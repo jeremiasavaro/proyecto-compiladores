@@ -19,7 +19,7 @@ letter    [a-zA-Z]
 
 %%
 
-{digit}+                 { printf("NUMBER: %s\n", yytext); num_tokens++; return DIG; }
+{digit}+                 { printf("NUMBER: %s\n", yytext); num_tokens++; return INTEGER_LITERAL; }
 
 "program"                 { num_tokens++; return PROGRAM;}
 "if"                      { num_tokens++; return IF; }

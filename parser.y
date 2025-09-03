@@ -19,25 +19,29 @@ void yyerror(const char *s);
 %%
 
 program:
-    PROGRAM block END
+    PROGRAM '{' main_block '}'
     ;
 
-block:
-    /* empty */
-    | block statement
+main_block:
+      var_decl main_block
+    | /* empty */
+    ;
+
+var_decl:
+      BOOL ID ';' var_decl
+    | INTEGER ID ';' var_decl
+    | statement
     ;
 
 statement:
-      IF expr THEN block ELSE block END
-    | WHILE expr block END
-    | RETURN expr ';'
-    | VOID ID '(' ')' block END
-    | EXTERN ID ';'
-    | BOOL ID ';'
-    | INTEGER ID ';'
-    | expr ';'
-    | COMMENT
-    | INLINECOMMENT
+      IF expr THEN block ELSE block END statement
+    | WHILE expr block END statement
+    | RETURN expr ';' statement
+    | EXTERN ID ';' statement
+    | expr ';' statement
+    | COMMENT statement
+    | INLINECOMMENT statement
+    | /* empty */
     ;
 
 expr:
@@ -49,11 +53,14 @@ expr:
     | expr OR expr
     | NEG expr
     | '(' expr ')'
+    | method_call
     | ID
-    | DIG
+    | INTEGER_LITERAL
     | TRUE
     | FALSE
     ;
+
+
 
 %%
 
