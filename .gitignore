@@ -57,3 +57,7 @@ dkms.conf
 *.tab.h
 *.tab.c
 *.yy.c
+
+# IDEs and editors
+.vscode/
+.idea/
