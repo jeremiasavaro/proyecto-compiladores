@@ -4,43 +4,68 @@
 
 extern int yylex();
 void yyerror(const char *s);
+extern FILE *yyin;
 
 %}
 
-%token PROGRAM IF ELSE THEN WHILE END VOID RETURN EXTERN BOOL INTEGER FALSE TRUE
-%token DIG ID INLINECOMMENT COMMENT
-%token AND OR NEG
+%union {
+    int ival;
+    char *sval;
+}
 
-%left OR
-%left AND
+%token PROGRAM IF ELSE THEN WHILE END VOID RETURN EXTERN BOOL INTEGER FALSE TRUE
+%token <ival> INTEGER_LITERAL
+%token <sval> ID INLINECOMMENT COMMENT
+%token AND OR NEG EQ NEQ LEQ GEQ
+
+/* pseudo-token para evitar conflictos shift-reduce en construcciones if then else */
+%nonassoc LOWER_THAN_ELSE
+%nonassoc ELSE
+
+%left AND OR
+%left EQ NEQ
+%left '<' '>' LEQ GEQ
 %left '+' '-'
-%left '*' '/'
+%left '*' '/' '%'
+
+%right UMINUS
+%right NEG
 
 %%
 
 program:
-    PROGAM '{' var_decl method_decl '}'
+    PROGRAM '{' decls '}'
+    ;
+
+decls:
+      decl decls
+    | /* empty */
+    ;
+
+decl:
+      var_decl
+    | method_decl
     ;
 
 var_decl:
-      type ID '=' expr ';' var_decl
-    | /* empty */
+      type ID '=' expr ';'
     ;
 
 method_decl:
-      method_type ID '(' method_args ')' block method_decl
-    | method_type ID '(' method_args ')' extern ';' method_decl
-    | /* empty */
-    ;
-
-method_type:
-      type
-    | VOID
+      VOID ID '(' method_args ')' block
+    | VOID ID '(' method_args ')' EXTERN ';'
+    | type ID '(' method_args ')' block
+    | type ID '(' method_args ')' EXTERN ';'
     ;
 
 method_args:
-      type ID ',' method_args
-    | type ID
+      arg_list
+    | /* empty */
+    ;
+
+arg_list:
+      type ID
+    | arg_list ',' type ID
     ;
 
 type:
@@ -49,59 +74,65 @@ type:
     ;
 
 block:
-      '{' var_decl statement '}'
-      ;
-
-statement:
-    | ID '=' expr ';' statement
-    | method_call ';' statement
-    | IF '( expr ')' THEN block statement
-    | IF '( expr ')' THEN block ELSE block statement
-    | WHILE '(' expr ')' block statement
-    | RETURN expr ';' statement
-    | RETURN ';' statement
-    | ';'
-    | block
-    |
+      '{' var_decls statements '}'
     ;
 
-method_call:
-      ID '(' method_args ')'
-      ;
+var_decls:
+      var_decl var_decls
+    | /* empty */
+    ;
+
+statements:
+      statement statements
+    | /* empty */
+    ;
+
+statement:
+      ID '=' expr ';'
+    | method_call ';'
+    | IF '(' expr ')' THEN statement %prec LOWER_THAN_ELSE
+    | IF '(' expr ')' THEN statement ELSE statement
+    | WHILE '(' expr ')' block
+    | RETURN expr ';'
+    | RETURN ';'
+    | ';'
+    | block
+    ;
 
 expr:
       ID
     | method_call
     | literal
-    | expr binary_op expr
-    | '-' expr
+    | expr '+' expr
+    | expr '-' expr
+    | expr '*' expr
+    | expr '/' expr
+    | expr '%' expr
+    | expr '<' expr
+    | expr '>' expr
+    | expr EQ expr
+    | expr NEQ expr
+    | expr LEQ expr
+    | expr GEQ expr
+    | expr AND expr
+    | expr OR expr
+    | '-' expr %prec UMINUS
     | NEG expr
     | '(' expr ')'
     ;
 
-binary_op:
-      arith_op
-    | rel_op
-    | cond_op
+method_call:
+      ID '(' call_args ')'
+      ;
+
+call_args:
+      expr_list
+    | /* empty */
     ;
 
-arith_op:
-      '+'
-    | '-'
-    | '*'
-    | '/'
-    | '%'
-    ;
-
-rel_op:
-      '<'
-    | '>'
-    | '=='
-    ;
-
-cond_op:
-      AND
-    | OR
+expr_list:
+      expr
+    | expr_list ',' expr
     ;
 
 literal:
@@ -110,17 +141,23 @@ literal:
     | FALSE
     ;
 
-
-
 %%
 
 void yyerror(const char *s) {
     fprintf(stderr, "Parse error: %s\n", s);
 }
 
-int main() {
+int main(int argc, char *argv[]) {
+    if (argc > 1) {
+        FILE *file = fopen(argv[1], "r");
+        if (!file) {
+            fprintf(stderr, "Error: could not open file %s\n", argv[1]);
+            return 1;
+        }
+        yyin = file;
+    }
+
     printf("=== SYNTAX ANALYSIS ===\n");
     yyparse();
-    printf("Parsing finished.\n");
     return 0;
 }
