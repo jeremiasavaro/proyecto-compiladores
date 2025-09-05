@@ -6,6 +6,8 @@
 
 char *strdup(const char *s);
 
+extern int yylineno;
+
 /* Stats counter */
 int num_tokens = 0;
 int num_lines = 1;
@@ -28,7 +30,6 @@ letter    [a-zA-Z]
 "else"                    { num_tokens++; return ELSE; }
 "then"                    { num_tokens++; return THEN;}
 "while"                   { num_tokens++; return WHILE; }
-"end"                     { num_tokens++; return END; }
 "void"                    { num_tokens++; return VOID;}
 "return"                  { num_tokens++; return RETURN;}
 "extern"                  { num_tokens++; return EXTERN;}

@@ -3,6 +3,7 @@
 #include <stdlib.h>
 
 extern int yylex();
+extern int yylineno;
 void yyerror(const char *s);
 extern FILE *yyin;
 
@@ -13,7 +14,7 @@ extern FILE *yyin;
     char *sval;
 }
 
-%token PROGRAM IF ELSE THEN WHILE END VOID RETURN EXTERN BOOL INTEGER FALSE TRUE
+%token PROGRAM IF ELSE THEN WHILE VOID RETURN EXTERN BOOL INTEGER FALSE TRUE
 %token <ival> INTEGER_LITERAL
 %token <sval> ID INLINECOMMENT COMMENT
 %token AND OR NEG EQ NEQ LEQ GEQ
@@ -34,7 +35,7 @@ extern FILE *yyin;
 %%
 
 program:
-    PROGRAM '{' decls '}'
+    PROGRAM '{' decls '}' { printf("No syntactic errors.\n"); }
     ;
 
 decls:
@@ -90,13 +91,17 @@ statements:
 statement:
       ID '=' expr ';'
     | method_call ';'
-    | IF '(' expr ')' THEN statement %prec LOWER_THAN_ELSE
-    | IF '(' expr ')' THEN statement ELSE statement
+    | IF '(' expr ')' THEN statement else
     | WHILE '(' expr ')' block
     | RETURN expr ';'
     | RETURN ';'
     | ';'
     | block
+    ;
+
+else: 
+      ELSE statement
+    | LOWER_THAN_ELSE /* empty */
     ;
 
 expr:
@@ -144,7 +149,7 @@ literal:
 %%
 
 void yyerror(const char *s) {
-    fprintf(stderr, "Parse error: %s\n", s);
+    fprintf(stderr, "Parse error: %s in line %d\n", s, yylineno);
 }
 
 int main(int argc, char *argv[]) {
