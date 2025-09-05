@@ -61,3 +61,6 @@ dkms.conf
 # IDEs and editors
 .vscode/
 .idea/
+
+parser
+parser.output
