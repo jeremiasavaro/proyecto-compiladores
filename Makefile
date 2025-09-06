@@ -1,13 +1,43 @@
-# Makefile
+# Variables
+LEX     = flex
+BISON   = bison
+CC      = gcc
+CFLAGS  = -g -Wall -Wextra -std=c11 -I. -Ierror_handling
+TARGET  = parser
 
-parser: lex.yy.c parser.tab.c
-	$(CC) -o parser lex.yy.c parser.tab.c
+# Sources
+GEN_LEX_SRC   = lex.yy.c
+GEN_Y_TAB_C   = parser.tab.c
+GEN_Y_TAB_H   = parser.tab.h
+LEX_FILE      = lex.l
+YACC_FILE     = parser.y
 
-lex.yy.c: lex.l
-	flex lex.l
+SRCS = error_handling/error_handling.c
+OBJS = $(SRCS:.c=.o) $(GEN_LEX_SRC:.c=.o) $(GEN_Y_TAB_C:.c=.o)
 
-parser.tab.c: parser.y
-	bison -d -v parser.y
+.PHONY: all clean
+
+all: $(TARGET)
+
+$(TARGET): $(GEN_LEX_SRC) $(GEN_Y_TAB_C) $(GEN_Y_TAB_H) $(OBJS)
+	$(CC) $(CFLAGS) -o $@ $(OBJS)
+
+# Generate Bison files
+$(GEN_Y_TAB_C) $(GEN_Y_TAB_H): $(YACC_FILE)
+	$(BISON) -d -v $(YACC_FILE)
+
+# Generate Flex file
+$(GEN_LEX_SRC): $(LEX_FILE) $(GEN_Y_TAB_H)
+	$(LEX) $(LEX_FILE)
+
+# Generic compile rule
+%.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# Compile error_handling sources
+error_handling/%.o: error_handling/%.c
+	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -f parser lex.yy.c parser.tab.c parser.tab.h
+	rm -f $(OBJS) $(TARGET) $(GEN_LEX_SRC) $(GEN_Y_TAB_C) $(GEN_Y_TAB_H)
+	rm -f error_handling/*.o
