@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "parser.tab.h"
+#include "error_handling.h"
 
 char *strdup(const char *s);
 
@@ -25,7 +26,7 @@ letter    [a-zA-Z]
 
 {digit}+                 { yylval.ival = atoi(yytext); num_tokens++; return INTEGER_LITERAL; }
 
-"program"                 { num_tokens++; return PROGRAM;}
+"Program"                 { num_tokens++; return PROGRAM;}
 "if"                      { num_tokens++; return IF; }
 "else"                    { num_tokens++; return ELSE; }
 "then"                    { num_tokens++; return THEN;}
@@ -55,6 +56,6 @@ letter    [a-zA-Z]
 [+\-*/%=]              { return *yytext; }
 [;(){}]                { return *yytext; }
 [ \t\r\n]+             { }
-.                      { fprintf(stderr, "Lexical ERROR(line %d): unknown character '%s'\n", yylineno, yytext); exit(EXIT_FAILURE); }
+.                      { error_lexical(yylineno, yytext); }
 
 %%

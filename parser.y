@@ -1,6 +1,7 @@
 %{
 #include <stdio.h>
 #include <stdlib.h>
+#include "error_handling.h"
 
 extern int yylex();
 extern int yylineno;
@@ -91,7 +92,7 @@ statements:
 statement:
       ID '=' expr ';'
     | method_call ';'
-    | IF '(' expr ')' THEN statement else
+    | IF '(' expr ')' THEN block else
     | WHILE '(' expr ')' block
     | RETURN expr ';'
     | RETURN ';'
@@ -100,7 +101,7 @@ statement:
     ;
 
 else: 
-      ELSE statement
+      ELSE block
     | LOWER_THAN_ELSE /* empty */
     ;
 
@@ -149,15 +150,14 @@ literal:
 %%
 
 void yyerror(const char *s) {
-    fprintf(stderr, "Parse error: %s in line %d\n", s, yylineno);
+    error_parse(yylineno, (char *)s);
 }
 
 int main(int argc, char *argv[]) {
     if (argc > 1) {
         FILE *file = fopen(argv[1], "r");
         if (!file) {
-            fprintf(stderr, "Error: could not open file %s\n", argv[1]);
-            return 1;
+            error_open_file(argv[1]);
         }
         yyin = file;
     }
