@@ -1,0 +1,11 @@
+Program {
+    bool cond = true;
+    void main() {
+        if (cond) then {
+            cond = false;
+        } else {
+            bool in = cond;
+        }
+        return in;
+    }
+}

@@ -1,0 +1,23 @@
+Program {
+    void main() {
+        integer a = 5;
+        integer b = 10;
+        bool c = true;
+        bool d = false;
+        a = a + b;  
+        a = a * b;
+        a = a - b;
+        a = a / b;
+        a = a % b;
+        a = -b;
+        c = a < b;
+        c = a <= b;
+        c = a > b;
+        c = a >= b;
+        c = a == b;
+        c = a != b;
+        c = c && d;
+        c = c || d;
+        c = !c;
+    }
+}

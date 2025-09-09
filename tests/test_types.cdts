@@ -1,0 +1,8 @@
+Program {
+    integer x;
+    bool flag;
+    void main() {
+        x = 10;
+        flag = true;
+    }
+}

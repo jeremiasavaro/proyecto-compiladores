@@ -1,0 +1,26 @@
+Program {
+    integer add(integer a, integer b) {
+        return a + b;
+    }
+    integer inc(integer a) {
+        return a + 1;
+    }
+    bool isPositive(integer num) {
+        if (num > 0) then {
+            return true; 
+        } else {
+            return false; 
+        }
+    }
+    void main() {
+        integer x;
+        integer z;
+        bool check;
+        integer y = 5;
+        y = inc(y);
+        x = y + 10;
+        z = add(x, y);
+        check = isPositive(z);
+    }
+
+}
