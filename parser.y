@@ -17,7 +17,7 @@ extern FILE *yyin;
 
 %token PROGRAM IF ELSE THEN WHILE VOID RETURN EXTERN BOOL INTEGER FALSE TRUE
 %token <ival> INTEGER_LITERAL
-%token <sval> ID INLINECOMMENT COMMENT
+%token <sval> ID
 %token AND OR NEG EQ NEQ LEQ GEQ
 
 /* pseudo-token para evitar conflictos shift-reduce en construcciones if then else */
@@ -51,6 +51,7 @@ decl:
 
 var_decl:
       type ID '=' expr ';'
+    | type ID ';' /* variable declaration without initialization */
     ;
 
 method_decl:

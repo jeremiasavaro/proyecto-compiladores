@@ -42,9 +42,8 @@ letter    [a-zA-Z]
 
 {letter}({letter}|{digit}|_)*  { yylval.sval = strdup(yytext); num_tokens++; return ID; }
 
-
-"//"({letter}|{digit}|_)*       { yylval.sval = strdup(yytext); num_tokens++; return INLINECOMMENT; }
-"/*"({letter}|{digit}|_)*"*/"   { yylval.sval = strdup(yytext); num_tokens++; return COMMENT; }
+"//".*                 { /* ignore one line comments */ }
+"/*"([^*]|\*+[^*/])*\*+"/"   { /* ignore multiline comments */ }
 
 "&&"                   { return AND; }
 "||"                   { return OR; }
@@ -53,9 +52,10 @@ letter    [a-zA-Z]
 "!="                   { return NEQ; }
 "<="                   { return LEQ; }
 ">="                   { return GEQ; }
-[+\-*/%=]              { return *yytext; }
+[+\-*/%=<>]              { return *yytext; }
+[,]                    { return *yytext; }
 [;(){}]                { return *yytext; }
 [ \t\r\n]+             { }
-.                      { error_lexical(yylineno, yytext); }
+.                   { error_lexical(yylineno, yytext); }
 
 %%
