@@ -1,0 +1,71 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish]{babel}
+\usepackage[hidelinks]{hyperref}
+\usepackage{listings}  % Para mostrar código
+\usepackage{xcolor}
+\usepackage[a4paper, margin=2cm]{geometry}
+
+% Configuración de listings para C y Flex
+\lstset{
+    language=C,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue}\bfseries,
+    commentstyle=\color{green!50!black},
+    stringstyle=\color{red},
+    numbers=left,
+    numberstyle=\tiny,
+    stepnumber=1,
+    numbersep=5pt,
+    breaklines=true,
+    frame=single,
+    tabsize=4
+}
+
+\title{Documentación del Proyecto - Primera etapa}
+\author{Jeremias Avaro, Mateo Cornejo, Máximo Marquez Regis}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\subsection*{División de la primera etapa}
+\begin{itemize}
+    \item \textbf{Jeremias Avaro:} Inicialización del proyecto y primeros avances del lexer y la gramática.
+    \item \textbf{Mateo Cornejo:} Refinamiento de lexer y gramática. Creación de tests.
+    \item \textbf{Máximo Marquez Regis:} Completó la gramática casi en su totalidad. Integración del parser y lexer.
+    \item Todos: Discusión de decisiones de diseño, revisión de código y documentación.
+\end{itemize}
+
+\subsection*{Decisiones de diseño y aclaraciones}
+\begin{itemize}
+    \item Los comentarios se ignoran en el lexer para simplificar la gramática del parser. Como no devuelven tokens (return), el parser nunca se entera de que había comentarios. Así es posible ponerlos en cualquier parte sin romper la gramática.
+    \item Uso de un pseudo-token \texttt{LOWER\_THAN\_ELSE} es un token inventado que nunca aparece en el código y se utiliza basicamente para darle una precedencia mas baja que el ELSE, por lo que Bison siempre asociara el else al if más cercano, lo cual nos permite evitar errores de shift - reduce.
+    \item Se optó por separar el manejo de errores en un módulo propio (\texttt{error\_handling.c/h}) para centralizar la gestión de mensajes y facilitar futuras extensiones.
+    \item Se decidió que el lexer cuente tokens y líneas para facilitar el reporte de errores y estadísticas.
+\end{itemize}
+
+\subsection*{Diseño y decisiones clave}
+\begin{itemize}
+    \item La gramática permite declaraciones de variables, métodos y bloques de código.
+    \item Se definió un \textbf{union} para manejar tokens con valores enteros o cadenas.
+    \item Las expresiones incluyen operadores aritméticos, relacionales y lógicos con precedencias adecuadas.
+    \item Alternativas: se evaluó manejar comentarios en el parser, pero se optó por ignorarlos en el lexer para simplificar el diseño.
+    \item Se implementó un sistema de reporte de errores léxicos y sintácticos que indica el número de línea y el tipo de error.
+    \item El parser está preparado para ser extendido con análisis semántico y generación de código en futuras etapas.
+    \item Se utilizó un Makefile para automatizar la compilación y facilitar la integración de nuevos módulos.
+    \item Se crearon tests básicos para validar el funcionamiento del lexer y parser.
+\end{itemize}
+
+\subsection*{Problemas conocidos}
+\begin{itemize}
+    \item Algunos casos límite (por ejemplo, anidamiento profundo de bloques o expresiones muy largas) no han sido exhaustivamente probados.
+    \item El manejo de comentarios multilinea podría fallar en comentarios no cerrados.
+\end{itemize}
+
+
+
+\end{document}
