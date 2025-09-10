@@ -24,7 +24,7 @@ extern FILE *yyin;
 
 %left AND OR
 %left EQ NEQ
-%left '<' '>' LEQ GEQ
+%left LES GRT LEQ GEQ
 %left '+' '-'
 %left '*' '/' '%'
 
@@ -112,8 +112,8 @@ expr:
     | expr '*' expr
     | expr '/' expr
     | expr '%' expr
-    | expr '<' expr
-    | expr '>' expr
+    | expr LES expr
+    | expr GRT expr
     | expr EQ expr
     | expr NEQ expr
     | expr LEQ expr
