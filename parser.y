@@ -20,13 +20,11 @@ extern FILE *yyin;
 %token <sval> ID
 %token AND OR NEG EQ NEQ LEQ GEQ
 
-/* pseudo-token para evitar conflictos shift-reduce en construcciones if then else */
-%nonassoc LOWER_THAN_ELSE
 %nonassoc ELSE
 
 %left AND OR
 %left EQ NEQ
-%left '<' '>' LEQ GEQ
+%left LES GRT LEQ GEQ
 %left '+' '-'
 %left '*' '/' '%'
 
@@ -101,9 +99,8 @@ statement:
     | block
     ;
 
-else: 
+else:
       ELSE block
-    | LOWER_THAN_ELSE /* empty */
     ;
 
 expr:
@@ -115,8 +112,8 @@ expr:
     | expr '*' expr
     | expr '/' expr
     | expr '%' expr
-    | expr '<' expr
-    | expr '>' expr
+    | expr LES expr
+    | expr GRT expr
     | expr EQ expr
     | expr NEQ expr
     | expr LEQ expr

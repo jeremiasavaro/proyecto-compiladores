@@ -52,7 +52,11 @@ letter    [a-zA-Z]
 "!="                   { return NEQ; }
 "<="                   { return LEQ; }
 ">="                   { return GEQ; }
-[+\-*/%=<>]              { return *yytext; }
+"<"                    { return LES; }
+">"                    { return GRT; }
+[+\-*/%=]              { return *yytext; }
+
+
 [,]                    { return *yytext; }
 [;(){}]                { return *yytext; }
 [ \t\r\n]+             { }
