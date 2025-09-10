@@ -45,16 +45,16 @@ letter    [a-zA-Z]
 "//".*                 { /* ignore one line comments */ }
 "/*"([^*]|\*+[^*/])*\*+"/"   { /* ignore multiline comments */ }
 
-"&&"                   { return AND; }
-"||"                   { return OR; }
-"!"                    { return NEG; }
-"=="                   { return EQ; }
-"!="                   { return NEQ; }
-"<="                   { return LEQ; }
-">="                   { return GEQ; }
-"<"                    { return LES; }
-">"                    { return GRT; }
-[+\-*/%=]              { return *yytext; }
+"&&"                   { num_tokens++; return AND; }
+"||"                   { num_tokens++; return OR; }
+"!"                    { num_tokens++; return NEG; }
+"=="                   { num_tokens++; return EQ; }
+"!="                   { num_tokens++; return NEQ; }
+"<="                   { num_tokens++; return LEQ; }
+">="                   { num_tokens++; return GEQ; }
+"<"                    { num_tokens++; return LES; }
+">"                    { num_tokens++; return GRT; }
+[+\-*/%=]              { num_tokens++; return *yytext; }
 
 
 [,]                    { return *yytext; }

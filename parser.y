@@ -49,7 +49,7 @@ decl:
 
 var_decl:
       type ID '=' expr ';'
-    | type ID ';' /* variable declaration without initialization */
+    | type ID ';'
     ;
 
 method_decl:
