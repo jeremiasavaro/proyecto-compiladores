@@ -15,7 +15,7 @@ void error_lexical(int line, char* msg) {
     exit(EXIT_FAILURE); 
 }
 
-void error_open_file(char* filename) {
+int error_open_file(char* filename) {
     fprintf(stderr, "Error: could not open file %s\n", filename);
     return 1;
 }
