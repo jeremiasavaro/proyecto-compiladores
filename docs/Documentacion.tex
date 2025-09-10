@@ -43,7 +43,6 @@
 \subsection*{Decisiones de diseño y aclaraciones}
 \begin{itemize}
     \item Los comentarios se ignoran en el lexer para simplificar la gramática del parser. Como no devuelven tokens (return), el parser nunca se entera de que había comentarios. Así es posible ponerlos en cualquier parte sin romper la gramática.
-    \item Uso de un pseudo-token \texttt{LOWER\_THAN\_ELSE} es un token inventado que nunca aparece en el código y se utiliza basicamente para darle una precedencia mas baja que el ELSE, por lo que Bison siempre asociara el else al if más cercano, lo cual nos permite evitar errores de shift - reduce.
     \item Se optó por separar el manejo de errores en un módulo propio (\texttt{error\_handling.c/h}) para centralizar la gestión de mensajes y facilitar futuras extensiones.
     \item Se decidió que el lexer cuente tokens y líneas para facilitar el reporte de errores y estadísticas.
 \end{itemize}
