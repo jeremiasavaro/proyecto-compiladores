@@ -69,7 +69,7 @@ var_decl:
     ;
 
 var_decls:
-      var_decl var_decls  { add_sentence($1) }
+      var_decl var_decls  { add_sentence($1); }
     | /* empty */     
     ;
 

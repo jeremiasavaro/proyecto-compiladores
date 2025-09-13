@@ -1,10 +1,11 @@
 %{
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include "parser.tab.h"
-#include "error_handling.h"
-#include "ast.h"
+    #define _GNU_SOURCE
+    #include "ast.h"
+    #include "parser.tab.h"
+    #include <stdio.h>
+    #include <stdlib.h>
+    #include <string.h>
+    #include "error_handling.h"
 
 char *strdup(const char *s);
 
