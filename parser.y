@@ -69,8 +69,8 @@ var_decl:
     ;
 
 var_decls:
-      var_decl var_decls  { add_sentence($1); $$ = NULL; }
-    | /* empty */        { $$ = NULL; }
+      var_decl var_decls  { add_sentence($1) }
+    | /* empty */     
     ;
 
 method_decl:

@@ -4,6 +4,7 @@
 #include <string.h>
 #include "parser.tab.h"
 #include "error_handling.h"
+#include "ast.h"
 
 char *strdup(const char *s);
 
