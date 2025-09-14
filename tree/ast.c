@@ -5,6 +5,16 @@
 #include "error_handling.h"
 #include "ast.h"
 
+/* Portable strdup replacement to avoid implicit declaration issues. */
+static char *my_strdup(const char *s) {
+    if (!s) return NULL;
+    size_t n = strlen(s) + 1;
+    char *r = malloc(n);
+    if (!r) return NULL;
+    memcpy(r, s, n);
+    return r;
+}
+
 int returnInt;
 int returnBool;
 AST_ROOT *head_ast = NULL;
@@ -33,8 +43,18 @@ AST_NODE* new_leaf_node(LEAF_TYPE type, void* value) {
         node->leaf.value->bool_leaf.type = TYPE_BOOL;
         node->leaf.value->bool_leaf.value = *((int*) value);
     } else if (type == TYPE_ID) {
+        /* Create ID leaf: store a copy of the identifier string */
         node->leaf.value = malloc(sizeof(union LEAF));
-        node->leaf.value->id_leaf = strdup((char*)value);
+        if (!node->leaf.value) {
+            free(node);
+            return NULL;
+        }
+        node->leaf.value->id_leaf = my_strdup((char*) value);
+        if (!node->leaf.value->id_leaf) {
+            free(node->leaf.value);
+            free(node);
+            return NULL;
+        }
     }
     return node;
 }
@@ -87,8 +107,8 @@ AST_NODE* new_while_node(AST_NODE* condition, AST_NODE* block) {
 AST_NODE* new_method_node(char* name, AST_NODE_LIST* args, AST_NODE* block, int is_extern) {
     AST_NODE* node = alloc_node();
     node->type = AST_METHOD;
-    node->method.name = strdup(name); // save a copy of the name 
-    node->method.args = (AST_NODE*)args; 
+    node->method.name = my_strdup(name); // save a copy of the name 
+    node->method.args = args; 
     node->method.block = block;
     node->method.is_extern = is_extern;
     if (args) {
@@ -105,7 +125,7 @@ AST_NODE* new_method_node(char* name, AST_NODE_LIST* args, AST_NODE* block, int 
 AST_NODE* new_block_node(AST_NODE_LIST* stmts) {
     AST_NODE* node = alloc_node();
     node->type = AST_BLOCK;
-    node->block.stmts = (AST_NODE*)stmts;
+    node->block.stmts = stmts;
     if (stmts) {
         AST_NODE_LIST* it = stmts;
         while (it) {
@@ -148,21 +168,23 @@ void free_mem(AST_NODE* node) {
             free_mem(node->while_stmt.block);
             break;
         case AST_BLOCK: {
-            AST_NODE* stmt = node->block.stmts;
-            while (stmt) {
-                AST_NODE* next = stmt->block.stmts;
-                free_mem(stmt);
-                stmt = next;
+            AST_NODE_LIST* list_stmts = node->block.stmts;
+            while (list_stmts) {
+                if (list_stmts->first) free_mem(list_stmts->first);
+                AST_NODE_LIST* next = list_stmts->next;
+                free(list_stmts);
+                list_stmts = next;
             }
             break;
         }
         case AST_METHOD: {
             free(node->method.name);
-            AST_NODE* arg = node->method.args;
-            while (arg) {
-                AST_NODE* next = arg->block.stmts;
-                free_mem(arg);
-                arg = next;
+            AST_NODE_LIST* args_list = node->method.args;
+            while (args_list) {
+                if (args_list->first) free_mem(args_list->first);
+                AST_NODE_LIST* next = args_list->next;
+                free(args_list);
+                args_list = next;
             }
             free_mem(node->method.block);
             break;
@@ -184,14 +206,21 @@ void free_mem(AST_NODE* node) {
 }
 
 AST_NODE* new_method_call_node(char* name, AST_NODE_LIST* args) {
-    AST_NODE* node = malloc(sizeof(AST_NODE));
+    AST_NODE* node = alloc_node();
     node->type = AST_METHOD;
-    node->method.name = strdup(name);
-    node->method.args = (AST_NODE*)args;
+    node->method.name = my_strdup(name);
+    node->method.args = args;
     node->method.block = NULL;
     node->method.is_extern = 0;
     node->father = NULL;
     node->line = yylineno;
+    if (args) {
+        AST_NODE_LIST* args_list = args;
+        while (args_list) {
+            if (args_list->first) args_list->first->father = node;
+            args_list = args_list->next;
+        }
+    }
     return node;
 }
 // method utilized for build lists of expressions (statements, args, etc)

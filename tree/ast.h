@@ -106,14 +106,13 @@ struct AST_NODE {
 
         struct {
             char* name;
-            struct AST_NODE* args;   // arguments list
-            struct AST_NODE* block;  // method body
+            struct AST_NODE_LIST* args;   // arguments list
+            struct AST_NODE* block;      // method body
             int is_extern; 
         } method;
 
-        
         struct {
-            struct AST_NODE* stmts; // list of statements
+            struct AST_NODE_LIST* stmts; // statements list
         } block;
 
         // for leaf nodes
