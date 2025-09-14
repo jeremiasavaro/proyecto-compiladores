@@ -4,7 +4,7 @@
 #include <string.h>
 #include "error_handling.h"
 #include "ast.h"
-/* #include "print_funcs.h" */
+#include "print_funcs.h"
 
 extern int yylex();
 extern int yylineno;
@@ -34,7 +34,7 @@ extern FILE *yyin;
 %right NEG
 
 %type <node> program decls decl var_decl method_decl block statement expr literal method_call
-%type <nodelist> method_args arg_list expr_list call_args statements
+%type <nodelist> method_args arg_list expr_list call_args statements var_decls
 %type <ival> type
 
 %%
@@ -44,13 +44,13 @@ program:
     ;
 
 decls:
-      decl decls
-    | /* empty */ { $$ = NULL; }
+      decl decls { if ($1) add_sentence($1); } /* garantize decl != NULL */
+    | /* empty */
     ;
 
 decl:
-      var_decl { add_sentence($1); }
-    | method_decl { add_sentence($1); }
+      var_decl    { $$ = $1; }
+    | method_decl { $$ = $1; }
     ;
 
 var_decl:
@@ -69,9 +69,9 @@ var_decl:
     ;
 
 var_decls:
-      var_decl var_decls  { add_sentence($1); }
-    | /* empty */     
-    ;
+            var_decl var_decls  { $$ = append_expr($2, $1); }
+        | /* empty */ { $$ = NULL; }     
+        ;
 
 method_decl:
       VOID ID '(' method_args ')' block
@@ -100,7 +100,15 @@ type:
     ;
 
 block:
-    '{' var_decls statements '}' { $$ = new_block_node($3); }
+    '{' var_decls statements '}' { /* to maintain the previous decls */
+        AST_NODE_LIST *merged = $3; /* statements list */
+        AST_NODE_LIST *it = $2;    /* var_decls list */
+        while (it) {
+            merged = append_expr(merged, it->first);
+            it = it->next;
+        }
+        $$ = new_block_node(merged);
+    }
     ;
 
 statements:
@@ -182,6 +190,6 @@ int main(int argc, char *argv[]) {
 
     printf("=== SYNTAX ANALYSIS ===\n");
     yyparse();
-    /* print_program_horizontal(); */
+    print_full_ast(head_ast);
     return 0;
 }
