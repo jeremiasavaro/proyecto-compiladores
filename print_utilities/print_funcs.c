@@ -1,3 +1,5 @@
+#include <stdio.h>
+#include <string.h>
 #include "print_funcs.h"
 
 static const char *op_to_string(OPERATOR op) {
@@ -25,209 +27,242 @@ static const char *op_to_string(OPERATOR op) {
     }
 }
 
-static void print_leaf(AST_NODE *n) {
-    switch (n->leaf_type) {
-        case TYPE_INT:
-            printf("INT(%d)", n->value->int_leaf.value);
+static void node_label(AST_NODE *node, char *buf, size_t bufsz) {
+    if (!node) { snprintf(buf, bufsz, "(null)"); return; }
+    switch (node->type) {
+        case AST_LEAF:
+            if (!node->leaf.value) { snprintf(buf, bufsz, "LEAF(NULL)"); return; }
+            switch (node->leaf.leaf_type) {
+                case TYPE_INT:
+                    snprintf(buf, bufsz, "%d", node->leaf.value->int_leaf.value);
+                    return;
+                case TYPE_BOOL:
+                    snprintf(buf, bufsz, "%s", node->leaf.value->bool_leaf.value ? "true" : "false");
+                    return;
+                case TYPE_ID:
+                    if (node->leaf.value && node->leaf.value->id_leaf)
+                        snprintf(buf, bufsz, "%s", node->leaf.value->id_leaf);
+                    else
+                        snprintf(buf, bufsz, "ID(?)");
+                    return;
+                default:
+                    snprintf(buf, bufsz, "LEAF(?)");
+                    return;
+            }
             break;
-        case TYPE_BOOL:
-            printf("BOOL(%s)", n->value->bool_leaf.value ? "true" : "false");
-            break;
-        case TYPE_ID:
-            printf("ID(%s)", n->value->id_leaf->id_name);
-            break;
+        case AST_COMMON:
+            snprintf(buf, bufsz, "%s", op_to_string(node->common.op));
+            return;
+        case AST_IF:
+            snprintf(buf, bufsz, "IF");
+            return;
+        case AST_WHILE:
+            snprintf(buf, bufsz, "WHILE");
+            return;
+        case AST_METHOD:
+            if (node->method.block)
+                snprintf(buf, bufsz, "METHOD %s", node->method.name ? node->method.name : "(null)");
+            else
+                snprintf(buf, bufsz, "CALL %s", node->method.name ? node->method.name : "(null)");
+            return;
+        case AST_BLOCK:
+            snprintf(buf, bufsz, "BLOCK");
+            return;
+        case AST_NULL:
+            snprintf(buf, bufsz, "NULL");
+            return;
         default:
-            printf("LEAF(?)");
-            break;
+            snprintf(buf, bufsz, "?(type=%d)", node->type);
+            return;
     }
 }
 
-void print_node(AST_NODE *node, const char *prefix, int is_last) {
+// recursive tree printer using ASCII connectors
+static void print_node_tree(AST_NODE *node, const char *prefix, int is_last) {
     if (!node) return;
+    char label[256];
+    node_label(node, label, sizeof(label));
 
-    printf("%s", prefix);
-    printf(is_last ? "└── " : "├── ");
+    printf("%s%s%s\n", prefix, (is_last ? "└── " : "├── "), label);
 
-    if (node->is_leaf) {
-        print_leaf(node);
-    } else {
-        printf("%s", op_to_string(node->op));
-    }
-    printf("\n");
-
+    // build new prefix
     char new_prefix[512];
-    snprintf(new_prefix, sizeof(new_prefix), "%s%s", prefix, is_last ? "    " : "│   ");
+    snprintf(new_prefix, sizeof(new_prefix), "%s%s", prefix, (is_last ? "    " : "│   "));
 
-    AST_NODE *children[2];
-    int count = 0;
-    if (node->left) children[count++] = node->left;
-    if (node->arity == BINARY && node->right) children[count++] = node->right;
-
-    for (int i = 0; i < count; ++i) {
-        print_node(children[i], new_prefix, i == count - 1);
-    }
-}
-
-void print_program_horizontal(void) {
-    printf("=== Program AST ===\n");
-    AST_ROOT *cur = head_ast;
-    int idx = 0;
-    while (cur) {
-        printf("Statement %d\n", idx++);
-        print_node(cur->sentence, "", 1);
-        cur = cur->next;
-    }
-    printf("========================\n");
-}
-
-static void print_spaces(int n) {
-    for (int i = 0; i < n; ++i) putchar(' ');
-}
-
-void print_tree_ascii(AST_NODE *node, int depth, int is_left) {
-    if (!node) return;
-
-    if (node->arity == BINARY && node->right) {
-        print_tree_ascii(node->right, depth + 1, 0);
-    }
-
-    print_spaces(depth * 5);
-    if (depth > 0) {
-        printf(is_left ? "/----" : "\\----");
-    }
-
-    if (node->is_leaf) {
-        switch (node->leaf_type) {
-            case TYPE_INT:
-                printf("%d\n", node->value->int_leaf.value);
-                break;
-            case TYPE_BOOL:
-                printf("%s\n", node->value->bool_leaf.value ? "true" : "false");
-                break;
-            case TYPE_ID:
-                printf("%s\n", node->value->id_leaf->id_name);
-                break;
-            default:
-                printf("?\n");
-                break;
+    // handle children depending on node type
+    if (node->type == AST_COMMON) {
+        AST_NODE *children[2];
+        int count = 0;
+        if (node->common.left) children[count++] = node->common.left;
+        if (node->common.arity == BINARY && node->common.right) children[count++] = node->common.right;
+        for (int i = 0; i < count; ++i) {
+            print_node_tree(children[i], new_prefix, i == count - 1);
         }
-    } else {
-        printf("%s\n", op_to_string(node->op));
-    }
+    } else if (node->type == AST_IF) {
+        AST_NODE *children[3]; int count = 0;
+        if (node->if_stmt.condition) children[count++] = node->if_stmt.condition;
+        if (node->if_stmt.then_block) children[count++] = node->if_stmt.then_block;
+        if (node->if_stmt.else_block) children[count++] = node->if_stmt.else_block;
+        for (int i = 0; i < count; ++i) print_node_tree(children[i], new_prefix, i == count - 1);
+    } else if (node->type == AST_WHILE) {
+        AST_NODE *children[2]; int count = 0;
+        if (node->while_stmt.condition) children[count++] = node->while_stmt.condition;
+        if (node->while_stmt.block) children[count++] = node->while_stmt.block;
+        for (int i = 0; i < count; ++i) print_node_tree(children[i], new_prefix, i == count - 1);
+    } else if (node->type == AST_METHOD) {
+        /* Print method arguments as a grouped 'ARGS' node (so args appear as
+           direct children of METHOD), then print the BLOCK. */
+        if (node->method.args) {
+            AST_NODE_LIST *it = node->method.args;
+            int total = 0; for (AST_NODE_LIST *t = it; t; t = t->next) total++;
+            int has_block = node->method.block ? 1 : 0;
+            // print ARGS group (not last if there is a block)
+            printf("%s%s%s\n", new_prefix, (has_block ? "├── " : "└── "), "ARGS");
+            char args_prefix[512];
+            snprintf(args_prefix, sizeof(args_prefix), "%s%s", new_prefix, (has_block ? "│   " : "    "));
+            int ai = 0;
+            AST_NODE_LIST *it2 = node->method.args;
+            while (it2) {
+                AST_NODE *arg = it2->first;
+                // print arg name as a simple label (assume TYPE_ID leaf)
+                if (arg && arg->type == AST_LEAF && arg->leaf.leaf_type == TYPE_ID) {
+                    char namebuf[256];
+                    if (arg->leaf.value && arg->leaf.value->id_leaf)
+                        snprintf(namebuf, sizeof(namebuf), "%s", arg->leaf.value->id_leaf);
+                    else
+                        snprintf(namebuf, sizeof(namebuf), "(arg?)");
+                    printf("%s%s%s\n", args_prefix, (ai == total - 1 && !has_block ? "└── " : "├── "), namebuf);
+                } else {
+                    // fallback: print the node normally
+                    print_node_tree(arg, args_prefix, ai == total - 1 && !has_block);
+                }
+                it2 = it2->next; ai++;
+            }
+        }
+        if (node->method.block) {
+            // block as last child
+            print_node_tree(node->method.block, new_prefix, 1);
+        }
+    } else if (node->type == AST_BLOCK) {
+        AST_NODE_LIST *it = node->block.stmts;
+        int total = 0; for (AST_NODE_LIST *t = it; t; t = t->next) total++;
+        if (total == 0) return;
+        AST_NODE **arr = malloc(sizeof(AST_NODE*) * total);
+        if (!arr) {
+            AST_NODE_LIST *tmp = it;
+            while (tmp) {
+                print_node_tree(tmp->first, new_prefix, tmp->next == NULL);
+                tmp = tmp->next;
+            }
+            return;
+        }
+        int i = 0;
+        for (AST_NODE_LIST *t = it; t; t = t->next) {
+            arr[i++] = t->first;
+        }
+        /* Separate declarations (OP_DECL_*) from other statements so we can
+           display them grouped under a synthetic "DECLS" node inside the block. */
+        AST_NODE **decls = malloc(sizeof(AST_NODE*) * total);
+        AST_NODE **stmts = malloc(sizeof(AST_NODE*) * total);
+        int d = 0, s = 0;
+        for (int j = total - 1; j >= 0; --j) {
+            AST_NODE *n = arr[j];
+            if (n && n->type == AST_COMMON && (n->common.op == OP_DECL_INT || n->common.op == OP_DECL_BOOL)) {
+                decls[d++] = n;
+            } else {
+                stmts[s++] = n;
+            }
+        }
 
-    if (node->left) {
-        print_tree_ascii(node->left, depth + 1, 1);
+        int groups = (d>0?1:0) + (s>0?1:0);
+        int group_index = 0;
+        // print DECLS group if any
+        if (d > 0) {
+            int is_last_group = (group_index == groups - 1);
+            char decl_prefix[512];
+            snprintf(decl_prefix, sizeof(decl_prefix), "%s%s", new_prefix, (is_last_group ? "    " : "│   "));
+            for (int k = 0; k < d; ++k) {
+                // last decl in group is last if group is last
+                int is_last_decl = (k == d - 1) && is_last_group;
+                print_node_tree(decls[k], decl_prefix, is_last_decl);
+            }
+            group_index++;
+        }
+        // print STATEMENTS group if any
+        if (s > 0) {
+            int is_last_group = (group_index == groups - 1);
+            if (groups > 1) {
+                printf("%s%s%s\n", new_prefix, (is_last_group ? "└── " : "├── "), "STATEMENTS");
+            }
+            char stm_prefix[512];
+            snprintf(stm_prefix, sizeof(stm_prefix), "%s%s", new_prefix, (is_last_group ? "    " : "│   "));
+            for (int k = 0; k < s; ++k) {
+                int is_last_stmt = (k == s - 1) && is_last_group;
+                print_node_tree(stmts[k], stm_prefix, is_last_stmt);
+            }
+        }
+        free(arr);
+        free(decls);
+        free(stmts);
     }
 }
 
-void print_program_vertical(void) {
+void print_ast_node(AST_NODE *node, int indent) {
+    // build a prefix of spaces
+    char prefix[128] = {0};
+    int n = indent * 4;
+    if (n >= (int)sizeof(prefix)) n = sizeof(prefix) - 1;
+    for (int i = 0; i < n; ++i) prefix[i] = ' ';
+    prefix[n] = '\0';
+    print_node_tree(node, prefix, 1);
+}
+
+void print_ast_list(AST_NODE_LIST *list, int indent) {
+    if (!list) return;
+    int total = 0; for (AST_NODE_LIST *t = list; t; t = t->next) total++;
+    int i = 0;
+    while (list) {
+        // provide indentation as prefix
+        char prefix[128] = {0};
+        int n = indent * 4;
+        if (n >= (int)sizeof(prefix)) n = sizeof(prefix) - 1;
+        for (int k = 0; k < n; ++k) prefix[k] = ' ';
+        prefix[n] = '\0';
+        print_node_tree(list->first, prefix, i == total - 1);
+        list = list->next; i++;
+    }
+}
+
+void print_full_ast(AST_ROOT *root) {
     printf("=== Program AST ===\n");
-    AST_ROOT *cur = head_ast;
-    int idx = 0;
-    while (cur) {
-        printf("\nStatement %d\n\n", idx++);
-        print_tree_ascii(cur->sentence, 0, 0);
-        cur = cur->next;
-    }
-    printf("\n========================\n\n");
-}
-
-
-static const char *id_type_to_string(ID_TYPE t) {
-    switch (t) {
-        case CONST_INT:  return "CONST_INT";
-        case CONST_BOOL: return "CONST_BOOL";
-        case UNKNOWN:    return "UNKNOWN";
-        default:         return "?";
-    }
-}
-
-void print_id_table(void) {
-    printf("\n=== Symbol Table (ID_TABLE) ===\n");
-    if (!head_table) {
-        printf("(empty)\n");
-        printf("================================\n");
+    if (!root) { printf("(empty program)\n========================\n"); return; }
+    /* The AST_ROOT list may be built with the newest sentences at the head.
+       To print top-to-bottom (the order they appear in the source), collect
+       nodes into an array and iterate from first to last. */
+    int total = 0;
+    for (AST_ROOT *t = root; t; t = t->next) total++;
+    AST_NODE **arr = malloc(sizeof(AST_NODE*) * total);
+    if (!arr) {
+        // fallback: print in stored order
+        AST_ROOT *cur = root; int idx = 0;
+        while (cur) {
+            printf("Statement %d\n", idx++);
+            print_node_tree(cur->sentence, "", 1);
+            cur = cur->next;
+        }
+        printf("========================\n");
         return;
     }
-
-    // First: linear chain overview
-    printf("Chain:\n  ");
-    ID_TABLE *cur = head_table;
-    size_t idx = 0;
-    while (cur) {
-        printf("[%zu:%s]", idx, cur->id_name ? cur->id_name : "(null)");
-        if (cur->next) printf(" -> ");
-        cur = cur->next;
-        idx++;
+    int i = 0;
+    for (AST_ROOT *t = root; t; t = t->next) {
+        arr[i++] = t->sentence;
     }
-    printf(" -> NULL\n\n");
-
-    // Detailed table header
-    printf("+-----+-----------------+-----------------+-------------+---------------+-----------------+\n");
-    printf("| idx | self            | id_name         | id_type     | value         | next            |\n");
-    printf("+-----+-----------------+-----------------+-------------+---------------+-----------------+\n");
-
-    cur = head_table;
-    idx = 0;
-    while (cur) {
-        char value_buf[64];
-        if (!cur->data) {
-            snprintf(value_buf, sizeof value_buf, "%s", "(null)");
-        } else {
-            switch (cur->id_type) {
-                case CONST_INT:
-                    snprintf(value_buf, sizeof value_buf, "%d", *(int*)cur->data);
-                    break;
-                case CONST_BOOL:
-                    snprintf(value_buf, sizeof value_buf, "%s", (*(int*)cur->data) ? "true" : "false");
-                    break;
-                case UNKNOWN:
-                default:
-                    snprintf(value_buf, sizeof value_buf, "%s", "?");
-                    break;
-            }
-        }
-
-        printf("| %3zu | %14p | %-15s | %-11s | %-13s | %14p |\n",
-               idx,
-               (void*)cur,
-               cur->id_name ? cur->id_name : "(null)",
-               id_type_to_string(cur->id_type),
-               value_buf,
-               (void*)cur->next);
-
-        cur = cur->next;
-        idx++;
+    // stored list is head-most-recent; print from arr[total-1]..arr[0]
+    int idx = 0;
+    for (int j = total - 1; j >= 0; --j) {
+        printf("\nStatement %d\n", idx++);
+        print_node_tree(arr[j], "", 1);
     }
-    printf("+-----+-----------------+-----------------+-------------+---------------+-----------------+\n\n");
-
-    // Per-node verbose block
-    printf("Verbose nodes:\n");
-    cur = head_table;
-    idx = 0;
-    while (cur) {
-        printf("Node %zu @ %p\n", idx, (void*)cur);
-        printf("  id_name : %s\n", cur->id_name ? cur->id_name : "(null)");
-        printf("  id_type : %s (%d)\n", id_type_to_string(cur->id_type), cur->id_type);
-        if (cur->data) {
-            switch (cur->id_type) {
-                case CONST_INT:
-                    printf("  data    : (int) %d (addr=%p)\n", *(int*)cur->data, cur->data);
-                    break;
-                case CONST_BOOL:
-                    printf("  data    : (bool) %s (addr=%p)\n",
-                           (*(int*)cur->data) ? "true" : "false", cur->data);
-                    break;
-                default:
-                    printf("  data    : (unknown) addr=%p\n", cur->data);
-            }
-        } else {
-            printf("  data    : (null)\n");
-        }
-        printf("  next    : %p\n", (void*)cur->next);
-        printf("------------------------------------------------------------\n");
-        cur = cur->next;
-        idx++;
-    }
-    printf("================================\n");
+    free(arr);
+    printf("========================\n");
 }
