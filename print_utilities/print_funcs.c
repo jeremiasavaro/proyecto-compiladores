@@ -62,6 +62,8 @@ static void node_label(AST_NODE *node, char *buf, size_t bufsz) {
         case AST_METHOD:
             if (node->method.block)
                 snprintf(buf, bufsz, "METHOD %s", node->method.name ? node->method.name : "(null)");
+            else if (node->method.is_extern)
+                snprintf(buf, bufsz, "EXTERN METHOD %s", node->method.name ? node->method.name : "(null)");
             else
                 snprintf(buf, bufsz, "CALL %s", node->method.name ? node->method.name : "(null)");
             return;
