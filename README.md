@@ -18,6 +18,30 @@ called TDS25.
   In this stage, x86-64 assembly code (without optimizations) is generated from the intermediate code.
 - Optimizer
 
+## Branches for tasks
+- Lexical and syntactic analyzer: syntactic-analyzer
+
+## Dependencies
+- flex
+- bison
+- gcc
+- make
+
+## Compilation
+```sh
+  make
+```
+Generates the binary called `parser`.
+
+## Use
+From file:
+```sh
+  ./parser input.txt
+```
+Or by stdin (Ctrl+D to exit):
+```sh
+  ./parser
+```
 
 ### Members:
 - Avaro Jeremias Jose
