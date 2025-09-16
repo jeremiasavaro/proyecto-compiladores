@@ -7,37 +7,68 @@
 #include <stddef.h>
 
 typedef struct ID_TABLE ID_TABLE;
+typedef struct TABLE_STACK TABLE_STACK;
+typedef struct ARGS ARGS;
+typedef struct ARGS_LIST ARGS_LIST;
 
-// pointers to the start and end of id_table
-extern ID_TABLE* head_table;
-extern ID_TABLE* end_table;
-
-typedef struct ROOT_TABLE ROOT_TABLE;
+// pointer to the global level of table_stack
+extern TABLE_STACK* global_level;
 
 typedef enum {
 	CONST_INT,
 	CONST_BOOL,
+	METHOD,
 	UNKNOWN
 } ID_TYPE;
 
-struct ROOT_TABLE {
-	ID_TABLE* block;
-	ROOT_TABLE* next;
+typedef enum {
+	INT,
+	BOOL,
+	VOID
+} RETURN_TYPE;
+
+struct TABLE_STACK {
+	ID_TABLE* head_block;
+	ID_TABLE* end_block;
+	TABLE_STACK* up;
 };
 
-// node type for id_Table
+// node type for ARGS_LIST
+struct ARGS {
+	char* name;
+	ID_TYPE type;
+	void* data;
+};
+
+// list to save arguments of methods
+struct ARGS_LIST {
+	ARGS* arg;
+	ARGS_LIST* next;
+};
+
+// node type for ID_TABLE
 struct ID_TABLE {
 	char* id_name;
 	ID_TYPE id_type;
-	void* data;
+	union {
+		struct {
+			void* data;
+		} common;
+
+		struct {
+			RETURN_TYPE return_type;
+			int num_args;
+			ARGS_LIST* arg_list;
+			void* data; // store the return value of the method, if return_type is void this remains void as well
+		} method;
+	};
 	ID_TABLE* next;
 };
 
-ID_TABLE* allocate_mem();
 ID_TABLE* add_id(char* name, ID_TYPE type);
 void add_data(char* name, ID_TYPE type, void* data);
 ID_TABLE* find(char* name);
-void print_id_table(void);
 void* get_data(char* name);
+ARGS_LIST* create_args_list(ID_TABLE* method, ID_TYPE arg_type, char* arg_name);
 
 #endif
