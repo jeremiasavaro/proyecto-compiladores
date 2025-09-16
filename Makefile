@@ -2,7 +2,7 @@
 LEX     = flex
 BISON   = bison
 CC      = gcc
-CFLAGS  = -g -Wall -Wextra -std=c11 -I. -Ierror_handling -Itree -Iprint_utilities
+CFLAGS  = -g -Wall -Wextra -std=c11 -I. -Ierror_handling -Itree -Iprint_utilities -Isymbol_table
 TARGET  = parser
 
 # Sources
@@ -12,7 +12,7 @@ GEN_Y_TAB_H   = parser.tab.h
 LEX_FILE      = lex.l
 YACC_FILE     = parser.y
 
-SRCS = error_handling/error_handling.c tree/ast.c print_utilities/print_funcs.c
+SRCS = error_handling/error_handling.c tree/ast.c print_utilities/print_funcs.c symbol_table/symbol_table.c
 OBJS = $(SRCS:.c=.o) $(GEN_LEX_SRC:.c=.o) $(GEN_Y_TAB_C:.c=.o)
 
 .PHONY: all clean
@@ -45,6 +45,10 @@ tree/%.o: tree/%.c
 print_utilities/%.o: print_utilities/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
+# Compile symbol_table sources
+symbol_table/%.o: symbol_table/%.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
 clean:
 	rm -f $(OBJS) $(TARGET) $(GEN_LEX_SRC) $(GEN_Y_TAB_C) $(GEN_Y_TAB_H)
-	rm -f error_handling/*.o rm -f tree/*.o print_utilities/*.o
+	rm -f error_handling/*.o rm -f tree/*.o print_utilities/*.o symbol_table/*.o
