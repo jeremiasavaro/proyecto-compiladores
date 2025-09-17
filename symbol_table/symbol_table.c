@@ -1,9 +1,9 @@
 #include "symbol_table.h"
 #include "error_handling.h"
 
-// Scope top and global root
-TABLE_STACK* global_level = NULL;		//scope global
-static TABLE_STACK* stack_level = NULL;		//scope en el tope
+// scope on top and global scope
+TABLE_STACK* global_level = NULL;   // global scope
+static TABLE_STACK* stack_level = NULL;     // top scope
 
 extern int yylineno;
 
@@ -11,17 +11,15 @@ ID_TABLE* allocate_mem();
 ARGS_LIST* allocate_args_list_mem();
 ARGS* allocate_args_mem();
 
-// crea un nuevo scope asociado a su scope superior.
+// creates a new scope associated with its superior scope
 static TABLE_STACK* allocate_scope(TABLE_STACK* up) {
-    TABLE_STACK* s = malloc(sizeof(TABLE_STACK));
+    TABLE_STACK* s = calloc(1, sizeof(TABLE_STACK));
     if (!s) error_allocate_mem();
-    s->head_block = NULL;
-    s->end_block = NULL;
     s->up = up;
     return s;
 }
 
-// inicializa la TS.
+// initializes symbols' table (singleton)
 void st_init(void) {
     if (!global_level) {
         global_level = allocate_scope(NULL);
@@ -29,18 +27,18 @@ void st_init(void) {
     }
 }
 
-// pushea un nuevo scope a la pila.
+// pushes a new scope in the stack
 void scope_push(void) {
     if (!stack_level) st_init();
     stack_level = allocate_scope(stack_level);
 }
 
-// libera todos los símbolos perteneciente a un scope.
+// frees all memory of one level in the table stack (probably we won't use this)
 static void free_id_list(ID_TABLE* head) {
     while (head) {
         ID_TABLE* nxt = head->next;
         free(head->id_name);
-        if (head->id_type == METHOD) {	// Si el símbolo es un metodo liberamos la lista de args y el retorno
+        if (head->id_type == METHOD) {	// if the symbol is a method free all args and return value
             // free args list
             ARGS_LIST* al = head->method.arg_list;
             while (al) {
@@ -61,20 +59,20 @@ static void free_id_list(ID_TABLE* head) {
     }
 }
 
-// popea el scope actual
+// pop the actual scope
 void scope_pop(void) {
     if (!stack_level) return;
     TABLE_STACK* doomed = stack_level;
     stack_level = stack_level->up;
-    free_id_list(doomed->head_block);
+    // free_id_list(doomed->head_block);
     free(doomed);
     if (!stack_level) {
         global_level = NULL;
     }
 }
 
-// creates a new node with id_name = name and returns its memory direction
-// ahora tambien prohibe redeclaracion en el mismo scope.
+/* creates a new node with id_name = name and returns its memory direction
+   and doesn't allow to create two symbols with the same id in the same scope level */
 ID_TABLE* add_id(char* name, ID_TYPE type) {
     if (!stack_level) st_init();
     if (find_in_current_scope(name) != NULL) {
@@ -96,8 +94,7 @@ ID_TABLE* add_id(char* name, ID_TYPE type) {
     return stack_level->end_block;
 }
 
-// declara un metodo en el scope actual con su tipo de valor de retorno.
-// la declaro antes de procesar todo el cuerpo de la funcion, asi permitimos llamadas recursivas.
+// declare a method in the actual scope with its return value
 ID_TABLE* add_method(char* name, RETURN_TYPE ret_type) {
     ID_TABLE* id = add_id(name, METHOD);
     id->method.return_type = ret_type;
@@ -137,6 +134,7 @@ void add_data(char* name, ID_TYPE type, void* data) {
     }
 }
 
+// adds data to the method's return value
 void add_method_return_data(char* name, RETURN_TYPE type, void* data) {
     ID_TABLE* aux = find(name);
     if (aux == NULL) {
@@ -185,7 +183,8 @@ ID_TABLE* find(char* name) {
     return NULL;
 }
 
-// busca un id en el scope actual.
+/* return the memory direction of the node with id_name = name in the actual scope
+   if the node is not found, returns NULL */
 ID_TABLE* find_in_current_scope(char* name) {
     if (!stack_level) return NULL;
     for (ID_TABLE* id = stack_level->head_block; id; id = id->next) {
@@ -196,14 +195,8 @@ ID_TABLE* find_in_current_scope(char* name) {
 
 // allocate memory for a node in the id_table
 ID_TABLE* allocate_mem() {
-    ID_TABLE* aux = malloc(sizeof(ID_TABLE));
-    if (!aux) {
-        error_allocate_mem();
-    }
-    aux->id_name = NULL;
-    aux->id_type = UNKNOWN;
-    aux->next = NULL;
-    aux->common.data = NULL; // safe for both unions
+    ID_TABLE* aux = calloc(1, sizeof(ID_TABLE));
+    if (!aux) error_allocate_mem();
     return aux;
 }
 
@@ -249,8 +242,8 @@ void add_arg(char* method_name, ID_TYPE arg_type, char* arg_name) {
         ARGS_LIST* new_arg_place = allocate_args_list_mem();
         aux_arg->next = new_arg_place;
         new_arg_place->arg = new_arg;
+        aux_table->method.num_args++;
     }
-    aux_table->method.num_args++;
 }
 
 // creates the argument list of a given method
@@ -269,19 +262,16 @@ ARGS_LIST* create_args_list(ID_TABLE* method, ID_TYPE arg_type, char* arg_name) 
     return method->method.arg_list;
 }
 
+// allocates memory for ARGS_LIST and initializes all fields in NULL
 ARGS_LIST* allocate_args_list_mem() {
-    ARGS_LIST* aux = malloc(sizeof(ARGS_LIST));
+    ARGS_LIST* aux = calloc(1, sizeof(ARGS_LIST));
     if (!aux) error_allocate_mem();
-    aux->arg = NULL;
-    aux->next = NULL;
     return aux;
 }
 
+// allocates memory for ARGS and initializes all fields in NULL
 ARGS* allocate_args_mem() {
-    ARGS* aux = malloc(sizeof(ARGS));
+    ARGS* aux = calloc(1, sizeof(ARGS));
     if (!aux) error_allocate_mem();
-    aux->data = NULL;
-    aux->name = NULL;
-    aux->type = UNKNOWN;
     return aux;
 }
