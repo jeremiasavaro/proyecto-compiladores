@@ -20,7 +20,7 @@ static TABLE_STACK* allocate_scope(TABLE_STACK* up) {
 }
 
 // initializes symbols' table (singleton)
-void st_init(void) {
+void st_init() {
     if (!global_level) {
         global_level = allocate_scope(NULL);
         stack_level = global_level;
@@ -28,7 +28,7 @@ void st_init(void) {
 }
 
 // pushes a new scope in the stack
-void scope_push(void) {
+void scope_push() {
     if (!stack_level) st_init();
     stack_level = allocate_scope(stack_level);
 }
@@ -73,7 +73,7 @@ void scope_pop(void) {
 
 /* creates a new node with id_name = name and returns its memory direction
    and doesn't allow to create two symbols with the same id in the same scope level */
-ID_TABLE* add_id(char* name, ID_TYPE type) {
+ID_TABLE* add_id(char* name, const ID_TYPE type) {
     if (!stack_level) st_init();
     if (find_in_current_scope(name) != NULL) {
         error_variable_redeclaration(yylineno, name);
@@ -95,7 +95,7 @@ ID_TABLE* add_id(char* name, ID_TYPE type) {
 }
 
 // declare a method in the actual scope with its return value
-ID_TABLE* add_method(char* name, RETURN_TYPE ret_type) {
+ID_TABLE* add_method(char* name, const RETURN_TYPE ret_type) {
     ID_TABLE* id = add_id(name, METHOD);
     id->method.return_type = ret_type;
     id->method.num_args = 0;
@@ -105,7 +105,7 @@ ID_TABLE* add_method(char* name, RETURN_TYPE ret_type) {
 }
 
 // adds data to the variable name node
-void add_data(char* name, ID_TYPE type, void* data) {
+void add_data(char* name, const ID_TYPE type, const void* data) {
     ID_TABLE* aux = find(name);
     if (aux == NULL) {
         error_variable_not_declared(yylineno, name);
@@ -135,7 +135,7 @@ void add_data(char* name, ID_TYPE type, void* data) {
 }
 
 // adds data to the method's return value
-void add_method_return_data(char* name, RETURN_TYPE type, void* data) {
+void add_method_return_data(char* name, const RETURN_TYPE type, const void* data) {
     ID_TABLE* aux = find(name);
     if (aux == NULL) {
         error_variable_not_declared(yylineno, name);
@@ -172,8 +172,8 @@ void add_method_return_data(char* name, RETURN_TYPE type, void* data) {
    if the node is not found, returns NULL
    first, it looks for the id in the current scope, if it doesn't find it,
    it goes up one scope level and keeps searching */
-ID_TABLE* find(char* name) {
-    for (TABLE_STACK* current_level = stack_level; current_level != NULL; current_level = current_level->up) {
+ID_TABLE* find(const char* name) {
+    for (const TABLE_STACK* current_level = stack_level; current_level != NULL; current_level = current_level->up) {
         for (ID_TABLE* current_id = current_level->head_block; current_id; current_id = current_id->next) {
             if (current_id->id_name && strcmp(current_id->id_name, name) == 0) {
                 return current_id;
@@ -185,7 +185,7 @@ ID_TABLE* find(char* name) {
 
 /* return the memory direction of the node with id_name = name in the actual scope
    if the node is not found, returns NULL */
-ID_TABLE* find_in_current_scope(char* name) {
+ID_TABLE* find_in_current_scope(const char* name) {
     if (!stack_level) return NULL;
     for (ID_TABLE* id = stack_level->head_block; id; id = id->next) {
         if (id->id_name && strcmp(id->id_name, name) == 0) return id;
@@ -195,6 +195,7 @@ ID_TABLE* find_in_current_scope(char* name) {
 
 // allocate memory for a node in the id_table
 ID_TABLE* allocate_mem() {
+    // calloc allocates memory and sets all its fields in 0 (NULL)
     ID_TABLE* aux = calloc(1, sizeof(ID_TABLE));
     if (!aux) error_allocate_mem();
     return aux;
@@ -202,10 +203,9 @@ ID_TABLE* allocate_mem() {
 
 // retrieves data of id from table
 void* get_data(char* name) {
-    ID_TABLE* aux = find(name);
+    const ID_TABLE* aux = find(name);
     if (aux == NULL) {
-        fprintf(stderr, "Error: id not found\n");
-        exit(EXIT_FAILURE);
+        error_variable_not_declared(yylineno, name);
     }
 
     switch (aux->id_type) {
@@ -221,7 +221,7 @@ void* get_data(char* name) {
 }
 
 // add an argument to a given method
-void add_arg(char* method_name, ID_TYPE arg_type, char* arg_name) {
+void add_arg(char* method_name, const ID_TYPE arg_type, const char* arg_name) {
     ID_TABLE* aux_table = find(method_name);
     if (!aux_table || aux_table->id_type != METHOD) {
         fprintf(stderr, "Error: trying to add argument to non-method %s\n", method_name);
@@ -235,6 +235,7 @@ void add_arg(char* method_name, ID_TYPE arg_type, char* arg_name) {
         while (aux_arg->next != NULL) {
             aux_arg = aux_arg->next;
         }
+        // allocates and sets the fields of ARGS and its place in ARGS_LIST
         ARGS* new_arg = allocate_args_mem();
         new_arg->type = arg_type;
         new_arg->name = strdup(arg_name);
@@ -247,7 +248,7 @@ void add_arg(char* method_name, ID_TYPE arg_type, char* arg_name) {
 }
 
 // creates the argument list of a given method
-ARGS_LIST* create_args_list(ID_TABLE* method, ID_TYPE arg_type, char* arg_name) {
+ARGS_LIST* create_args_list(ID_TABLE* method, const ID_TYPE arg_type, const char* arg_name) {
     if (method == NULL) {
         fprintf(stderr, "Error: method is NULL in create_args_list \n");
         exit(EXIT_FAILURE);
