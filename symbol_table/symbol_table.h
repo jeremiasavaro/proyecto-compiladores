@@ -71,4 +71,12 @@ ID_TABLE* find(char* name);
 void* get_data(char* name);
 ARGS_LIST* create_args_list(ID_TABLE* method, ID_TYPE arg_type, char* arg_name);
 
+//metodos para el scope (estos son los que añadi tito maxi)
+
+void st_init(void);
+void scope_push(void);
+void scope_pop(void);
+ID_TABLE* add_method(char* name, RETURN_TYPE ret_type);
+ID_TABLE* find_in_current_scope(char* name);
+
 #endif
