@@ -118,7 +118,7 @@ void add_data(char* name, ID_TYPE type, void* data) {
         exit(EXIT_FAILURE);
     }
     if (aux->id_type != type) {
-        error_type_mismatch(yylineno, name, "type mismatch");
+        error_type_mismatch(yylineno, name, (char*) aux->id_type);
     }
 
     if (aux->common.data != NULL) {
@@ -133,7 +133,7 @@ void add_data(char* name, ID_TYPE type, void* data) {
             memcpy(aux->common.data, data, sizeof(int));
             return;
         default:
-            error_type_mismatch(yylineno, name, "unknown");
+            error_type_mismatch(yylineno, name, (char*) aux->id_type);
     }
 }
 
@@ -151,7 +151,7 @@ void add_method_return_data(char* name, RETURN_TYPE type, void* data) {
         exit(EXIT_FAILURE);
     }
     if (aux->method.return_type != type) {
-        error_type_mismatch(yylineno, name, "return type mismatch");
+        error_type_mismatch(yylineno, name, (char*) aux->id_type);
     }
 
     if (aux->method.data != NULL) {
@@ -159,14 +159,14 @@ void add_method_return_data(char* name, RETURN_TYPE type, void* data) {
     }
 
     switch(type) {
-        case INT:
-        case BOOL:
+        case CONST_INT:
+        case CONST_BOOL:
             aux->method.data = malloc(sizeof(int));
             if (!aux->method.data) error_allocate_mem();
             memcpy(aux->method.data, data, sizeof(int));
             return;
         default:
-            error_type_mismatch(yylineno, name, "unknown");
+            error_type_mismatch(yylineno, name, (char*) aux->id_type);
     }
 }
 
