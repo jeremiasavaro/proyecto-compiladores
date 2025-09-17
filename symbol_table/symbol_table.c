@@ -3,7 +3,8 @@
 
 extern int yylineno;
 
-TABLE_STACK* stack_level = NULL;
+TABLE_STACK* global_level = NULL;
+static TABLE_STACK* stack_level = NULL;	//representa un scope
 
 ID_TABLE* allocate_mem();
 ARGS_LIST* allocate_args_list_mem();
@@ -189,7 +190,7 @@ ARGS_LIST* allocate_args_list_mem() {
 	ARGS_LIST* aux = malloc(sizeof(ARGS_LIST));
 	aux->arg = NULL;
 	aux->next = NULL;
-	
+
 	return aux;
 }
 
@@ -200,4 +201,27 @@ ARGS* allocate_args_mem() {
 	aux->type = UNKNOWN;
 
 	return aux;
+}
+
+
+//implementacion de metodos para el scope
+static TABLE_STACK* allocate_scope(TABLE_STACK* up) {
+    TABLE_STACK* s = malloc(sizeof(TABLE_STACK));
+    if (!s) error_allocate_mem();
+    s->head_block = NULL;
+    s->end_block = NULL;
+    s->up = up;
+    return s;
+}
+
+void stack_init(void) {
+    if (!global_level) {
+        global_level = allocate_scope(NULL);
+        stack_level = global_level;
+    }
+}
+
+void scope_push(void) {
+    if (!stack_level) st_init();
+    stack_level = allocate_scope(stack_level);
 }
