@@ -46,7 +46,7 @@ struct ARGS_LIST {
 	ARGS_LIST* next;
 };
 
-// node type for ID_TABLE
+// node type for ID_TABLE (variable, constant or method)
 struct ID_TABLE {
 	char* id_name;
 	ID_TYPE id_type;
@@ -65,6 +65,7 @@ struct ID_TABLE {
 	ID_TABLE* next;
 };
 
+
 ID_TABLE* add_id(char* name, ID_TYPE type);
 void add_data(char* name, ID_TYPE type, void* data);
 ID_TABLE* find(char* name);
@@ -73,10 +74,19 @@ ARGS_LIST* create_args_list(ID_TABLE* method, ID_TYPE arg_type, char* arg_name);
 
 //metodos para el scope (estos son los que añadi tito maxi)
 
+// crea el scope global si aún no existe.
 void st_init(void);
+
+// pushea un nuevo scope (para entrar a un bloque o al cuerpo de un método).
 void scope_push(void);
+
+// popea el scope actual y hace free de los símbolos locales.
 void scope_pop(void);
+
+// declara un método en el scope actual (permite la recursion).
 ID_TABLE* add_method(char* name, RETURN_TYPE ret_type);
+
+// busca dentro del scope que esta en el tope (para ver que no haya redeclaraciones).
 ID_TABLE* find_in_current_scope(char* name);
 
 #endif
