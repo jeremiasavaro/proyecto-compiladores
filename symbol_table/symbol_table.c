@@ -99,7 +99,12 @@ ID_TABLE* add_id(char* name, ID_TYPE type) {
 // declara un metodo en el scope actual con su tipo de valor de retorno.
 // la declaro antes de procesar todo el cuerpo de la funcion, asi permitimos llamadas recursivas.
 ID_TABLE* add_method(char* name, RETURN_TYPE ret_type) {
-
+    ID_TABLE* id = add_id(name, METHOD);
+    id->method.return_type = ret_type;
+    id->method.num_args = 0;
+    id->method.arg_list = NULL;
+    id->method.data = NULL;
+    return id;
 }
 
 // adds data to the variable name node
@@ -182,7 +187,11 @@ ID_TABLE* find(char* name) {
 
 // busca un id en el scope actual.
 ID_TABLE* find_in_current_scope(char* name) {
-
+    if (!stack_level) return NULL;
+    for (ID_TABLE* id = stack_level->head_block; id; id = id->next) {
+        if (id->id_name && strcmp(id->id_name, name) == 0) return id;
+    }
+    return NULL;
 }
 
 // allocate memory for a node in the id_table
