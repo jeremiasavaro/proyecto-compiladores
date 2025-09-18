@@ -38,3 +38,33 @@ void error_allocate_mem() {
     fprintf(stderr, "Error: Failed to allocate memory \n");
     exit(EXIT_FAILURE);
 }
+
+void error_method_return_data() {
+    fprintf(stderr, "Error: can't assign data to a method id, use add_method_return_data() instead\n");
+    exit(EXIT_FAILURE);
+}
+
+void error_method_data() {
+    fprintf(stderr, "Error: can't assign data to a non-method id, use add_data() instead\n");
+    exit(EXIT_FAILURE);
+}
+
+void error_return_void() {
+    fprintf(stderr, "Error: can't assign return value of type VOID\n");
+    exit(EXIT_FAILURE);
+}
+
+void error_type_id_unknown() {
+    fprintf(stderr, "Error: id's type unknown\n");
+    exit(EXIT_FAILURE);
+}
+
+void error_add_argument_method(char* method_name) {
+    fprintf(stderr, "Error: trying to add argument to non-method %s\n", method_name);
+    exit(EXIT_FAILURE);
+}
+
+void error_method_not_found(char* method_name) {
+    fprintf(stderr, "Error: method %s not found \n", method_name);
+    exit(EXIT_FAILURE);
+}

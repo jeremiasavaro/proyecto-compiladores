@@ -6,12 +6,12 @@
 #include "ast.h"
 
 /* Portable strdup replacement to avoid implicit declaration issues. */
-static char *my_strdup(const char *s) {
+char *my_strdup(const char *s) {
     if (!s) return NULL;
     size_t n = strlen(s) + 1;
     char *r = malloc(n);
     if (!r) return NULL;
-    memcpy(r, s, n);
+    strcpy(r, s);
     return r;
 }
 

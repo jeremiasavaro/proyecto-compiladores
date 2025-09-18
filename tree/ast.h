@@ -144,6 +144,7 @@ AST_NODE* new_method_node(char* name, AST_NODE_LIST* args, AST_NODE* block, int 
 AST_NODE* new_block_node(AST_NODE_LIST* stmts);
 AST_NODE* new_method_call_node(char* name, AST_NODE_LIST* args);
 AST_NODE_LIST* append_expr(AST_NODE_LIST* list, AST_NODE* expr);
+char *my_strdup(const char *s);
 void create_root(AST_NODE* tree);
 void add_sentence(AST_NODE* tree);
 

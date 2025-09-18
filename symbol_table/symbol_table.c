@@ -1,8 +1,9 @@
 #include "symbol_table.h"
 #include "error_handling.h"
+#include "../tree/ast.h"
 
 // scope on top and global scope
-TABLE_STACK* global_level = NULL;   // global scope
+TABLE_STACK* global_level = NULL;
 static TABLE_STACK* stack_level = NULL;     // top scope
 
 extern int yylineno;
@@ -80,7 +81,7 @@ ID_TABLE* add_id(char* name, const ID_TYPE type) {
     }
 
     ID_TABLE* aux = allocate_mem();
-    aux->id_name = strdup(name);
+    aux->id_name = my_strdup(name);
     if (!aux->id_name) error_allocate_mem();
     aux->id_type = type;
 
@@ -111,8 +112,7 @@ void add_data(char* name, const ID_TYPE type, const void* data) {
         error_variable_not_declared(yylineno, name);
     }
     if (aux->id_type == METHOD) {
-        fprintf(stderr, "Error: can't assign data to a method id, use add_method_return_data() instead\n");
-        exit(EXIT_FAILURE);
+        error_method_return_data();
     }
     if (aux->id_type != type) {
         error_type_mismatch(yylineno, name, (char*) aux->id_type);
@@ -141,12 +141,10 @@ void add_method_return_data(char* name, const RETURN_TYPE type, const void* data
         error_variable_not_declared(yylineno, name);
     }
     if (aux->id_type != METHOD) {
-        fprintf(stderr, "Error: can't assign data to a non-method id, use add_data() instead\n");
-        exit(EXIT_FAILURE);
+        error_method_data();
     }
     if (type == VOID) {
-        fprintf(stderr, "Error: can't assign return value of type VOID\n");
-        exit(EXIT_FAILURE);
+        error_return_void();
     }
     if (aux->method.return_type != type) {
         error_type_mismatch(yylineno, name, (char*) aux->id_type);
@@ -215,8 +213,7 @@ void* get_data(char* name) {
         case METHOD:
             return aux->method.data;
         default:
-            fprintf(stderr, "Error: id's type unknown\n");
-            exit(EXIT_FAILURE);
+            error_id_unknown_type();
     }
 }
 
@@ -224,8 +221,7 @@ void* get_data(char* name) {
 void add_arg(char* method_name, const ID_TYPE arg_type, const char* arg_name) {
     ID_TABLE* aux_table = find(method_name);
     if (!aux_table || aux_table->id_type != METHOD) {
-        fprintf(stderr, "Error: trying to add argument to non-method %s\n", method_name);
-        exit(EXIT_FAILURE);
+        error_add_argument_method(method_name);
     }
 
     ARGS_LIST* aux_arg = aux_table->method.arg_list;
@@ -238,7 +234,7 @@ void add_arg(char* method_name, const ID_TYPE arg_type, const char* arg_name) {
         // allocates and sets the fields of ARGS and its place in ARGS_LIST
         ARGS* new_arg = allocate_args_mem();
         new_arg->type = arg_type;
-        new_arg->name = strdup(arg_name);
+        new_arg->name = my_strdup(arg_name);
         if (!new_arg->name) error_allocate_mem();
         ARGS_LIST* new_arg_place = allocate_args_list_mem();
         aux_arg->next = new_arg_place;
@@ -250,13 +246,12 @@ void add_arg(char* method_name, const ID_TYPE arg_type, const char* arg_name) {
 // creates the argument list of a given method
 ARGS_LIST* create_args_list(ID_TABLE* method, const ID_TYPE arg_type, const char* arg_name) {
     if (method == NULL) {
-        fprintf(stderr, "Error: method is NULL in create_args_list \n");
-        exit(EXIT_FAILURE);
+        error_method_not_found(method);
     }
 
     method->method.arg_list = allocate_args_list_mem();
     method->method.arg_list->arg = allocate_args_mem();
-    method->method.arg_list->arg->name = strdup(arg_name);
+    method->method.arg_list->arg->name = my_strdup(arg_name);
     if (!method->method.arg_list->arg->name) error_allocate_mem();
     method->method.arg_list->arg->type = arg_type;
     method->method.num_args = 1;
