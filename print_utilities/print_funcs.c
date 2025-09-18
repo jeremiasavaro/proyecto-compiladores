@@ -146,49 +146,12 @@ static void print_node_tree(AST_NODE *node, const char *prefix, int is_last) {
             print_node_tree(node->method.block, new_prefix, 1);
         }
     } else if (node->type == AST_BLOCK) {
-        // count decls and statements
-        int decls_count = 0, stmts_count = 0;
-        for (AST_NODE_LIST *it = node->block.stmts; it; it = it->next) {
-            AST_NODE *n = it->first;
-            if (n && n->type == AST_COMMON &&
-                (n->common.op == OP_DECL_INT || n->common.op == OP_DECL_BOOL))
-                decls_count++;
-            else
-                stmts_count++;
-        }
-        int groups = (decls_count > 0 ? 1 : 0) + (stmts_count > 0 ? 1 : 0);
-        int group_index = 0;
-
-        // print DECLS in source order
-        if (decls_count > 0) {
-            int printed = 0;
-            char decl_prefix[512];
-            int is_last_group = (group_index == groups - 1);
-            strcpy(decl_prefix, new_prefix);
-            for (AST_NODE_LIST *it = node->block.stmts; it; it = it->next) {
-                AST_NODE *n = it->first;
-                if (n && n->type == AST_COMMON &&
-                    (n->common.op == OP_DECL_INT || n->common.op == OP_DECL_BOOL)) {
-                    int is_last_decl = (++printed == decls_count) && is_last_group;
-                    print_node_tree(n, decl_prefix, is_last_decl);
-                }
-            }
-            group_index++;
-        }
-        // print STATEMENTS in source order
-        if (stmts_count > 0) {
-            int printed = 0;
-            int is_last_group = (group_index == groups - 1);
-            char stm_prefix[512];
-            strcpy(stm_prefix, new_prefix);
-            for (AST_NODE_LIST *it = node->block.stmts; it; it = it->next) {
-                AST_NODE *n = it->first;
-                if (!(n && n->type == AST_COMMON &&
-                    (n->common.op == OP_DECL_INT || n->common.op == OP_DECL_BOOL))) {
-                    int is_last_stmt = (++printed == stmts_count) && is_last_group;
-                    print_node_tree(n, stm_prefix, is_last_stmt);
-                }
-            }
+        int total = 0;
+        for (AST_NODE_LIST *it = node->block.stmts; it; it = it->next)
+            total++;
+        int i = 0;
+        for (AST_NODE_LIST *it = node->block.stmts; it; it = it->next, i++) {
+            print_node_tree(it->first, new_prefix, i == total - 1);
         }
     }
 }

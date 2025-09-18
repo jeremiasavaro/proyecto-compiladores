@@ -101,13 +101,15 @@ type:
 
 block:
     '{' var_decls statements '}' { /* to maintain the previous decls */
-        AST_NODE_LIST *merged = $3; /* statements list */
-        AST_NODE_LIST *it = $2;    /* var_decls list */
-        while (it) {
-            merged = append_expr(merged, it->first);
-            it = it->next;
-        }
-        $$ = new_block_node(merged);
+        AST_NODE_LIST *merged = $2;
+        if (merged) {
+            AST_NODE_LIST *last = merged;
+            while (last->next) last = last->next;
+            last->next = $3;
+            $$ = new_block_node(merged);
+        } else {
+            $$ = new_block_node($3);
+}
     }
     ;
 
