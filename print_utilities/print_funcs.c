@@ -146,66 +146,50 @@ static void print_node_tree(AST_NODE *node, const char *prefix, int is_last) {
             print_node_tree(node->method.block, new_prefix, 1);
         }
     } else if (node->type == AST_BLOCK) {
-        AST_NODE_LIST *it = node->block.stmts;
-        int total = 0; for (AST_NODE_LIST *t = it; t; t = t->next) total++;
-        if (total == 0) return;
-        AST_NODE **arr = malloc(sizeof(AST_NODE*) * total);
-        if (!arr) {
-            AST_NODE_LIST *tmp = it;
-            while (tmp) {
-                print_node_tree(tmp->first, new_prefix, tmp->next == NULL);
-                tmp = tmp->next;
-            }
-            return;
+        // count decls and statements
+        int decls_count = 0, stmts_count = 0;
+        for (AST_NODE_LIST *it = node->block.stmts; it; it = it->next) {
+            AST_NODE *n = it->first;
+            if (n && n->type == AST_COMMON &&
+                (n->common.op == OP_DECL_INT || n->common.op == OP_DECL_BOOL))
+                decls_count++;
+            else
+                stmts_count++;
         }
-        int i = 0;
-        for (AST_NODE_LIST *t = it; t; t = t->next) {
-            arr[i++] = t->first;
-        }
-        /* Separate declarations (OP_DECL_*) from other statements so we can
-           display them grouped under a synthetic "DECLS" node inside the block. */
-        AST_NODE **decls = malloc(sizeof(AST_NODE*) * total);
-        AST_NODE **stmts = malloc(sizeof(AST_NODE*) * total);
-        int d = 0, s = 0;
-        for (int j = total - 1; j >= 0; --j) {
-            AST_NODE *n = arr[j];
-            if (n && n->type == AST_COMMON && (n->common.op == OP_DECL_INT || n->common.op == OP_DECL_BOOL)) {
-                decls[d++] = n;
-            } else {
-                stmts[s++] = n;
-            }
-        }
-
-        int groups = (d>0?1:0) + (s>0?1:0);
+        int groups = (decls_count > 0 ? 1 : 0) + (stmts_count > 0 ? 1 : 0);
         int group_index = 0;
-        // print DECLS group if any
-        if (d > 0) {
-            int is_last_group = (group_index == groups - 1);
+
+        // print DECLS in source order
+        if (decls_count > 0) {
+            int printed = 0;
             char decl_prefix[512];
-            snprintf(decl_prefix, sizeof(decl_prefix), "%s%s", new_prefix, (is_last_group ? "    " : "│   "));
-            for (int k = 0; k < d; ++k) {
-                // last decl in group is last if group is last
-                int is_last_decl = (k == d - 1) && is_last_group;
-                print_node_tree(decls[k], decl_prefix, is_last_decl);
+            int is_last_group = (group_index == groups - 1);
+            strcpy(decl_prefix, new_prefix);
+            for (AST_NODE_LIST *it = node->block.stmts; it; it = it->next) {
+                AST_NODE *n = it->first;
+                if (n && n->type == AST_COMMON &&
+                    (n->common.op == OP_DECL_INT || n->common.op == OP_DECL_BOOL)) {
+                    int is_last_decl = (++printed == decls_count) && is_last_group;
+                    print_node_tree(n, decl_prefix, is_last_decl);
+                }
             }
             group_index++;
         }
-        // print STATEMENTS group if any
-        if (s > 0) {
+        // print STATEMENTS in source order
+        if (stmts_count > 0) {
+            int printed = 0;
             int is_last_group = (group_index == groups - 1);
-            if (groups > 1) {
-                printf("%s%s%s\n", new_prefix, (is_last_group ? "└── " : "├── "), "STATEMENTS");
-            }
             char stm_prefix[512];
-            snprintf(stm_prefix, sizeof(stm_prefix), "%s%s", new_prefix, (is_last_group ? "    " : "│   "));
-            for (int k = 0; k < s; ++k) {
-                int is_last_stmt = (k == s - 1) && is_last_group;
-                print_node_tree(stmts[k], stm_prefix, is_last_stmt);
+            strcpy(stm_prefix, new_prefix);
+            for (AST_NODE_LIST *it = node->block.stmts; it; it = it->next) {
+                AST_NODE *n = it->first;
+                if (!(n && n->type == AST_COMMON &&
+                    (n->common.op == OP_DECL_INT || n->common.op == OP_DECL_BOOL))) {
+                    int is_last_stmt = (++printed == stmts_count) && is_last_group;
+                    print_node_tree(n, stm_prefix, is_last_stmt);
+                }
             }
         }
-        free(arr);
-        free(decls);
-        free(stmts);
     }
 }
 
@@ -237,34 +221,14 @@ void print_ast_list(AST_NODE_LIST *list, int indent) {
 
 void print_full_ast(AST_ROOT *root) {
     printf("=== Program AST ===\n");
-    if (!root) { printf("(empty program)\n========================\n"); return; }
-    /* The AST_ROOT list may be built with the newest sentences at the head.
-       To print top-to-bottom (the order they appear in the source), collect
-       nodes into an array and iterate from first to last. */
-    int total = 0;
-    for (AST_ROOT *t = root; t; t = t->next) total++;
-    AST_NODE **arr = malloc(sizeof(AST_NODE*) * total);
-    if (!arr) {
-        // fallback: print in stored order
-        AST_ROOT *cur = root; int idx = 0;
-        while (cur) {
-            printf("Statement %d\n", idx++);
-            print_node_tree(cur->sentence, "", 1);
-            cur = cur->next;
-        }
-        printf("========================\n");
+    if (!root) {
+        printf("(empty program)\n========================\n");
         return;
     }
-    int i = 0;
-    for (AST_ROOT *t = root; t; t = t->next) {
-        arr[i++] = t->sentence;
-    }
-    // stored list is head-most-recent; print from arr[total-1]..arr[0]
     int idx = 0;
-    for (int j = total - 1; j >= 0; --j) {
+    for (AST_ROOT *cur = root; cur; cur = cur->next) {
         printf("\nStatement %d\n", idx++);
-        print_node_tree(arr[j], "", 1);
+        print_node_tree(cur->sentence, "", 1);
     }
-    free(arr);
     printf("========================\n");
 }

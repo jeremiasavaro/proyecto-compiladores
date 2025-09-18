@@ -44,8 +44,8 @@ program:
     ;
 
 decls:
-      decl decls { if ($1) add_sentence($1); } /* garantize decl != NULL */
-    | /* empty */
+      decls decl { if ($2) add_sentence($2); } /* garantize decl != NULL */
+    | /* empty */ { $$ = NULL; }
     ;
 
 decl:
@@ -69,7 +69,7 @@ var_decl:
     ;
 
 var_decls:
-            var_decl var_decls  { $$ = append_expr($2, $1); }
+            var_decls var_decl { $$ = append_expr($1, $2); }
         | /* empty */ { $$ = NULL; }     
         ;
 
@@ -112,7 +112,7 @@ block:
     ;
 
 statements:
-      statement statements { $$ = append_expr($2, $1); }
+        statements statement { $$ = append_expr($1, $2); }
     | /* empty */ { $$ = NULL; }
     ;
 
