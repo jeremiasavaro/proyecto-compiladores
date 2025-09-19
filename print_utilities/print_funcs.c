@@ -195,3 +195,43 @@ void print_full_ast(AST_ROOT *root) {
     }
     printf("========================\n");
 }
+
+static const char* id_type_to_str(ID_TYPE t) {
+    switch (t) {
+        case CONST_INT: return "int";
+        case CONST_BOOL: return "bool";
+        case METHOD: return "method";
+        default: return "unknown";
+    }
+}
+
+static const char* return_type_to_str(RETURN_TYPE t) {
+    switch (t) {
+        case RETURN_INT: return "int";
+        case RETURN_BOOL: return "bool";
+        case RETURN_VOID: return "void";
+        default: return "unknown";
+    }
+}
+
+void print_symbol_table(TABLE_STACK* top) {
+    int scope_level = 0;
+    for (TABLE_STACK* scope = top; scope; scope = scope->up, scope_level++) {
+        printf("Scope Level %d:\n", scope_level);
+        for (ID_TABLE* id = scope->head_block; id; id = id->next) {
+            printf("  - Name: %s | Type: %s", id->id_name, id_type_to_str(id->id_type));
+            if (id->id_type == METHOD) {
+                printf(" | Return: %s | Args: %d\n", return_type_to_str(id->method.return_type), id->method.num_args);
+                ARGS_LIST* arg = id->method.arg_list;
+                int arg_idx = 0;
+                while (arg) {
+                    printf("      Arg %d: %s (%s)\n", arg_idx++, arg->arg->name, id_type_to_str(arg->arg->type));
+                    arg = arg->next;
+                }
+            } else {
+                printf("\n");
+            }
+        }
+        printf("\n");
+    }
+}
