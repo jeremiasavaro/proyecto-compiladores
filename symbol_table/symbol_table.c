@@ -1,6 +1,6 @@
 #include "symbol_table.h"
 #include "error_handling.h"
-#include "../tree/ast.h"
+#include "utils.h"
 
 // scope on top and global scope
 TABLE_STACK* global_level = NULL;
@@ -213,7 +213,7 @@ void* get_data(char* name) {
         case METHOD:
             return aux->method.data;
         default:
-            error_id_unknown_type();
+            error_type_id_unknown();
     }
 }
 
@@ -246,7 +246,7 @@ void add_arg(char* method_name, const ID_TYPE arg_type, const char* arg_name) {
 // creates the argument list of a given method
 ARGS_LIST* create_args_list(ID_TABLE* method, const ID_TYPE arg_type, const char* arg_name) {
     if (method == NULL) {
-        error_method_not_found(method);
+        error_method_not_found((char*) method);
     }
 
     method->method.arg_list = allocate_args_list_mem();
