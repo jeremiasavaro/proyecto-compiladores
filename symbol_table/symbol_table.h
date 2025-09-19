@@ -22,9 +22,9 @@ typedef enum {
 } ID_TYPE;
 
 typedef enum {
-	INT,
-	BOOL,
-	VOID
+	RETURN_INT,
+	RETURN_BOOL,
+	RETURN_VOID
 } RETURN_TYPE;
 
 struct TABLE_STACK {
@@ -66,11 +66,11 @@ struct ID_TABLE {
 };
 
 // pushes a new scope in the stack
-void scope_push();
+void push_scope();
 // frees all memory of one level in the table stack (probably we won't use this)
 static void free_id_list(ID_TABLE* head);
 // pop the actual scope
-void scope_pop(void);
+void pop_scope(void);
 /* creates a new node with id_name = name and returns its memory direction
    and doesn't allow to create two symbols with the same id in the same scope level */
 ID_TABLE* add_id(char* name, ID_TYPE type);

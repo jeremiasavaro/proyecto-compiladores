@@ -4,7 +4,7 @@
 
 // scope on top and global scope
 TABLE_STACK* global_level = NULL;
-static TABLE_STACK* stack_level = NULL;     // top scope
+TABLE_STACK* stack_level = NULL;     // top scope
 
 extern int yylineno;
 
@@ -29,9 +29,16 @@ void st_init() {
 }
 
 // pushes a new scope in the stack
-void scope_push() {
+void push_scope() {
     if (!stack_level) st_init();
-    stack_level = allocate_scope(stack_level);
+    if (stack_level == global_level) {
+        stack_level = allocate_scope(global_level);
+    } else {
+        TABLE_STACK* aux = stack_level;
+        stack_level = allocate_scope(aux->up);
+        aux->up = stack_level;
+    }
+
 }
 
 // frees all memory of one level in the table stack (probably we won't use this)
@@ -61,7 +68,7 @@ static void free_id_list(ID_TABLE* head) {
 }
 
 // pop the actual scope
-void scope_pop(void) {
+void pop_scope(void) {
     if (!stack_level) return;
     TABLE_STACK* doomed = stack_level;
     stack_level = stack_level->up;
@@ -143,7 +150,7 @@ void add_method_return_data(char* name, const RETURN_TYPE type, const void* data
     if (aux->id_type != METHOD) {
         error_method_data();
     }
-    if (type == VOID) {
+    if (type == RETURN_VOID) {
         error_return_void();
     }
     if (aux->method.return_type != type) {

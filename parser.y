@@ -5,11 +5,13 @@
 #include "error_handling.h"
 #include "ast.h"
 #include "print_funcs.h"
+#include "symbol_table.h"
 
 extern int yylex();
 extern int yylineno;
 void yyerror(const char *s);
 extern FILE *yyin;
+extern TABLE_STACK* global_level;
 %}
 
 %union {
@@ -57,14 +59,14 @@ var_decl:
       type ID '=' expr ';'
         {
           AST_NODE* id = new_leaf_node(TYPE_ID, $2);
-          if ($1 == INTEGER) { $$ = new_binary_node(OP_DECL_INT, id, $4); }
-          else { $$ = new_binary_node(OP_DECL_BOOL, id, $4); }
+          if ($1 == INTEGER) { $$ = new_binary_node(OP_DECL_INT, id, $4); add_id($2, CONST_INT); }
+          else { $$ = new_binary_node(OP_DECL_BOOL, id, $4); add_id($2, CONST_BOOL); }
         }
     | type ID ';'
         {
           AST_NODE* id = new_leaf_node(TYPE_ID, $2);
-          if ($1 == INTEGER) { $$ = new_unary_node(OP_DECL_INT, id); }
-          else { $$ = new_unary_node(OP_DECL_BOOL, id); }
+          if ($1 == INTEGER) { $$ = new_unary_node(OP_DECL_INT, id); add_id($2, CONST_INT); }
+          else { $$ = new_unary_node(OP_DECL_BOOL, id); add_id($2, CONST_BOOL); }
         }
     ;
 
@@ -74,12 +76,17 @@ var_decls:
         ;
 
 method_decl:
-      VOID ID '(' method_args ')' block
-        { $$ = new_method_node($2, $4, $6, 0); }
+      VOID ID '(' method_args ')' block {
+        $$ = new_method_node($2, $4, $6, 0);
+        add_method($2, RETURN_VOID);
+      }
     | VOID ID '(' method_args ')' EXTERN ';'
         { $$ = new_method_node($2, $4, NULL, 1); }
-    | type ID '(' method_args ')' block
-        { $$ = new_method_node($2, $4, $6, 0); }
+    | type ID '(' method_args ')' block {
+        $$ = new_method_node($2, $4, $6, 0);
+        if ($1 == INTEGER) {add_method($2, RETURN_INT);}
+        else if ($1 == BOOL) {add_method($2, RETURN_BOOL);}
+    }
     | type ID '(' method_args ')' EXTERN ';'
         { $$ = new_method_node($2, $4, NULL, 1); }
     ;
@@ -109,7 +116,7 @@ block:
             $$ = new_block_node(merged);
         } else {
             $$ = new_block_node($3);
-}
+        }
     }
     ;
 
@@ -193,5 +200,6 @@ int main(int argc, char *argv[]) {
     printf("=== SYNTAX ANALYSIS ===\n");
     yyparse();
     print_full_ast(head_ast);
+    print_symbol_table(global_level);
     return 0;
 }
