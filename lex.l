@@ -6,14 +6,12 @@
     #include <stdlib.h>
     #include <string.h>
     #include "error_handling.h"
-
-char *strdup(const char *s);
+    #include "utils.h"
 
 extern int yylineno;
 
 /* Stats counter */
 int num_tokens = 0;
-int num_lines = 1;
 
 %}
 
@@ -42,7 +40,7 @@ letter    [a-zA-Z]
 "true"                    { num_tokens++; return TRUE;}
 
 
-{letter}({letter}|{digit}|_)*  { yylval.sval = strdup(yytext); num_tokens++; return ID; }
+{letter}({letter}|{digit}|_)*  { yylval.sval = my_strdup(yytext); num_tokens++; return ID; }
 
 "//".*                 { /* ignore one line comments */ }
 "/*"([^*]|\*+[^*/])*\*+"/"   { /* ignore multiline comments */ }
