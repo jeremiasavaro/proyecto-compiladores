@@ -1,14 +1,15 @@
 \documentclass[12pt,a4paper]{article}
 
 \usepackage[utf8]{inputenc}
+\usepackage{graphicx}
 \usepackage[T1]{fontenc}
 \usepackage[spanish]{babel}
 \usepackage[hidelinks]{hyperref}
-\usepackage{listings}  % Para mostrar código
+\usepackage{listings}
 \usepackage{xcolor}
+\usepackage{titlesec}
 \usepackage[a4paper, margin=2cm]{geometry}
 
-% Configuración de listings para C y Flex
 \lstset{
     language=C,
     basicstyle=\ttfamily\small,
@@ -24,27 +25,55 @@
     tabsize=4
 }
 
-\title{Documentación del Proyecto - Primera etapa}
-\author{Jeremias Avaro, Mateo Cornejo, Máximo Marquez Regis}
-\date{}
-
 \begin{document}
 
-\maketitle
+\begin{titlepage}
+    \centering
+    \vspace*{1cm}
+
+    \includegraphics[width=0.20\textwidth]{escudounrc.jpg} \\[1cm]
+
+    \textsc{\Large Universidad Nacional de Río Cuarto}\\[0.2cm]
+    \textsc{\large Facultad de Ciencias Exactas, Físico - Químicas y Naturales}\\[0.2cm]
+    \textsc{\normalsize Departamento de Computación}\\[4cm]
+
+    {\huge \bfseries TDS25 - Documentación del Proyecto}\\[8cm]
+    \textbf{Autores:} Jeremias Avaro, Mateo Cornejo, Maximo Marquez Regis \\[0.3cm]
+    \textbf{Materia:} Taller de Diseño de Software \\[0.3cm]
+    \textbf{Docente:} Francisco Bavera \\[0.3cm]
+    \textbf{Año:} 2025
+    \date{}
+
+    \vfill
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+\section{Introducción}
+Este documento recopila las distintas etapas de desarrollo del compilador
+realizado como proyecto académico. Se detallan las tareas llevadas a cabo
+por cada integrante, las decisiones de diseño adoptadas (y aclaraciones), decisiones clave y y los problemas detectados.
+
+El objetivo es documentar de forma progresiva la evolución del compilador,
+dejando registro tanto de los aspectos técnicos como de la organización
+del trabajo en equipo.
+
+
+\section{Primera etapa}
 
 \subsection*{División de la primera etapa}
 \begin{itemize}
-    \item \textbf{Jeremias Avaro:} Inicialización del proyecto y primeros avances del lexer y la gramática.
-    \item \textbf{Mateo Cornejo:} Refinamiento de lexer y gramática. Creación de tests.
-    \item \textbf{Máximo Marquez Regis:} Completó la gramática casi en su totalidad. Integración del parser y lexer.
-    \item Todos: Discusión de decisiones de diseño, revisión de código y documentación.
+    \item \textbf{Jeremias Avaro:} inicialización del proyecto y primeros avances del lexer y la gramática.
+    \item \textbf{Mateo Cornejo:} refinamiento de lexer y gramática. Creación de tests.
+    \item \textbf{Máximo Marquez Regis:} completó la gramática casi en su totalidad. Integración del parser y lexer.
+    \item Todos: discusión de decisiones de diseño, revisión de código y documentación.
 \end{itemize}
 
 \subsection*{Decisiones de diseño y aclaraciones}
 \begin{itemize}
-    \item Los comentarios se ignoran en el lexer para simplificar la gramática del parser. Como no devuelven tokens (return), el parser nunca se entera de que había comentarios. Así es posible ponerlos en cualquier parte sin romper la gramática.
-    \item Uso de un pseudo-token \texttt{LOWER\_THAN\_ELSE} es un token inventado que nunca aparece en el código y se utiliza basicamente para darle una precedencia mas baja que el ELSE, por lo que Bison siempre asociara el else al if más cercano, lo cual nos permite evitar errores de shift - reduce.
-    \item Se optó por separar el manejo de errores en un módulo propio (\texttt{error\_handling.c/h}) para centralizar la gestión de mensajes y facilitar futuras extensiones.
+    \item Los comentarios se ignoran en el lexer para simplificar la gramática del parser.
+    \item Se optó por separar el manejo de errores en un módulo propio (\texttt{error\_handling.c/h}) para centralizar la gestión de mensajes.
     \item Se decidió que el lexer cuente tokens y líneas para facilitar el reporte de errores y estadísticas.
 \end{itemize}
 
@@ -53,19 +82,54 @@
     \item La gramática permite declaraciones de variables, métodos y bloques de código.
     \item Se definió un \textbf{union} para manejar tokens con valores enteros o cadenas.
     \item Las expresiones incluyen operadores aritméticos, relacionales y lógicos con precedencias adecuadas.
-    \item Alternativas: se evaluó manejar comentarios en el parser, pero se optó por ignorarlos en el lexer para simplificar el diseño.
-    \item Se implementó un sistema de reporte de errores léxicos y sintácticos que indica el número de línea y el tipo de error.
-    \item El parser está preparado para ser extendido con análisis semántico y generación de código en futuras etapas.
+    \item Se implementó un sistema de reporte de errores léxicos y sintácticos.
+    \item El parser está preparado para ser extendido con análisis semántico y generación de código.
     \item Se utilizó un Makefile para automatizar la compilación y facilitar la integración de nuevos módulos.
     \item Se crearon tests básicos para validar el funcionamiento del lexer y parser.
 \end{itemize}
 
 \subsection*{Problemas conocidos}
 \begin{itemize}
-    \item Algunos casos límite (por ejemplo, anidamiento profundo de bloques o expresiones muy largas) no han sido exhaustivamente probados.
+    \item Algunos casos límite no han sido exhaustivamente probados.
     \item El manejo de comentarios multilinea podría fallar en comentarios no cerrados.
 \end{itemize}
 
+\newpage
+
+\section{Segunda etapa}
+
+\subsection*{División de la segunda etapa}
+\begin{itemize}
+    \item \textbf{Mateo Cornejo:} implementación del AST incluyendo la definición de estructuras y métodos asociados. Desarrollo de funciones para la visualización del AST. Refactorización del manejo de errores hacia el módulo \texttt{error\_handling}.
+    \item \textbf{Jeremias Avaro:} inicialización de la tabla de símbolos, dejando planteada la estructura y la idea principal de su funcionamiento.
+    \item \textbf{Máximo Marquez Regis:} finalización de la implementación de la tabla de símbolos, realizando ajustes y refinamientos en funcionalidades complementarias.
+    \item Todos: participación en la discusión de decisiones de diseño, testeo y documentación.
+\end{itemize}
+
+\subsection*{Decisiones de diseño y aclaraciones}
+\begin{itemize}
+    \item Se definió la función \texttt{my\_strdup} para duplicar strings, evitando el uso de \texttt{strdup}.
+    \item Se creó un enumerado para los tipos de nodos del AST (\texttt{AST\_NODE\_TYPE}). 
+    \item En la estructura \texttt{AST\_NODE}, se empleó una \texttt{union} para almacenar información específica según el tipo de nodo.
+    \item Se diseñó la estructura \texttt{AST\_NODE\_LIST} para manejar listas de sentencias, declaraciones y argumentos.
+    \item Se creó la carpeta \texttt{utils} para funciones de utilidad como \texttt{my\_strdup}.
+\end{itemize}
+
+\subsection*{Diseño y decisiones clave}
+\begin{itemize}
+    \item Se creó el enumerado \texttt{AST\_TYPE} para representar los distintos tipos de nodos.
+    \item Se utilizó una \texttt{union} en \texttt{AST\_NODE} para reducir redundancia en la representación de nodos.
+    \item Se implementó \texttt{free\_mem} para liberar memoria del AST de manera recursiva.
+    \item Se integraron los constructores de nodos en las acciones semánticas del parser.
+    \item Se cambió la gramática a recursión por la izquierda para construir listas de statements y declaraciones. Esto permite almacenarlos e imprimirlos directamente en el orden fuente.
+    \item Se organizó el proyecto con la carpeta \texttt{utils}.
+    \item Se integró la impresión del AST y de la tabla de símbolos al final del análisis sintáctico.
+\end{itemize}
+
+\subsection*{Problemas conocidos}
+\begin{itemize}
+    \item Falta testear exhaustivamente la correcta construcción y recorrido del AST con múltiples tipos de nodos.
+\end{itemize}
 
 
 \end{document}
