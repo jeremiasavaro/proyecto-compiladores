@@ -12,7 +12,13 @@ extern int yylineno;
 void yyerror(const char *s);
 extern FILE *yyin;
 ARGS_LIST* current_args_list = NULL;
+
+/* flag so that the next block does NOT do push_scope() (used by methods) */
+int suppress_next_block_push = 0;
+/* indicates whether the most recent block was pushed (to decide pop) */
+int last_block_pushed = 0;
 %}
+
 
 %union {
     int ival;
@@ -42,7 +48,7 @@ ARGS_LIST* current_args_list = NULL;
 %%
 
 program:
-    PROGRAM '{' decls '}' { printf("No syntactic errors.\n"); make_global(); }
+    PROGRAM '{' decls '}' { printf("No syntactic errors.\n"); }
     ;
 
 decls:
@@ -88,38 +94,61 @@ var_decls:
         ;
 
 method_decl:
-      VOID ID '(' method_args ')' block {
+    VOID ID '(' method_args ')' block {
         $$ = new_method_node($2, $4, $6, 0);
         add_method($2, RETURN_VOID);
         add_current_list($2, current_args_list);
         current_args_list = NULL;
-      }
-    | VOID ID '(' method_args ')' EXTERN ';'
-        { $$ = new_method_node($2, $4, NULL, 1); add_method($2, RETURN_VOID); current_args_list = NULL; }
-    | type ID '(' method_args ')' block {
+        pop_scope();
+    }
+  |
+    VOID ID '(' method_args ')' EXTERN ';' {
+        $$ = new_method_node($2, $4, NULL, 1);
+        add_method($2, RETURN_VOID);
+        current_args_list = NULL;
+        pop_scope();
+    }
+  |
+    type ID '(' method_args ')' block {
         $$ = new_method_node($2, $4, $6, 0);
-        if ($1 == INTEGER) add_method($2, RETURN_INT); else if ($1 == BOOL) add_method($2, RETURN_BOOL);
+        if ($1 == INTEGER) add_method($2, RETURN_INT);
+        else if ($1 == BOOL) add_method($2, RETURN_BOOL);
         add_current_list($2, current_args_list);
         current_args_list = NULL;
-      }
-    | type ID '(' method_args ')' EXTERN ';'
-        { $$ = new_method_node($2, $4, NULL, 1); if ($1 == INTEGER) add_method($2, RETURN_INT); else if ($1 == BOOL) add_method($2, RETURN_BOOL);
-        current_args_list = NULL; }
-    ;
+        pop_scope();
+    }
+  |
+    type ID '(' method_args ')' EXTERN ';' {
+        $$ = new_method_node($2, $4, NULL, 1);
+        if ($1 == INTEGER) add_method($2, RETURN_INT);
+        else if ($1 == BOOL) add_method($2, RETURN_BOOL);
+        current_args_list = NULL;
+        pop_scope();
+    }
+;
 
 method_args
-    : arg_list         { $$ = $1; }
-    | /* empty */      { $$ = NULL; }
+    : { push_scope(); suppress_next_block_push = 1; } arg_list {
+        $$ = $2;
+      }
+    | { push_scope(); suppress_next_block_push = 1; } /* empty */ {
+        $$ = NULL;
+      }
     ;
 
 arg_list
-    : type ID  { $$ = append_expr(NULL, new_leaf_node(TYPE_ID, $2));
-                 current_args_list = add_arg_current_list(current_args_list, $2, ($1 == INTEGER) ? CONST_INT : CONST_BOOL);
-               }
-    | arg_list ',' type ID { $$ = append_expr($1, new_leaf_node(TYPE_ID, $4));
-                             current_args_list = add_arg_current_list(current_args_list, $4, ($3 == INTEGER) ? CONST_INT : CONST_BOOL);
-                           }
+    : type ID  {
+        ID_TABLE *dir = add_id($2, ($1 == INTEGER) ? CONST_INT : CONST_BOOL);
+        $$ = append_expr(NULL, new_leaf_node(TYPE_ID, dir));
+        current_args_list = add_arg_current_list(current_args_list, $2, ($1 == INTEGER) ? CONST_INT : CONST_BOOL);
+      }
+    | arg_list ',' type ID {
+        ID_TABLE *dir = add_id($4, ($3 == INTEGER) ? CONST_INT : CONST_BOOL);
+        $$ = append_expr($1, new_leaf_node(TYPE_ID, dir));
+        current_args_list = add_arg_current_list(current_args_list, $4, ($3 == INTEGER) ? CONST_INT : CONST_BOOL);
+      }
     ;
+
 
 type:
       INTEGER { $$ = INTEGER; }
@@ -127,18 +156,29 @@ type:
     ;
 
 block:
-    '{' var_decls statements '}' {
-        AST_NODE_LIST *merged = $2;
+    '{' {
+        if (suppress_next_block_push) {
+            last_block_pushed = 0;
+            suppress_next_block_push = 0;
+        } else {
+            push_scope();
+            last_block_pushed = 1;
+        }
+    } var_decls statements '}' {
+        AST_NODE_LIST *merged = $3;
         if (merged) {
             AST_NODE_LIST *last = merged;
             while (last->next) last = last->next;
-            last->next = $3;
+            last->next = $4;
             $$ = new_block_node(merged);
         } else {
-            $$ = new_block_node($3);
+            $$ = new_block_node($4);
+        }
+        if (last_block_pushed) {
+            pop_scope();
         }
     }
-    ;
+;
 
 statements:
         statements statement { $$ = append_expr($1, $2); }
@@ -168,10 +208,10 @@ expr:
       ID {
         ID_TABLE* dir = find($1);
         if (!dir) {
-            error_variable_not_declared(yylineno, $1);
-          }
-        $$ = new_leaf_node(TYPE_ID, dir);
+          error_variable_not_declared(yylineno, $1);
         }
+        $$ = new_leaf_node(TYPE_ID, dir);
+      }
     | method_call { $$ = $1; }
     | literal { $$ = $1; }
     | expr '+' expr { $$ = new_binary_node(OP_ADDITION, $1, $3); }
