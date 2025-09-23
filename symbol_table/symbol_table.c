@@ -20,6 +20,17 @@ static TABLE_STACK* allocate_scope(TABLE_STACK* up) {
     return s;
 }
 
+/* para hacer que al terminar de parsear el programa nuestro nivel global sea el adecuado.
+   esto pasa porque como los nuevos scopes los "insertamos" entre el nivel global y el actual
+   nunca añadimos al nivel global lo que realmente lleva (cuando parseamos no sabemos cuando estamos en el nivel global)
+   lo que hace esto es simplemente cambiar la referencia de global_level al último stack_level modificado (que sería en
+   realidad el global) */
+void make_global() {
+    if (stack_level != NULL) {
+        global_level = stack_level;
+    }
+}
+
 // initializes symbols' table (singleton)
 void st_init() {
     if (!global_level) {
@@ -73,7 +84,7 @@ void pop_scope(void) {
     TABLE_STACK* doomed = stack_level;
     stack_level = stack_level->up;
     // free_id_list(doomed->head_block);
-    free(doomed);
+    // free(doomed);
     if (!stack_level) {
         global_level = NULL;
     }

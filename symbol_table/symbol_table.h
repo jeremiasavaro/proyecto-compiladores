@@ -67,6 +67,7 @@ struct ID_TABLE {
 
 // pushes a new scope in the stack
 void push_scope();
+void make_global();
 // frees all memory of one level in the table stack (probably we won't use this)
 static void free_id_list(ID_TABLE* head);
 // pop the actual scope

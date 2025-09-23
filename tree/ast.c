@@ -40,7 +40,7 @@ AST_NODE* new_leaf_node(LEAF_TYPE type, void* value) {
             free(node);
             return NULL;
         }
-        node->leaf.value->id_leaf = my_strdup((char*) value);
+        node->leaf.value->id_leaf = (ID_TABLE*) value;
         if (!node->leaf.value->id_leaf) {
             free(node->leaf.value);
             free(node);

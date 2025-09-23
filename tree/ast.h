@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "symbol_table.h"
 
 #define true 1
 #define false 0
@@ -67,7 +68,7 @@ struct BOOL_LEAF {
 union LEAF {
     INT_LEAF int_leaf;
     BOOL_LEAF bool_leaf;
-    char* id_leaf; // should be ID_TABLE*
+    ID_TABLE* id_leaf; // should be ID_TABLE*
 };
 
 // enum for different AST node types
@@ -137,7 +138,7 @@ struct AST_ROOT {
 // methods to create different types of AST nodes
 AST_NODE* new_unary_node(OPERATOR op, AST_NODE* left);
 AST_NODE* new_binary_node(OPERATOR op, AST_NODE* left, AST_NODE* right);
-AST_NODE* new_leaf_node(LEAF_TYPE type, void* v);
+AST_NODE* new_leaf_node(LEAF_TYPE type, void* value);
 AST_NODE* new_if_node(AST_NODE* condition, AST_NODE* then_block, AST_NODE* else_block);
 AST_NODE* new_while_node(AST_NODE* condition, AST_NODE* block);
 AST_NODE* new_method_node(char* name, AST_NODE_LIST* args, AST_NODE* block, int is_extern);

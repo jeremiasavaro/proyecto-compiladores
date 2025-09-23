@@ -42,11 +42,11 @@ extern TABLE_STACK* global_level;
 %%
 
 program:
-    PROGRAM '{' decls '}' { printf("No syntactic errors.\n"); }
+    PROGRAM '{' decls '}' { printf("No syntactic errors.\n"); make_global(); }
     ;
 
 decls:
-      decls decl { if ($2) add_sentence($2); } /* garantize decl != NULL */
+      decls decl { if ($2) add_sentence($2); }
     | /* empty */ { $$ = NULL; }
     ;
 
@@ -58,15 +58,27 @@ decl:
 var_decl:
       type ID '=' expr ';'
         {
-          AST_NODE* id = new_leaf_node(TYPE_ID, $2);
-          if ($1 == INTEGER) { $$ = new_binary_node(OP_DECL_INT, id, $4); add_id($2, CONST_INT); }
-          else { $$ = new_binary_node(OP_DECL_BOOL, id, $4); add_id($2, CONST_BOOL); }
+          if ($1 == INTEGER) {
+            ID_TABLE* dir = add_id($2, CONST_INT);
+            AST_NODE* id = new_leaf_node(TYPE_ID, dir);
+            $$ = new_binary_node(OP_DECL_INT, id, $4);
+          } else {
+            ID_TABLE* dir = add_id($2, CONST_BOOL);
+            AST_NODE* id = new_leaf_node(TYPE_ID, dir);
+            $$ = new_binary_node(OP_DECL_BOOL, id, $4);
+          }
         }
     | type ID ';'
         {
-          AST_NODE* id = new_leaf_node(TYPE_ID, $2);
-          if ($1 == INTEGER) { $$ = new_unary_node(OP_DECL_INT, id); add_id($2, CONST_INT); }
-          else { $$ = new_unary_node(OP_DECL_BOOL, id); add_id($2, CONST_BOOL); }
+          if ($1 == INTEGER) {
+            ID_TABLE* dir = add_id($2, CONST_INT);
+            AST_NODE* id = new_leaf_node(TYPE_ID, dir);
+            $$ = new_unary_node(OP_DECL_INT, id);
+          } else {
+            ID_TABLE* dir = add_id($2, CONST_BOOL);
+            AST_NODE* id = new_leaf_node(TYPE_ID, dir);
+            $$ = new_unary_node(OP_DECL_BOOL, id);
+          }
         }
     ;
 
@@ -79,16 +91,17 @@ method_decl:
       VOID ID '(' method_args ')' block {
         $$ = new_method_node($2, $4, $6, 0);
         add_method($2, RETURN_VOID);
+        add_current_list();
       }
     | VOID ID '(' method_args ')' EXTERN ';'
-        { $$ = new_method_node($2, $4, NULL, 1); }
+        { $$ = new_method_node($2, $4, NULL, 1); add_method($2, RETURN_VOID); }
     | type ID '(' method_args ')' block {
         $$ = new_method_node($2, $4, $6, 0);
-        if ($1 == INTEGER) {add_method($2, RETURN_INT);}
-        else if ($1 == BOOL) {add_method($2, RETURN_BOOL);}
-    }
+        if ($1 == INTEGER) add_method($2, RETURN_INT); else if ($1 == BOOL) add_method($2, RETURN_BOOL);
+        add_current_list();
+      }
     | type ID '(' method_args ')' EXTERN ';'
-        { $$ = new_method_node($2, $4, NULL, 1); }
+        { $$ = new_method_node($2, $4, NULL, 1); if ($1 == INTEGER) add_method($2, RETURN_INT); else if ($1 == BOOL) add_method($2, RETURN_BOOL); }
     ;
 
 method_args
@@ -97,7 +110,9 @@ method_args
     ;
 
 arg_list
-    : type ID  { $$ = append_expr(NULL, new_leaf_node(TYPE_ID, $2)); }
+    : type ID  { $$ = append_expr(NULL, new_leaf_node(TYPE_ID, $2));
+                 add_arg_current_list($2, ($1 == INTEGER) ? CONST_INT : CONST_BOOL);
+               }
     | arg_list ',' type ID { $$ = append_expr($1, new_leaf_node(TYPE_ID, $4)); }
     ;
 
@@ -107,16 +122,17 @@ type:
     ;
 
 block:
-    '{' var_decls statements '}' { /* to maintain the previous decls */
-        AST_NODE_LIST *merged = $2;
+    '{' {push_scope();} var_decls statements '}' {
+        AST_NODE_LIST *merged = $3;
         if (merged) {
             AST_NODE_LIST *last = merged;
             while (last->next) last = last->next;
-            last->next = $3;
+            last->next = $4;
             $$ = new_block_node(merged);
         } else {
-            $$ = new_block_node($3);
+            $$ = new_block_node($4);
         }
+        pop_scope();
     }
     ;
 
@@ -128,7 +144,11 @@ statements:
 statement:
       ID '=' expr ';' 
         {
-          AST_NODE* id = new_leaf_node(TYPE_ID, $1);
+          ID_TABLE* dir = find($1);
+          if (!dir) {
+            error_undeclared_variable(yylineno, $1);
+          }
+          AST_NODE* id = new_leaf_node(TYPE_ID, dir);
           $$ = new_binary_node(OP_ASSIGN, id, $3);
         }
     | method_call ';' { $$ = $1; }
@@ -141,7 +161,13 @@ statement:
     ;
 
 expr:
-      ID { $$ = new_leaf_node(TYPE_ID, $1); }
+      ID {
+        ID_TABLE* dir = find($1);
+        if (!dir) {
+            error_undeclared_variable(yylineno, $1);
+          }
+        $$ = new_leaf_node(TYPE_ID, dir);
+        }
     | method_call { $$ = $1; }
     | literal { $$ = $1; }
     | expr '+' expr { $$ = new_binary_node(OP_ADDITION, $1, $3); }
