@@ -95,6 +95,10 @@ void* get_data(char* name);
 void add_arg(char* method_name, ID_TYPE arg_type, const char* arg_name);
 // creates the argument list of a given method
 ARGS_LIST* create_args_list(ID_TABLE* method, ID_TYPE arg_type, const char* arg_name);
+// add an argument node into a temporary ARGS_LIST being built during parsing
+ARGS_LIST* add_arg_current_list(ARGS_LIST* list, const char* name, ID_TYPE type);
+// assign a prepared list to a method symbol
+void add_current_list(char* name, ARGS_LIST* list);
 
 
 #endif

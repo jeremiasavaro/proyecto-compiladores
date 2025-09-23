@@ -289,3 +289,37 @@ ARGS* allocate_args_mem() {
     if (!aux) error_allocate_mem();
     return aux;
 }
+
+ARGS_LIST* add_arg_current_list(ARGS_LIST* list, const char* name, ID_TYPE type) {
+    if (list) {
+        ARGS_LIST* tail = list;
+        while (tail->next) tail = tail->next;
+        ARGS* new_arg = allocate_args_mem();
+        new_arg->name = my_strdup(name);
+        if (!new_arg->name) error_allocate_mem();
+        new_arg->type = type;
+        ARGS_LIST* node = allocate_args_list_mem();
+        node->arg = new_arg;
+        tail->next = node;
+        return list;
+    } else {
+        ARGS_LIST* head = allocate_args_list_mem();
+        head->arg = allocate_args_mem();
+        head->arg->name = my_strdup(name);
+        if (!head->arg->name) error_allocate_mem();
+        head->arg->type = type;
+        head->next = NULL;
+        return head;
+    }
+}
+
+void add_current_list(char* name, ARGS_LIST* list) {
+    ID_TABLE* meth = find(name);
+    if (!meth || meth->id_type != METHOD) {
+        error_add_argument_method(name);
+    }
+    meth->method.arg_list = list;
+    int count = 0;
+    for (ARGS_LIST* it = list; it; it = it->next) count++;
+    meth->method.num_args = count;
+}

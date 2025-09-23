@@ -11,7 +11,7 @@ extern int yylex();
 extern int yylineno;
 void yyerror(const char *s);
 extern FILE *yyin;
-extern TABLE_STACK* global_level;
+ARGS_LIST* current_args_list = NULL;
 %}
 
 %union {
@@ -91,17 +91,20 @@ method_decl:
       VOID ID '(' method_args ')' block {
         $$ = new_method_node($2, $4, $6, 0);
         add_method($2, RETURN_VOID);
-        add_current_list();
+        add_current_list($2, current_args_list);
+        current_args_list = NULL;
       }
     | VOID ID '(' method_args ')' EXTERN ';'
-        { $$ = new_method_node($2, $4, NULL, 1); add_method($2, RETURN_VOID); }
+        { $$ = new_method_node($2, $4, NULL, 1); add_method($2, RETURN_VOID); current_args_list = NULL; }
     | type ID '(' method_args ')' block {
         $$ = new_method_node($2, $4, $6, 0);
         if ($1 == INTEGER) add_method($2, RETURN_INT); else if ($1 == BOOL) add_method($2, RETURN_BOOL);
-        add_current_list();
+        add_current_list($2, current_args_list);
+        current_args_list = NULL;
       }
     | type ID '(' method_args ')' EXTERN ';'
-        { $$ = new_method_node($2, $4, NULL, 1); if ($1 == INTEGER) add_method($2, RETURN_INT); else if ($1 == BOOL) add_method($2, RETURN_BOOL); }
+        { $$ = new_method_node($2, $4, NULL, 1); if ($1 == INTEGER) add_method($2, RETURN_INT); else if ($1 == BOOL) add_method($2, RETURN_BOOL);
+        current_args_list = NULL; }
     ;
 
 method_args
@@ -111,9 +114,11 @@ method_args
 
 arg_list
     : type ID  { $$ = append_expr(NULL, new_leaf_node(TYPE_ID, $2));
-                 add_arg_current_list($2, ($1 == INTEGER) ? CONST_INT : CONST_BOOL);
+                 current_args_list = add_arg_current_list(current_args_list, $2, ($1 == INTEGER) ? CONST_INT : CONST_BOOL);
                }
-    | arg_list ',' type ID { $$ = append_expr($1, new_leaf_node(TYPE_ID, $4)); }
+    | arg_list ',' type ID { $$ = append_expr($1, new_leaf_node(TYPE_ID, $4));
+                             current_args_list = add_arg_current_list(current_args_list, $4, ($3 == INTEGER) ? CONST_INT : CONST_BOOL);
+                           }
     ;
 
 type:
@@ -122,17 +127,16 @@ type:
     ;
 
 block:
-    '{' {push_scope();} var_decls statements '}' {
-        AST_NODE_LIST *merged = $3;
+    '{' var_decls statements '}' {
+        AST_NODE_LIST *merged = $2;
         if (merged) {
             AST_NODE_LIST *last = merged;
             while (last->next) last = last->next;
-            last->next = $4;
+            last->next = $3;
             $$ = new_block_node(merged);
         } else {
-            $$ = new_block_node($4);
+            $$ = new_block_node($3);
         }
-        pop_scope();
     }
     ;
 
@@ -146,7 +150,7 @@ statement:
         {
           ID_TABLE* dir = find($1);
           if (!dir) {
-            error_undeclared_variable(yylineno, $1);
+            error_variable_not_declared(yylineno, $1);
           }
           AST_NODE* id = new_leaf_node(TYPE_ID, dir);
           $$ = new_binary_node(OP_ASSIGN, id, $3);
@@ -164,7 +168,7 @@ expr:
       ID {
         ID_TABLE* dir = find($1);
         if (!dir) {
-            error_undeclared_variable(yylineno, $1);
+            error_variable_not_declared(yylineno, $1);
           }
         $$ = new_leaf_node(TYPE_ID, dir);
         }
