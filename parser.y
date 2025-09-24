@@ -95,7 +95,7 @@ var_decls:
 
 method_decl:
     VOID ID '(' method_args ')' block {
-        $$ = new_method_node($2, $4, $6, 0);
+        $$ = new_method_decl_node($2, $4, $6, 0);
         add_method($2, RETURN_VOID);
         add_current_list($2, current_args_list);
         current_args_list = NULL;
@@ -103,14 +103,14 @@ method_decl:
     }
   |
     VOID ID '(' method_args ')' EXTERN ';' {
-        $$ = new_method_node($2, $4, NULL, 1);
+        $$ = new_method_decl_node($2, $4, NULL, 1);
         add_method($2, RETURN_VOID);
         current_args_list = NULL;
         pop_scope();
     }
   |
     type ID '(' method_args ')' block {
-        $$ = new_method_node($2, $4, $6, 0);
+        $$ = new_method_decl_node($2, $4, $6, 0);
         if ($1 == INTEGER) add_method($2, RETURN_INT);
         else if ($1 == BOOL) add_method($2, RETURN_BOOL);
         add_current_list($2, current_args_list);
@@ -119,7 +119,7 @@ method_decl:
     }
   |
     type ID '(' method_args ')' EXTERN ';' {
-        $$ = new_method_node($2, $4, NULL, 1);
+        $$ = new_method_decl_node($2, $4, NULL, 1);
         if ($1 == INTEGER) add_method($2, RETURN_INT);
         else if ($1 == BOOL) add_method($2, RETURN_BOOL);
         current_args_list = NULL;

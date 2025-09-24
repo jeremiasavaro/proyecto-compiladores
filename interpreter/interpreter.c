@@ -194,6 +194,8 @@ static void eval_common(AST_NODE *tree, ReturnValueNode *ret) {
 
             eval(tree->common.right, &right);
 
+            // Diferenciar una asignacion con un metodo
+
             if ((id->id_type == CONST_INT && right.type != INT_TYPE) ||
                 (id->id_type == CONST_BOOL && right.type != BOOL_TYPE)) {
                 error_type_mismatch(line, id->id_name, (id->id_type == CONST_INT) ? "int" : "bool");
@@ -366,7 +368,8 @@ void eval(AST_NODE *tree, ReturnValueNode *ret){
             eval_if(tree, ret);
         case AST_WHILE:
             eval_while(tree, ret);
-        case AST_METHOD:
+        case AST_METHOD_DECL:
+        case AST_METHOD_CALL:
         case AST_BLOCK:
             eval_block(tree, ret);
         case AST_LEAF:

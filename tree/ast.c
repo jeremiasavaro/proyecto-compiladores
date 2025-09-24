@@ -95,21 +95,42 @@ AST_NODE* new_while_node(AST_NODE* condition, AST_NODE* block) {
     return node;
 }
 
-AST_NODE* new_method_node(char* name, AST_NODE_LIST* args, AST_NODE* block, int is_extern) {
+AST_NODE* new_method_decl_node(char* name, AST_NODE_LIST* args, AST_NODE* block, int is_extern) {
     AST_NODE* node = alloc_node();
-    node->type = AST_METHOD;
-    node->method.name = my_strdup(name); // save a copy of the name 
-    node->method.args = args; 
-    node->method.block = block;
-    node->method.is_extern = is_extern;
+    node->type = AST_METHOD_DECL;
+    node->method_decl.name = my_strdup(name); // save a copy of the name 
+    node->method_decl.args = args; 
+    node->method_decl.block = block;
+    node->method_decl.is_extern = is_extern;
+    int num_args = 0;
     if (args) {
-        AST_NODE_LIST* it = args;
-        while (it) {
-            if (it->first) it->first->father = node; // asign father to each arg
-            it = it->next;
+        AST_NODE_LIST* args_list = args;
+        while (args_list) {
+            num_args++;
+            if (args_list->first) args_list->first->father = node; // asign father to each arg
+            args_list = args_list->next;
         }
     }
     if (block) block->father = node;
+    return node;
+}
+
+AST_NODE* new_method_call_node(char* name, AST_NODE_LIST* args) {
+    AST_NODE* node = alloc_node();
+    node->type = AST_METHOD_CALL;
+    node->method_call.name = my_strdup(name);
+    node->method_call.args = args;
+    node->line = yylineno;
+    int num_args = 0;
+    if (args) {
+        AST_NODE_LIST* args_list = args;
+        while (args_list) {
+            num_args++;
+            if (args_list->first) args_list->first->father = node;
+            args_list = args_list->next;
+        }
+    }
+    node->method_decl.num_args = num_args;
     return node;
 }
 
@@ -168,18 +189,28 @@ void free_mem(AST_NODE* node) {
             }
             break;
         }
-        case AST_METHOD: {
-            free(node->method.name);
-            AST_NODE_LIST* args_list = node->method.args;
+        case AST_METHOD_DECL: {
+            free(node->method_decl.name);
+            AST_NODE_LIST* args_list = node->method_decl.args;
             while (args_list) {
                 if (args_list->first) free_mem(args_list->first);
                 AST_NODE_LIST* next = args_list->next;
                 free(args_list);
                 args_list = next;
             }
-            free_mem(node->method.block);
+            free_mem(node->method_decl.block);
             break;
         }
+        case AST_METHOD_CALL:
+            free(node->method_call.name);
+            AST_NODE_LIST* args_list = node->method_call.args;
+            while (args_list) {
+                if (args_list->first) free_mem(args_list->first);
+                AST_NODE_LIST* next = args_list->next;
+                free(args_list);
+                args_list = next;
+            }
+            break;
         case AST_COMMON:
             free_mem(node->common.left);
             free_mem(node->common.right);
@@ -196,24 +227,6 @@ void free_mem(AST_NODE* node) {
     free(node);
 }
 
-AST_NODE* new_method_call_node(char* name, AST_NODE_LIST* args) {
-    AST_NODE* node = alloc_node();
-    node->type = AST_METHOD;
-    node->method.name = my_strdup(name);
-    node->method.args = args;
-    node->method.block = NULL;
-    node->method.is_extern = 0;
-    node->father = NULL;
-    node->line = yylineno;
-    if (args) {
-        AST_NODE_LIST* args_list = args;
-        while (args_list) {
-            if (args_list->first) args_list->first->father = node;
-            args_list = args_list->next;
-        }
-    }
-    return node;
-}
 // method utilized for build lists of expressions (statements, args, etc)
 AST_NODE_LIST* append_expr(AST_NODE_LIST* list, AST_NODE* expr) {
     if (!expr) return list;

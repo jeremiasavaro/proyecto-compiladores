@@ -59,13 +59,13 @@ static void node_label(AST_NODE *node, char *buf, size_t bufsz) {
         case AST_WHILE:
             snprintf(buf, bufsz, "WHILE");
             return;
-        case AST_METHOD:
-            if (node->method.block)
-                snprintf(buf, bufsz, "METHOD %s", node->method.name ? node->method.name : "(null)");
-            else if (node->method.is_extern)
-                snprintf(buf, bufsz, "EXTERN METHOD %s", node->method.name ? node->method.name : "(null)");
+        case AST_METHOD_DECL:
+            if (node->method_decl.block)
+                snprintf(buf, bufsz, "METHOD %s", node->method_decl.name ? node->method_decl.name : "(null)");
+            else if (node->method_decl.is_extern)
+                snprintf(buf, bufsz, "EXTERN METHOD %s", node->method_decl.name ? node->method_decl.name : "(null)");
             else
-                snprintf(buf, bufsz, "CALL %s", node->method.name ? node->method.name : "(null)");
+                snprintf(buf, bufsz, "CALL %s", node->method_decl.name ? node->method_decl.name : "(null)");
             return;
         case AST_BLOCK:
             snprintf(buf, bufsz, "BLOCK");
@@ -111,19 +111,19 @@ static void print_node_tree(AST_NODE *node, const char *prefix, int is_last) {
         if (node->while_stmt.condition) children[count++] = node->while_stmt.condition;
         if (node->while_stmt.block) children[count++] = node->while_stmt.block;
         for (int i = 0; i < count; ++i) print_node_tree(children[i], new_prefix, i == count - 1);
-    } else if (node->type == AST_METHOD) {
+    } else if (node->type == AST_METHOD_DECL) {
         /* Print method arguments as a grouped 'ARGS' node (so args appear as
            direct children of METHOD), then print the BLOCK. */
-        if (node->method.args) {
-            AST_NODE_LIST *it = node->method.args;
+        if (node->method_decl.args) {
+            AST_NODE_LIST *it = node->method_decl.args;
             int total = 0; for (AST_NODE_LIST *t = it; t; t = t->next) total++;
-            int has_block = node->method.block ? 1 : 0;
+            int has_block = node->method_decl.block ? 1 : 0;
             // print ARGS group (not last if there is a block)
             printf("%s%s%s\n", new_prefix, (has_block ? "├── " : "└── "), "ARGS");
             char args_prefix[512];
             snprintf(args_prefix, sizeof(args_prefix), "%s%s", new_prefix, (has_block ? "│   " : "    "));
             int ai = 0;
-            AST_NODE_LIST *it2 = node->method.args;
+            AST_NODE_LIST *it2 = node->method_decl.args;
             while (it2) {
                 AST_NODE *arg = it2->first;
                 // print arg name as a simple label (assume TYPE_ID leaf)
@@ -141,9 +141,9 @@ static void print_node_tree(AST_NODE *node, const char *prefix, int is_last) {
                 it2 = it2->next; ai++;
             }
         }
-        if (node->method.block) {
+        if (node->method_decl.block) {
             // block as last child
-            print_node_tree(node->method.block, new_prefix, 1);
+            print_node_tree(node->method_decl.block, new_prefix, 1);
         }
     } else if (node->type == AST_BLOCK) {
         int total = 0;
@@ -152,6 +152,31 @@ static void print_node_tree(AST_NODE *node, const char *prefix, int is_last) {
         int i = 0;
         for (AST_NODE_LIST *it = node->block.stmts; it; it = it->next, i++) {
             print_node_tree(it->first, new_prefix, i == total - 1);
+        }
+    } else if (node->type == AST_METHOD_CALL) {
+        // print method name
+        char namebuf[256];
+        snprintf(namebuf, sizeof(namebuf), "CALL %s", 
+                node->method_call.name ? node->method_call.name : "(anon)");
+        printf("%s%s%s\n", prefix, (is_last ? "└── " : "├── "), namebuf);
+
+        // build new prefix for children
+        char call_prefix[512];
+        snprintf(call_prefix, sizeof(call_prefix), "%s%s", prefix, (is_last ? "    " : "│   "));
+
+        // if there are arguments, group them under ARGS
+        if (node->method_call.args) {
+            printf("%s└── ARGS\n", call_prefix);
+            char args_prefix[512];
+            snprintf(args_prefix, sizeof(args_prefix), "%s    ", call_prefix);
+
+            int total = 0;
+            for (AST_NODE_LIST *t = node->method_call.args; t; t = t->next) total++;
+
+            int ai = 0;
+            for (AST_NODE_LIST *it = node->method_call.args; it; it = it->next, ai++) {
+                print_node_tree(it->first, args_prefix, ai == total - 1);
+            }
         }
     }
 }
