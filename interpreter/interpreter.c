@@ -258,7 +258,20 @@ static void eval_leaf(AST_NODE *tree, ReturnValueNode *ret){
 
 static void eval_if(AST_NODE *tree, ReturnValueNode *ret) {
     line = tree->line;
-    ReturnValueNode condition;
+    AST_NODE* condition = tree->if_stmt.condition;
+    AST_NODE* then_block = tree->if_stmt.then_block;
+    AST_NODE* else_block = tree->if_stmt.else_block;
+    eval(condition, &ret);
+    if(ret->type != BOOL_TYPE) {
+        error_conditional(line);
+    }
+    if (*(int*)ret->value) { // true
+        eval(then_block, &ret);
+    } else { // false
+        eval(else_block, &ret);
+    }
+    free(ret->value);
+    return;
 }
 
 /* Public function: interprets (evaluates) a tree */
