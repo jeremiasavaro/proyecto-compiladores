@@ -6,25 +6,6 @@
 int alreadyReturned = 0;
 int line = 0;
 
-static void eval(AST_NODE *tree, ReturnValueNode *ret){
-    if (alreadyReturned){
-        warning_already_returned(line);
-        return;
-    }
-    switch (tree->type) {
-        case AST_COMMON:
-            eval_common(tree, &ret);
-        case AST_IF:
-            eval_if(tree, &ret);
-        case AST_WHILE:
-        case AST_METHOD:
-        case AST_BLOCK:
-        case AST_LEAF:
-            eval_leaf(tree, &ret);
-        
-    }
-}
-
 /*
  * Recursively evaluates an AST_COMMON node and stores its type and value in ‘ret’.
  * Booleans are represented as 0 (false) or 1 (true).
@@ -271,6 +252,25 @@ static void eval_if(AST_NODE *tree, ReturnValueNode *ret) {
         eval(else_block, &ret);
     }
     free(ret->value);
+    return;
+}
+
+void eval(AST_NODE *tree, ReturnValueNode *ret){
+    if (alreadyReturned){
+        warning_already_returned(line);
+        return;
+    }
+    switch (tree->type) {
+        case AST_COMMON:
+            eval_common(tree, &ret);
+        case AST_IF:
+            eval_if(tree, &ret);
+        case AST_WHILE:
+        case AST_METHOD:
+        case AST_BLOCK:
+        case AST_LEAF:
+            eval_leaf(tree, &ret);   
+    }
     return;
 }
 
