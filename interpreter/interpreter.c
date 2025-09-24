@@ -19,6 +19,7 @@ static void eval(AST_NODE *tree, ReturnValueNode *ret){
             eval_while(tree, ret);
         case AST_METHOD:
         case AST_BLOCK:
+            eval_block(tree, ret);
         case AST_LEAF:
             eval_leaf(tree, &ret);
     }
@@ -223,8 +224,26 @@ static void eval_while(AST_NODE *tree, ReturnValueNode *ret){
     line = tree->line;
     ReturnValueNode retCond;
     ReturnValueNode retBlock;
-    eval(tree->while_stmt.block, &retCond);
     eval(tree->while_stmt.condition, &retBlock);
+    eval(tree->while_stmt.block, &retCond);
+    free(&retCond);
+    free(&retBlock);
+    return;
+}
+
+
+static void eval_block(AST_NODE *tree, ReturnValueNode *ret){
+    if (!tree){
+        error_null_node(-1);
+    }
+    line = tree->line;
+    AST_NODE_LIST *aux = tree->block.stmts;
+    while (aux != NULL){
+        ReturnValueNode auxRet;
+        eval(aux->first, &auxRet);
+        aux = aux->next;
+        free(&auxRet);
+    }
     return;
 }
 
