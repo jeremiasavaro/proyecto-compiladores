@@ -192,6 +192,16 @@ ID_TABLE* find_in_current_scope(const char* name) {
     return NULL;
 }
 
+/* return the memory direction of the node with id_name = name in the global scope
+   if the node is not found, returns NULL */
+ID_TABLE* find_global(const char* name) {
+    if (!global_level) return NULL;
+    for (ID_TABLE* id = global_level->head_block; id; id = id->next) {
+        if (id->id_name && strcmp(id->id_name, name) == 0) return id;
+    }
+    return NULL;
+}
+
 // allocate memory for a node in the id_table
 ID_TABLE* allocate_mem() {
     // calloc allocates memory and sets all its fields in 0 (NULL)
@@ -307,4 +317,13 @@ void add_current_list(char* name, ARGS_LIST* list) {
     int count = 0;
     for (ARGS_LIST* it = list; it; it = it->next) count++;
     meth->method.num_args = count;
+}
+
+// return the argument list of a method
+ARGS_LIST* get_method_args(const char* name) {
+    ID_TABLE* meth = find_global(name);
+    if (!meth || meth->id_type != METHOD) {
+        error_method_not_found(name);
+    }
+    return meth->method.arg_list;
 }

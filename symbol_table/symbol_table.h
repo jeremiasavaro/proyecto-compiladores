@@ -87,6 +87,9 @@ ID_TABLE* find(const char* name);
 /* return the memory direction of the node with id_name = name in the actual scope
    if the node is not found, returns NULL */
 ID_TABLE* find_in_current_scope(const char* name);
+/* return the memory direction of the node with id_name = name in the global scope
+   if the node is not found, returns NULL */
+ID_TABLE* find_global(const char* name);
 // retrieves data of id from table
 void* get_data(char* name);
 // add an argument to a given method
@@ -101,5 +104,7 @@ void add_current_list(char* name, ARGS_LIST* list);
 TABLE_STACK* get_this_scope();
 // adds an id to the global scope
 ID_TABLE* add_global_id(char* name, ID_TYPE type);
+// return the argument list of a method
+ARGS_LIST* get_method_args(const char* name);
 
 #endif
