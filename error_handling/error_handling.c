@@ -74,52 +74,52 @@ void error_conditional(int line){
     exit(EXIT_FAILURE);
 }
 
-void additional_error(int line){
+void error_additional(int line){
     fprintf(stderr, "ERROR(linea %d): addition is only for integers\n", line);
     exit(EXIT_FAILURE);
 }
 
-void substraction_error(int line){
+void error_substraction(int line){
     fprintf(stderr, "ERROR(line %d): substraction is only for integers\n", line);
     exit(EXIT_FAILURE);
 }
 
-void multiplication_error(int line){
+void error_multiplication(int line){
     fprintf(stderr, "ERROR(line %d): multiplication is only for integers\n", line);
     exit(EXIT_FAILURE);
 }
 
-void division_error(int line){
+void error_division(int line){
     fprintf(stderr, "ERROR(line %d): divison is only for integers\n", line);
     exit(EXIT_FAILURE);
 }
 
-void division_zero_error(int line){
+void error_division_zero(int line){
     fprintf(stderr, "ERROR(line %d): division by zero\n", line);
     exit(EXIT_FAILURE);
 }
 
-void minus_error(int line){
+void error_minus(int line){
     fprintf(stderr, "ERROR(line %d): minus is only for integers\n", line);
     exit(EXIT_FAILURE);
 }
 
-void and_error(int line){
+void error_and(int line){
     fprintf(stderr, "ERROR(line %d): AND is only for booleans \n", line);
     exit(EXIT_FAILURE);
 }
 
-void or_error(int line){
+void error_or(int line){
     fprintf(stderr, "ERROR(line %d): OR is only for booleans \n", line);
     exit(EXIT_FAILURE);
 }
 
-void neg_error(int line){
+void error_neg(int line){
     fprintf(stderr, "ERROR(line %d): NEG is only for booleans \n", line);
     exit(EXIT_FAILURE);
 }
 
-void assign_error(int line){
+void error_assign(int line){
     fprintf(stderr, "ERROR(line %d): invalid left-hand side of assignment\n", line);
     exit(EXIT_FAILURE);
 }
@@ -181,5 +181,35 @@ void warning_already_returned(int line){
 
 void error_missing_return(int line){
     fprintf(stderr, "ERROR(line %d): missing return statement in main\n", line);
+    exit(EXIT_FAILURE);
+}
+
+void error_lesser(int line){
+    fprintf(stderr, "ERROR(line %d): operator < is only for integers \n", line);
+    exit(EXIT_FAILURE);
+}
+
+void error_greater(int line){
+    fprintf(stderr, "ERROR(line %d): operator > is only for integers \n", line);
+    exit(EXIT_FAILURE);
+}
+
+void error_equal(int line){
+    fprintf(stderr, "ERROR(line %d): operator == is only for integers \n", line);
+    exit(EXIT_FAILURE);
+}
+
+void error_not_equal(int line){
+    fprintf(stderr, "ERROR(line %d): operator != is only for integers \n", line);
+    exit(EXIT_FAILURE);
+}
+
+void error_less_equal(int line){
+    fprintf(stderr, "ERROR(line %d): operator <= is only for integers \n", line);
+    exit(EXIT_FAILURE);
+}
+
+void error_greater_equal(int line){
+    fprintf(stderr, "ERROR(line %d): operator >= is only for integers \n", line);
     exit(EXIT_FAILURE);
 }
