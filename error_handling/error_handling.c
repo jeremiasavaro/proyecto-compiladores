@@ -73,3 +73,8 @@ void error_null_node(int line){
     fprintf(stderr, "ERROR(line %d): NULL node in eval()\n", line);
     exit(EXIT_FAILURE);
 }
+
+void error_conditional(int line){
+    fprintf(stderr, "ERROR(line %d): conditional expression must be of type BOOL\n", line);
+    exit(EXIT_FAILURE);
+}

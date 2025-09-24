@@ -52,7 +52,7 @@ symbol_table/%.o: symbol_table/%.c
 utils/%.o: utils/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
-interpreter/%.o: interpreter/%.c11
+interpreter/%.o: interpreter/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
