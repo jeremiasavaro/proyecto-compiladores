@@ -17,5 +17,6 @@ typedef struct {
 extern int alreadyReturned;
 
 int interpreter(AST_ROOT* tree);
+void eval(AST_NODE *tree, ReturnValueNode *ret);
 
 #endif

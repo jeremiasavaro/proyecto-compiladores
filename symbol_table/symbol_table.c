@@ -145,7 +145,7 @@ void add_method_return_data(char* name, const RETURN_TYPE type, const void* data
         error_method_data();
     }
     if (type == RETURN_VOID) {
-        error_return_void();
+        error_return_void(yylineno);
     }
     if (aux->method.return_type != type) {
         error_type_mismatch(yylineno, name, (char*) aux->id_type);
