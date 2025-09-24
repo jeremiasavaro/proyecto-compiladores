@@ -35,41 +35,11 @@ void push_scope() {
     stack_level = allocate_scope(aux);
 }
 
-// frees all memory of one level in the table stack (probably we won't use this)
-static void free_id_list(ID_TABLE* head) {
-    while (head) {
-        ID_TABLE* nxt = head->next;
-        free(head->id_name);
-        if (head->id_type == METHOD) {	// if the symbol is a method free all args and return value
-            // free args list
-            ARGS_LIST* al = head->method.arg_list;
-            while (al) {
-                ARGS_LIST* an = al->next;
-                if (al->arg) {
-                    free(al->arg->name);
-                    free(al->arg);
-                }
-                free(al);
-                al = an;
-            }
-            free(head->method.data);
-        } else {
-            free(head->common.data);
-        }
-        free(head);
-        head = nxt;
-    }
-}
-
 // pop the actual scope
 void pop_scope(void) {
     if (!stack_level) return;
-    // TABLE_STACK* doomed = stack_level;
-    stack_level = stack_level->up;
-    // free_id_list(doomed->head_block);
-    // free(doomed);
-    if (!stack_level) {
-        global_level = NULL;
+    if (global_level != stack_level) {
+        stack_level = stack_level->up;
     }
 }
 
@@ -96,14 +66,44 @@ ID_TABLE* add_id(char* name, const ID_TYPE type) {
     return stack_level->end_block;
 }
 
+// adds an id to the global scope
+ID_TABLE* add_global_id(char* name, const ID_TYPE type) {
+    if (find(name) != NULL) {
+        error_variable_redeclaration(yylineno, name);
+    }
+
+    ID_TABLE* aux = allocate_mem();
+    aux->id_name = my_strdup(name);
+    if (!aux->id_name) error_allocate_mem();
+    aux->id_type = type;
+
+    if (!global_level) st_init();
+
+    if (global_level->head_block == NULL) {
+        global_level->head_block = aux;
+        global_level->end_block = aux;
+    } else {
+        global_level->end_block->next = aux;
+        global_level->end_block = aux;
+    }
+
+    return global_level->end_block;
+}
+
 // declare a method in the actual scope with its return value
-ID_TABLE* add_method(char* name, const RETURN_TYPE ret_type) {
-    ID_TABLE* id = add_id(name, METHOD);
+ID_TABLE* add_method(char* name, const RETURN_TYPE ret_type, TABLE_STACK* method_scope) {
+    ID_TABLE* id = add_global_id(name, METHOD);
     id->method.return_type = ret_type;
     id->method.num_args = 0;
     id->method.arg_list = NULL;
+    id->method.method_scope = method_scope;
     id->method.data = NULL;
     return id;
+}
+
+// return the actual scope (TABLE_STACK)
+TABLE_STACK* get_this_scope() {
+    return stack_level;
 }
 
 // adds data to the variable name node
@@ -273,6 +273,7 @@ ARGS* allocate_args_mem() {
     return aux;
 }
 
+// add an argument node into a temporary ARGS_LIST being built during parsing
 ARGS_LIST* add_arg_current_list(ARGS_LIST* list, const char* name, ID_TYPE type) {
     if (list) {
         ARGS_LIST* tail = list;
@@ -296,6 +297,7 @@ ARGS_LIST* add_arg_current_list(ARGS_LIST* list, const char* name, ID_TYPE type)
     }
 }
 
+// assign a prepared list to a method symbol
 void add_current_list(char* name, ARGS_LIST* list) {
     ID_TABLE* meth = find(name);
     if (!meth || meth->id_type != METHOD) {
