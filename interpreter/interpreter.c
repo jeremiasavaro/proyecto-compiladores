@@ -13,7 +13,7 @@ static void eval(AST_NODE *tree, ReturnValueNode *ret){
     }
     switch (tree->type) {
         case AST_COMMON:
-            eval_common(tree, &ret);
+            eval_common(tree, ret);
         case AST_IF:
         case AST_WHILE:
             eval_while(tree, ret);
@@ -21,7 +21,7 @@ static void eval(AST_NODE *tree, ReturnValueNode *ret){
         case AST_BLOCK:
             eval_block(tree, ret);
         case AST_LEAF:
-            eval_leaf(tree, &ret);
+            eval_leaf(tree, ret);
     }
 }
 
