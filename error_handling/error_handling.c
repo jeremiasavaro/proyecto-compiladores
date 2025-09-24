@@ -11,7 +11,7 @@ void error_parse(int line, char* msg) {
 
 void error_lexical(int line, char* msg) {
     fprintf(stderr, "Lexical error(line %d): unknown character '%s'\n", line, msg);
-    exit(EXIT_FAILURE); 
+    exit(EXIT_FAILURE);
 }
 
 int error_open_file(char* filename) {
@@ -66,5 +66,10 @@ void error_add_argument_method(char* method_name) {
 
 void error_method_not_found(char* method_name) {
     fprintf(stderr, "Error: method %s not found \n", method_name);
+    exit(EXIT_FAILURE);
+}
+
+void error_null_node(int line){
+    fprintf(stderr, "ERROR(line %d): NULL node in eval()\n", line);
     exit(EXIT_FAILURE);
 }

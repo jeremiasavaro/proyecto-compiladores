@@ -14,5 +14,6 @@ void error_return_void();
 void error_type_id_unknown();
 void error_add_argument_method(char* method_name);
 void error_method_not_found(char* method_name);
+void error_null_node(int line);
 
 #endif
