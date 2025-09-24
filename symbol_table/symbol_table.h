@@ -59,6 +59,7 @@ struct ID_TABLE {
 			RETURN_TYPE return_type;
 			int num_args;
 			ARGS_LIST* arg_list;
+			TABLE_STACK* method_scope;
 			void* data; // store the return value of the method, if return_type is void this remains void as well
 		} method;
 	};
@@ -67,15 +68,13 @@ struct ID_TABLE {
 
 // pushes a new scope in the stack
 void push_scope();
-// frees all memory of one level in the table stack (probably we won't use this)
-static void free_id_list(ID_TABLE* head);
 // pop the actual scope
 void pop_scope(void);
 /* creates a new node with id_name = name and returns its memory direction
    and doesn't allow to create two symbols with the same id in the same scope level */
 ID_TABLE* add_id(char* name, ID_TYPE type);
 // declare a method in the actual scope with its return value
-ID_TABLE* add_method(char* name, RETURN_TYPE ret_type);
+ID_TABLE* add_method(char* name, RETURN_TYPE ret_type, TABLE_STACK* method_scope);
 // adds data to the variable name node
 void add_data(char* name, ID_TYPE type, const void* data);
 // adds data to the method's return value
@@ -88,6 +87,9 @@ ID_TABLE* find(const char* name);
 /* return the memory direction of the node with id_name = name in the actual scope
    if the node is not found, returns NULL */
 ID_TABLE* find_in_current_scope(const char* name);
+/* return the memory direction of the node with id_name = name in the global scope
+   if the node is not found, returns NULL */
+ID_TABLE* find_global(const char* name);
 // retrieves data of id from table
 void* get_data(char* name);
 // add an argument to a given method
@@ -98,6 +100,11 @@ ARGS_LIST* create_args_list(ID_TABLE* method, ID_TYPE arg_type, const char* arg_
 ARGS_LIST* add_arg_current_list(ARGS_LIST* list, const char* name, ID_TYPE type);
 // assign a prepared list to a method symbol
 void add_current_list(char* name, ARGS_LIST* list);
-
+// return the actual scope (TABLE_STACK)
+TABLE_STACK* get_this_scope();
+// adds an id to the global scope
+ID_TABLE* add_global_id(char* name, ID_TYPE type);
+// return the argument list of a method
+ARGS_LIST* get_method_args(const char* name);
 
 #endif

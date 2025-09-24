@@ -40,10 +40,11 @@ static void node_label(AST_NODE *node, char *buf, size_t bufsz) {
                     snprintf(buf, bufsz, "%s", node->leaf.value->bool_leaf.value ? "true" : "false");
                     return;
                 case TYPE_ID:
-                    if (node->leaf.value && node->leaf.value->id_leaf)
-                        snprintf(buf, bufsz, "%s", node->leaf.value->id_leaf);
-                    else
+                    if (node && node->leaf.value && node->leaf.value->id_leaf && node->leaf.value->id_leaf->id_name) {
+                        snprintf(buf, bufsz, "%s", node->leaf.value->id_leaf->id_name);
+                    } else {
                         snprintf(buf, bufsz, "ID(?)");
+                    }
                     return;
                 default:
                     snprintf(buf, bufsz, "LEAF(?)");
@@ -129,10 +130,11 @@ static void print_node_tree(AST_NODE *node, const char *prefix, int is_last) {
                 // print arg name as a simple label (assume TYPE_ID leaf)
                 if (arg && arg->type == AST_LEAF && arg->leaf.leaf_type == TYPE_ID) {
                     char namebuf[256];
-                    if (arg->leaf.value && arg->leaf.value->id_leaf)
-                        snprintf(namebuf, sizeof(namebuf), "%s", arg->leaf.value->id_leaf);
-                    else
+                    if (arg->leaf.value && arg->leaf.value->id_leaf && arg->leaf.value->id_leaf->id_name) {
+                        snprintf(namebuf, sizeof(namebuf), "%s", arg->leaf.value->id_leaf->id_name);
+                    } else {
                         snprintf(namebuf, sizeof(namebuf), "(arg?)");
+                    }
                     printf("%s%s%s\n", args_prefix, (ai == total - 1 && !has_block ? "└── " : "├── "), namebuf);
                 } else {
                     // fallback: print the node normally
