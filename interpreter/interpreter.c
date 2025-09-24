@@ -24,7 +24,7 @@ static void eval_common(AST_NODE *tree, ReturnValueNode *ret) {
             }
             ret->type = INT_TYPE;
             ret->value = malloc(sizeof(int));
-            *(int*)ret->value = (*(int*)left.value) + (*(int*)right.value); 
+            *(int*)ret->value = (*(int*)left.value) + (*(int*)right.value);
             free(left.value);
             free(right.value);
             return;
@@ -72,7 +72,7 @@ static void eval_common(AST_NODE *tree, ReturnValueNode *ret) {
         case OP_MINUS:
             eval(tree->common.left, &left);
             if (left.type != INT_TYPE) {
-               minus_error(line); 
+               minus_error(line);
             }
             ret->type = INT_TYPE;
             ret->value = malloc(sizeof(int));
@@ -102,7 +102,7 @@ static void eval_common(AST_NODE *tree, ReturnValueNode *ret) {
             *(int*)ret->value = (*(int*)left.value) || (*(int*)right.value) ? 1 : 0;
             free(left.value);
             free(right.value);
-            return;        
+            return;
         case OP_NEG:
             eval(tree->common.left, &left);
             if (left.type != BOOL_TYPE) {
@@ -198,6 +198,36 @@ static void eval_common(AST_NODE *tree, ReturnValueNode *ret) {
     error_unknown_operator(line);
 }
 
+static void eval_while(AST_NODE *tree, ReturnValueNode *ret){
+    if (!tree){
+        error_null_node(-1);
+    }
+    line = tree->line;
+    ReturnValueNode retCond;
+    ReturnValueNode retBlock;
+    eval(tree->while_stmt.condition, &retBlock);
+    eval(tree->while_stmt.block, &retCond);
+    free(&retCond);
+    free(&retBlock);
+    return;
+}
+
+
+static void eval_block(AST_NODE *tree, ReturnValueNode *ret){
+    if (!tree){
+        error_null_node(-1);
+    }
+    line = tree->line;
+    AST_NODE_LIST *aux = tree->block.stmts;
+    while (aux != NULL){
+        ReturnValueNode auxRet;
+        eval(aux->first, &auxRet);
+        aux = aux->next;
+        free(&auxRet);
+    }
+    return;
+}
+
 static void eval_leaf(AST_NODE *tree, ReturnValueNode *ret){
     if (!tree) {
         error_null_node(-1);
@@ -262,16 +292,17 @@ void eval(AST_NODE *tree, ReturnValueNode *ret){
     }
     switch (tree->type) {
         case AST_COMMON:
-            eval_common(tree, &ret);
+            eval_common(tree, ret);
         case AST_IF:
-            eval_if(tree, &ret);
+            eval_if(tree, ret);
         case AST_WHILE:
+            eval_while(tree, ret);
         case AST_METHOD:
         case AST_BLOCK:
+            eval_block(tree, ret);
         case AST_LEAF:
-            eval_leaf(tree, &ret);   
+            eval_leaf(tree, ret);
     }
-    return;
 }
 
 /* Public function: interprets (evaluates) a tree */
