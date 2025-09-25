@@ -152,7 +152,6 @@ static void print_node_tree(AST_NODE *node, const char *prefix, int is_last) {
         }
 
     } else if (node->type == AST_METHOD_CALL) {
-    // Ya imprimiste el label arriba, solo imprime los argumentos si existen
         if (node->method_call.args) {
             printf("%s└── ARGS\n", new_prefix);
             char args_prefix[512];

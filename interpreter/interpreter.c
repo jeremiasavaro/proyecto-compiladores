@@ -65,7 +65,11 @@ static void eval_common(AST_NODE *tree, ReturnValueNode *ret) {
                 error_division_zero(line);
             }
             ret->value = malloc(sizeof(int));
-            *(int*)ret->value = (*(int*)left.value) / (*(int*)right.value);
+            if(tree->common.op == OP_DIVISION) {
+                *(int*)ret->value = (*(int*)left.value) / (*(int*)right.value);
+            } else {
+                *(int*)ret->value = (*(int*)left.value) % (*(int*)right.value);
+            }
             free(left.value);
             free(right.value);
             return;
@@ -194,8 +198,6 @@ static void eval_common(AST_NODE *tree, ReturnValueNode *ret) {
 
             eval(tree->common.right, &right);
 
-            // Diferenciar una asignacion con un metodo
-
             if ((id->id_type == CONST_INT && right.type != INT_TYPE) ||
                 (id->id_type == CONST_BOOL && right.type != BOOL_TYPE)) {
                 error_type_mismatch(line, id->id_name, (id->id_type == CONST_INT) ? "int" : "bool");
@@ -229,6 +231,7 @@ static void eval_common(AST_NODE *tree, ReturnValueNode *ret) {
             ret->type = (tree->common.op == OP_DECL_INT) ? INT_TYPE : BOOL_TYPE;
             return;
         case OP_RETURN: {
+            // Deberiamos corroborar el return dependiendo el tipo de retorno del metodo
             if (tree->common.left) {
                 if (returnInt) {
                     eval(tree->common.left, &left);
@@ -273,16 +276,19 @@ static void eval_common(AST_NODE *tree, ReturnValueNode *ret) {
 }
 
 static void eval_while(AST_NODE *tree, ReturnValueNode *ret){
-    if (!tree){
-        error_null_node(-1);
-    }
     line = tree->line;
+    AST_NODE* condition = tree->if_stmt.condition;
+    AST_NODE* then_block = tree->if_stmt.then_block;
+    AST_NODE* else_block = tree->if_stmt.else_block;
     ReturnValueNode retCond;
     ReturnValueNode retBlock;
-    eval(tree->while_stmt.condition, &retBlock);
-    eval(tree->while_stmt.block, &retCond);
-    free(&retCond);
-    free(&retBlock);
+    eval(tree->while_stmt.condition, &retCond);
+    if(condition->type != BOOL_TYPE) {
+        error_conditional(line);
+    }
+    eval(tree->while_stmt.block, &retBlock);
+    free(retCond.value);
+    free(retBlock.value);
     return;
 }
 
@@ -290,11 +296,15 @@ static void eval_while(AST_NODE *tree, ReturnValueNode *ret){
 static void eval_block(AST_NODE *tree, ReturnValueNode *ret){
     line = tree->line;
     AST_NODE_LIST *aux = tree->block.stmts;
+    ReturnValueNode auxRet;
     while (aux != NULL){
-        ReturnValueNode auxRet;
         eval(aux->first, &auxRet);
+        if (aux->next != NULL) {
+            free(auxRet.value); // only free if not last
+        } else {
+            *ret = auxRet; // save the last evaluated statement
+        }
         aux = aux->next;
-        free(&auxRet);
     }
     return;
 }
@@ -313,6 +323,7 @@ static void eval_leaf(AST_NODE *tree, ReturnValueNode *ret){
             *(int*)ret->value = tree->leaf.value->bool_leaf.value;
             return;
         case TYPE_ID: {
+            // Deberiamos corroborar que la variable este en el scope actual
             ID_TABLE *id = tree->leaf.value->id_leaf;
             if (!id) {
                 error_noexistent_id(line);
@@ -335,26 +346,75 @@ static void eval_leaf(AST_NODE *tree, ReturnValueNode *ret){
     error_unknown_leaf_type(line);
 }
 
+/*
+    * First, evaluates the condition. If it is not a boolean, returns an error.
+    * Then, evaluates the then_block and else_block.
+*/
+
 static void eval_if(AST_NODE *tree, ReturnValueNode *ret) {
     line = tree->line;
+    ReturnValueNode retCondition;
+    ReturnValueNode retThen;
+    ReturnValueNode retElse;
     AST_NODE* condition = tree->if_stmt.condition;
     AST_NODE* then_block = tree->if_stmt.then_block;
     AST_NODE* else_block = tree->if_stmt.else_block;
-    eval(condition, &ret);
-    if(ret->type != BOOL_TYPE) {
+    eval(condition, &retCondition);
+    if(retCondition.type != BOOL_TYPE) {
         error_conditional(line);
     }
-    if (*(int*)ret->value) { // true
-        eval(then_block, &ret);
-    } else { // false
-        eval(else_block, &ret);
+    eval(then_block, &retThen);
+    eval(else_block, &retElse);
+
+    if (*(int*)retCondition.value) {
+        ret->type = retThen.type;
+        ret->value = malloc(sizeof(int));
+        *(int*)ret->value = *(int*)retThen.value;
+    } else {
+        ret->type = retElse.type;
+        ret->value = malloc(sizeof(int));
+        *(int*)ret->value = *(int*)retElse.value;
     }
+
+    free(retCondition.value);
+    free(retThen.value);
+    free(retElse.value);
+
+    return;
+}
+
+/*
+ * Evaluates a method call node.
+ * First, look up the method in the symbol table.
+ * If it is not there, we return an error. Otherwise, we obtain the arguments of the method.
+ * Next, we go through the arguments of the method and the parameters we are passing in the call 
+ * to see if they are of the same type and if the number of arguments is the same. 
+ * If either of these two conditions is not met, we return an error.
+ */
+
+static void eval_method_call(AST_NODE *tree, ReturnValueNode *ret) {
+    line = tree->line;
+    // Buscamos el metodo en la tabla de simbolos, si no esta retornamos error.
+    // Si esta, obtenemos los argumentos del metodo.
+    // Luego recorremos los argumentos del metodo y los parametros que estamos pasando en la llamada
+    // para ver si son del mismo tipo y si la cantidad de argumentos es la misma.
+    // Si alguna de estas dos condiciones no se cumple, retornamos error.
+    return;
+}
+
+/*
+ * Only eval_block is called.
+ */
+
+static void eval_method_decl(AST_NODE *tree, ReturnValueNode *ret) {
+    line = tree->line;
+    eval(tree->method_decl.block, &ret);
     free(ret->value);
     return;
 }
 
 void eval(AST_NODE *tree, ReturnValueNode *ret){
-    if (alreadyReturned){
+    if (alreadyReturned){   
         warning_already_returned(line);
         return;
     }
@@ -369,12 +429,15 @@ void eval(AST_NODE *tree, ReturnValueNode *ret){
         case AST_WHILE:
             eval_while(tree, ret);
         case AST_METHOD_DECL:
+            eval_method_decl(tree, ret);
         case AST_METHOD_CALL:
+            eval_method_call(tree, ret);
         case AST_BLOCK:
             eval_block(tree, ret);
         case AST_LEAF:
             eval_leaf(tree, ret);
     }
+    return;
 }
 
 /* Public function: interprets (evaluates) a tree */

@@ -6,6 +6,7 @@
 #include "ast.h"
 #include "print_funcs.h"
 #include "symbol_table.h"
+#include "interpreter.h"
 
 extern int yylex();
 extern int yylineno;
@@ -270,6 +271,7 @@ int main(int argc, char *argv[]) {
     printf("=== SYNTAX ANALYSIS ===\n");
     yyparse();
     print_full_ast(head_ast);
+    interpreter(head_ast);
     print_symbol_table(global_level);
     return 0;
 }
