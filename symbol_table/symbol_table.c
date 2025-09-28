@@ -309,7 +309,7 @@ ARGS_LIST* add_arg_current_list(ARGS_LIST* list, const char* name, ID_TYPE type)
 
 // assign a prepared list to a method symbol
 void add_current_list(char* name, ARGS_LIST* list) {
-    ID_TABLE* meth = find(name);
+    ID_TABLE* meth = find_global(name);
     if (!meth || meth->id_type != METHOD) {
         error_add_argument_method(name);
     }
