@@ -137,7 +137,7 @@ void add_data(char* name, const ID_TYPE type, const void* data) {
 
 // adds data to the method's return value
 void add_method_return_data(char* name, const RETURN_TYPE type, const void* data) {
-    ID_TABLE* aux = find(name);
+    ID_TABLE* aux = find_global(name);
     if (aux == NULL) {
         error_variable_not_declared(yylineno, name);
     }
