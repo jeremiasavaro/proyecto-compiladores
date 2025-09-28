@@ -96,7 +96,7 @@ var_decls:
 
 method_decl:
     VOID ID '(' method_args ')' block {
-        $$ = new_method_decl_node($2, $4, $6, 0);
+        $$ = new_method_decl_node($2, $4, $6, get_this_scope(), 0);
         add_method($2, RETURN_VOID, get_this_scope());
         add_current_list($2, current_args_list);
         current_args_list = NULL;
@@ -104,14 +104,14 @@ method_decl:
     }
   |
     VOID ID '(' method_args ')' EXTERN ';' {
-        $$ = new_method_decl_node($2, $4, NULL, 1);
+        $$ = new_method_decl_node($2, $4, NULL, NULL, 1);
         add_method($2, RETURN_VOID, get_this_scope());
         current_args_list = NULL;
         pop_scope();
     }
   |
     type ID '(' method_args ')' block {
-        $$ = new_method_decl_node($2, $4, $6, 0);
+        $$ = new_method_decl_node($2, $4, $6, get_this_scope(), 0);
         if ($1 == INTEGER) add_method($2, RETURN_INT, get_this_scope());
         else if ($1 == BOOL) add_method($2, RETURN_BOOL, get_this_scope());
         add_current_list($2, current_args_list);
@@ -120,7 +120,7 @@ method_decl:
     }
   |
     type ID '(' method_args ')' EXTERN ';' {
-        $$ = new_method_decl_node($2, $4, NULL, 1);
+        $$ = new_method_decl_node($2, $4, NULL, NULL, 1);
         if ($1 == INTEGER) add_method($2, RETURN_INT, get_this_scope());
         else if ($1 == BOOL) add_method($2, RETURN_BOOL, get_this_scope());
         current_args_list = NULL;
@@ -271,7 +271,6 @@ int main(int argc, char *argv[]) {
     printf("=== SYNTAX ANALYSIS ===\n");
     yyparse();
     print_full_ast(head_ast);
-    interpreter(head_ast);
     print_symbol_table(global_level);
     return 0;
 }

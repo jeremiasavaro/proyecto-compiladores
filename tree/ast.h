@@ -111,6 +111,7 @@ struct AST_NODE {
             int num_args; // quantity of arguments
             struct AST_NODE_LIST* args;   // arguments list
             struct AST_NODE* block;      // method body
+            TABLE_STACK* scope; // scope of the method
             int is_extern; 
         } method_decl;
 
@@ -149,7 +150,7 @@ AST_NODE* new_binary_node(OPERATOR op, AST_NODE* left, AST_NODE* right);
 AST_NODE* new_leaf_node(LEAF_TYPE type, void* value);
 AST_NODE* new_if_node(AST_NODE* condition, AST_NODE* then_block, AST_NODE* else_block);
 AST_NODE* new_while_node(AST_NODE* condition, AST_NODE* block);
-AST_NODE* new_method_decl_node(char* name, AST_NODE_LIST* args, AST_NODE* block, int is_extern);
+AST_NODE* new_method_decl_node(char* name, AST_NODE_LIST* args, AST_NODE* block, TABLE_STACK* scope, int is_extern);
 AST_NODE* new_block_node(AST_NODE_LIST* stmts);
 AST_NODE* new_method_call_node(char* name, AST_NODE_LIST* args);
 AST_NODE_LIST* append_expr(AST_NODE_LIST* list, AST_NODE* expr);

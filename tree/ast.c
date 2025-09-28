@@ -95,12 +95,13 @@ AST_NODE* new_while_node(AST_NODE* condition, AST_NODE* block) {
     return node;
 }
 
-AST_NODE* new_method_decl_node(char* name, AST_NODE_LIST* args, AST_NODE* block, int is_extern) {
+AST_NODE* new_method_decl_node(char* name, AST_NODE_LIST* args, AST_NODE* block, TABLE_STACK* scope, int is_extern) {
     AST_NODE* node = alloc_node();
     node->type = AST_METHOD_DECL;
     node->method_decl.name = my_strdup(name); // save a copy of the name 
     node->method_decl.args = args; 
     node->method_decl.block = block;
+    node->method_decl.scope = scope;
     node->method_decl.is_extern = is_extern;
     int num_args = 0;
     if (args) {
