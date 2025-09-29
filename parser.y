@@ -59,7 +59,7 @@ decls:
 
 decl:
       var_decl    { $$ = $1; }
-    | method_decl { $$ = $1; }
+    | method_decl { $$ = $1; if ($1) add_sentence($1); }
     ;
 
 var_decl:
@@ -174,7 +174,7 @@ block:
 ;
 
 statements:
-        statements statement { $$ = append_expr($1, $2); if ($2) add_sentence($2); }
+        statements statement { $$ = append_expr($1, $2); }
     | /* empty */ { $$ = NULL; }
     ;
 

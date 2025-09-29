@@ -1,9 +1,7 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include "semantic_analyzer.h"
 #include "error_handling.h"
 
-int alreadyReturned = 0;
 int line = 0;
 
 /*
@@ -15,6 +13,7 @@ static void eval_common(AST_NODE *tree, TYPE *ret) {
     line = tree->line;
     TYPE left_type;
     TYPE right_type;
+    if (!tree) {printf("Tree doesnt exists \n");}
     switch (tree->common.op) {
         case OP_ADDITION:
             eval(tree->common.left, &left_type);
@@ -138,54 +137,27 @@ static void eval_common(AST_NODE *tree, TYPE *ret) {
 
             if ((id->id_type == CONST_INT && right_type != INT_TYPE) ||
                 (id->id_type == CONST_BOOL && right_type != BOOL_TYPE)) {
-                error_type_mismatch(line, id->id_name, (id->id_type == CONST_INT) ? "int" : "bool");
+                error_type_mismatch(line, id->id_name, id->id_type == CONST_INT ? "int" : "bool");
             }
 
             *ret = right_type;
+            printf("%s \n", (char*) right_type);
             return;
         }
         case OP_RETURN: {
-            // Deberiamos corroborar el return dependiendo el tipo de retorno del metodo
             if (tree->common.left) {
-                if (returnInt) {
-                    eval(tree->common.left, &left_type);
-                    if (returnInt && left_type != INT_TYPE) {
-                        error_return_int(line);
-                    }
-                    *ret = left_type;
-                    alreadyReturned = 1;
-                    return;
-                } else if (returnBool) {
-                    eval(tree->common.left, &left_type);
-                    if (left_type != BOOL_TYPE) {
-                        error_return_bool(line);
-                    }
-                    *ret = left_type;
-                    alreadyReturned = 1;
-                    return;
-                } else {
-                    error_return_void(line);
-                }
+                eval(tree->common.left, &left_type);
+                *ret = left_type;
             } else {
-                if (returnInt) {
-                    error_unespected_return_int(line);
-                } else if (returnBool) {
-                    error_unespected_return_bool(line);
-                } else {
-                    alreadyReturned = 1;
-                    return;
-                }
+                *ret = VOID_TYPE;
             }
         }
     }
     error_unknown_operator(line);
 }
 
-static void eval_while(AST_NODE *tree, TYPE *ret){
+static void eval_while(AST_NODE *tree){
     line = tree->line;
-    AST_NODE* condition = tree->if_stmt.condition;
-    AST_NODE* then_block = tree->if_stmt.then_block;
-    AST_NODE* else_block = tree->if_stmt.else_block;
     TYPE retCond;
     TYPE retBlock;
     eval(tree->while_stmt.condition, &retCond);
@@ -204,6 +176,7 @@ static void eval_block(AST_NODE *tree, TYPE *ret){
         eval(aux->first, &auxRet);
         aux = aux->next;
     }
+    memcpy(ret, &auxRet, sizeof(TYPE));
 }
 
 static void eval_leaf(AST_NODE *tree, TYPE *ret){
@@ -219,9 +192,6 @@ static void eval_leaf(AST_NODE *tree, TYPE *ret){
             ID_TABLE *id = tree->leaf.value->id_leaf;
             if (!id) {
                 error_noexistent_id(line);
-            }
-            if (id->common.data == NULL) {
-                error_variable_used_before_init(line, id->id_name);
             }
             if (id->id_type == CONST_INT) {
                 *ret = INT_TYPE;
@@ -241,7 +211,7 @@ static void eval_leaf(AST_NODE *tree, TYPE *ret){
     * Then, evaluates the then_block and else_block.
 */
 
-static void eval_if(AST_NODE *tree, TYPE *ret) {
+static void eval_if(AST_NODE *tree) {
     line = tree->line;
     TYPE retCondition;
     TYPE retThen;
@@ -286,6 +256,25 @@ static void eval_method_call(AST_NODE *tree, TYPE *ret) {
         fprintf(stderr, "Amount of args should be the same \n");
     }
 
+    while (method_args && call_args) {
+        eval(call_args->first, ret);
+        ID_TYPE auxType;
+        switch (*ret) {
+            case INT_TYPE:
+                auxType = CONST_INT;
+                break;
+            case BOOL_TYPE:
+                auxType = CONST_BOOL;
+                break;
+            default:
+                error_type_mismatch(line, method_args->arg->name, "INT or BOOL \n");
+        }
+        if (method_args->arg->type != auxType) {
+            error_type_mismatch(line, (char*) call_args->first->type, (char*) method_args->arg->type);
+        }
+        method_args = method_args->next;
+        call_args = call_args->next;
+    }
 }
 
 /*
@@ -295,13 +284,28 @@ static void eval_method_call(AST_NODE *tree, TYPE *ret) {
 static void eval_method_decl(AST_NODE *tree, TYPE *ret) {
     line = tree->line;
     eval(tree->method_decl.block, ret);
+    ID_TABLE* method = find_global(tree->method_decl.name);
+    if (!method) {
+        error_method_not_found(tree->method_decl.name);
+    }
+    RETURN_TYPE auxType;
+    switch (*ret) {
+        case INT_TYPE:
+            auxType = RETURN_INT;
+            break;
+        case BOOL_TYPE:
+            auxType = RETURN_BOOL;
+            break;
+        case VOID_TYPE:
+            auxType = RETURN_VOID;
+            break;
+    }
+    if (auxType != method->method.return_type) {
+        error_type_mismatch(line, (char*) ret, tree->method_decl.name);
+    }
 }
 
 void eval(AST_NODE *tree, TYPE *ret){
-    if (alreadyReturned){   
-        warning_already_returned(line);
-        return;
-    }
     if (!tree){
         error_null_node(-1);
     }
@@ -310,10 +314,10 @@ void eval(AST_NODE *tree, TYPE *ret){
             eval_common(tree, ret);
             break;
         case AST_IF:
-            eval_if(tree, ret);
+            eval_if(tree);
             break;
         case AST_WHILE:
-            eval_while(tree, ret);
+            eval_while(tree);
             break;
         case AST_METHOD_DECL:
             eval_method_decl(tree, ret);
@@ -335,8 +339,5 @@ void semantic_analyzer(AST_ROOT *tree) {
     TYPE ret;
     for (AST_ROOT* cur = tree; cur != NULL; cur = cur->next) {
         eval(cur->sentence, &ret);
-    }
-    if (alreadyReturned == 0 && (returnInt || returnBool)) {
-        error_missing_return(-1);
     }
 }
