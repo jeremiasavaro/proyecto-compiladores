@@ -45,8 +45,6 @@ typedef enum {
     OP_NEG,
     OP_ASSIGN,
     OP_RETURN,
-    OP_DECL_INT,
-    OP_DECL_BOOL,
 } OPERATOR;
 
 typedef enum {

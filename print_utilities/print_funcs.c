@@ -21,8 +21,6 @@ static const char *op_to_string(OPERATOR op) {
         case OP_NEG:             return "!";
         case OP_ASSIGN:          return "=";
         case OP_RETURN:          return "return";
-        case OP_DECL_INT:        return "decl int";
-        case OP_DECL_BOOL:       return "decl bool";
         default:                 return "?";
     }
 }

@@ -67,24 +67,16 @@ var_decl:
         {
           if ($1 == INTEGER) {
             ID_TABLE* dir = add_id($2, CONST_INT);
-            AST_NODE* id = new_leaf_node(TYPE_ID, dir);
-            $$ = new_binary_node(OP_DECL_INT, id, $4);
           } else {
             ID_TABLE* dir = add_id($2, CONST_BOOL);
-            AST_NODE* id = new_leaf_node(TYPE_ID, dir);
-            $$ = new_binary_node(OP_DECL_BOOL, id, $4);
           }
         }
     | type ID ';'
         {
           if ($1 == INTEGER) {
             ID_TABLE* dir = add_id($2, CONST_INT);
-            AST_NODE* id = new_leaf_node(TYPE_ID, dir);
-            $$ = new_unary_node(OP_DECL_INT, id);
           } else {
             ID_TABLE* dir = add_id($2, CONST_BOOL);
-            AST_NODE* id = new_leaf_node(TYPE_ID, dir);
-            $$ = new_unary_node(OP_DECL_BOOL, id);
           }
         }
     ;

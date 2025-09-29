@@ -142,26 +142,8 @@ static void eval_common(AST_NODE *tree, TYPE *ret) {
             }
 
             *ret = right_type;
-            switch (id->id_type) {
-                case CONST_INT: {
-                    add_data(id->id_name, CONST_INT, 0);  // Le pongo 0 de valor inicial para representar que fue inicializada
-                    break; 
-                }
-                case CONST_BOOL: {
-                    add_data(id->id_name, CONST_BOOL, 0);  // Le pongo 0 de valor inicial para representar que fue inicializada
-                    break;
-                }
-                case UNKNOWN:
-                    error_id_unknown_type(line, id->id_name);
-                    break;
-            }
             return;
         }
-        case OP_DECL_INT:
-        case OP_DECL_BOOL:
-            // Declaration already recorded in symbol table by parser; do not evaluate identifier
-            *ret = (tree->common.op == OP_DECL_INT) ? INT_TYPE : BOOL_TYPE;
-            return;
         case OP_RETURN: {
             // Deberiamos corroborar el return dependiendo el tipo de retorno del metodo
             if (tree->common.left) {
@@ -211,7 +193,6 @@ static void eval_while(AST_NODE *tree, TYPE *ret){
         error_conditional(line);
     }
     eval(tree->while_stmt.block, &retBlock);
-    return;
 }
 
 
@@ -223,11 +204,11 @@ static void eval_block(AST_NODE *tree, TYPE *ret){
         eval(aux->first, &auxRet);
         aux = aux->next;
     }
-    return;
 }
 
 static void eval_leaf(AST_NODE *tree, TYPE *ret){
     line = tree->line;
+    printf("%d\n", tree->leaf.value->bool_leaf.value);
     switch (tree->leaf.leaf_type) {
         case TYPE_INT:
             *ret = INT_TYPE;
@@ -275,8 +256,6 @@ static void eval_if(AST_NODE *tree, TYPE *ret) {
     }
     eval(then_block, &retThen);
     eval(else_block, &retElse);
-
-    return;
 }
 
 /*
@@ -295,7 +274,19 @@ static void eval_method_call(AST_NODE *tree, TYPE *ret) {
     // Luego recorremos los argumentos del metodo y los parametros que estamos pasando en la llamada
     // para ver si son del mismo tipo y si la cantidad de argumentos es la misma.
     // Si alguna de estas dos condiciones no se cumple, retornamos error.
-    return;
+    ID_TABLE* method = find_global(tree->method_call.name);
+    if (!method) {
+        error_method_not_found(tree->method_call.name);
+    }
+    if (method->id_type != METHOD) {
+        error_type_mismatch(line, tree->method_call.name, (char*)method->id_type);
+    }
+    ARGS_LIST* method_args = method->method.arg_list;
+    AST_NODE_LIST* call_args = tree->method_call.args;
+    if (method->method.num_args != tree->method_call.num_args) {
+        fprintf(stderr, "Amount of args should be the same \n");
+    }
+
 }
 
 /*
@@ -305,7 +296,6 @@ static void eval_method_call(AST_NODE *tree, TYPE *ret) {
 static void eval_method_decl(AST_NODE *tree, TYPE *ret) {
     line = tree->line;
     eval(tree->method_decl.block, ret);
-    return;
 }
 
 void eval(AST_NODE *tree, TYPE *ret){
@@ -339,7 +329,6 @@ void eval(AST_NODE *tree, TYPE *ret){
             eval_leaf(tree, ret);
             break;
     }
-    return;
 }
 
 /* Public function: interprets (evaluates) a tree */
@@ -351,5 +340,4 @@ void semantic_analyzer(AST_ROOT *tree) {
     if (alreadyReturned == 0 && (returnInt || returnBool)) {
         error_missing_return(-1);
     }
-    return;
 }
