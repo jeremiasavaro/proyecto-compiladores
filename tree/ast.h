@@ -68,7 +68,7 @@ struct BOOL_LEAF {
 union LEAF {
     INT_LEAF int_leaf;
     BOOL_LEAF bool_leaf;
-    ID_TABLE* id_leaf; // should be ID_TABLE*
+    ID_TABLE* id_leaf; 
 };
 
 // enum for different AST node types

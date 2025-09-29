@@ -6,7 +6,7 @@
 #include "ast.h"
 #include "print_funcs.h"
 #include "symbol_table.h"
-#include "interpreter.h"
+#include "semantic_analyzer.h"
 
 extern int yylex();
 extern int yylineno;
@@ -272,5 +272,6 @@ int main(int argc, char *argv[]) {
     yyparse();
     print_full_ast(head_ast);
     print_symbol_table(global_level);
+    semantic_analyzer(head_ast);
     return 0;
 }
