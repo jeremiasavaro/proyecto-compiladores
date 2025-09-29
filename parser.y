@@ -53,7 +53,7 @@ program:
     ;
 
 decls:
-      decls decl { if ($2) add_sentence($2); }
+      decls decl { $$ = NULL; }
     | /* empty */ { $$ = NULL; }
     ;
 
@@ -174,7 +174,7 @@ block:
 ;
 
 statements:
-        statements statement { $$ = append_expr($1, $2); }
+        statements statement { $$ = append_expr($1, $2); if ($2) add_sentence($2); }
     | /* empty */ { $$ = NULL; }
     ;
 

@@ -208,7 +208,6 @@ static void eval_block(AST_NODE *tree, TYPE *ret){
 
 static void eval_leaf(AST_NODE *tree, TYPE *ret){
     line = tree->line;
-    printf("%d\n", tree->leaf.value->bool_leaf.value);
     switch (tree->leaf.leaf_type) {
         case TYPE_INT:
             *ret = INT_TYPE;
