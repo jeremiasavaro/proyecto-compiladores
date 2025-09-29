@@ -22,7 +22,7 @@ static void eval_common(AST_NODE *tree, TYPE *ret) {
             if (left_type != INT_TYPE || right_type != INT_TYPE) {
                 error_additional(line);
             }
-            ret = INT_TYPE;
+            *ret = INT_TYPE;
             return;
         case OP_SUBTRACTION:
             eval(tree->common.left, &left_type);
@@ -30,7 +30,7 @@ static void eval_common(AST_NODE *tree, TYPE *ret) {
             if (left_type != INT_TYPE || right_type != INT_TYPE) {
                 error_substraction(line);
             }
-            ret = INT_TYPE;
+            *ret = INT_TYPE;
             return;
         case OP_MULTIPLICATION:
             eval(tree->common.left, &left_type);
@@ -38,7 +38,7 @@ static void eval_common(AST_NODE *tree, TYPE *ret) {
             if (left_type != INT_TYPE || right_type != INT_TYPE) {
                 error_multiplication(line);
             }
-            ret = INT_TYPE;
+            *ret = INT_TYPE;
             return;
         case OP_DIVISION:
         case OP_MOD:
@@ -47,14 +47,14 @@ static void eval_common(AST_NODE *tree, TYPE *ret) {
             if (left_type != INT_TYPE || right_type != INT_TYPE) {
                 error_division(line);
             }
-            ret = INT_TYPE;
+            *ret = INT_TYPE;
             return;
         case OP_MINUS:
             eval(tree->common.left, &left_type);
             if (left_type != INT_TYPE) {
                error_minus(line);
             }
-            ret = INT_TYPE;
+            *ret = INT_TYPE;
             return;
         case OP_LES:
             eval(tree->common.left, &left_type);
@@ -62,7 +62,7 @@ static void eval_common(AST_NODE *tree, TYPE *ret) {
             if (left_type != INT_TYPE || right_type != INT_TYPE) {
                 error_lesser(line);
             }
-            ret = BOOL_TYPE;
+            *ret = BOOL_TYPE;
             return;
         case OP_GRT:
             eval(tree->common.left, &left_type);
@@ -70,7 +70,7 @@ static void eval_common(AST_NODE *tree, TYPE *ret) {
             if (left_type != INT_TYPE || right_type != INT_TYPE) {
                 error_greater(line);
             }
-            ret = BOOL_TYPE;
+            *ret = BOOL_TYPE;
             return;
         case OP_EQ:
             eval(tree->common.left, &left_type);
@@ -78,7 +78,7 @@ static void eval_common(AST_NODE *tree, TYPE *ret) {
             if (left_type != INT_TYPE || right_type != INT_TYPE) {
                 error_equal(line);
             }
-            ret = BOOL_TYPE;
+            *ret = BOOL_TYPE;
             return;
         case OP_NEQ:
             eval(tree->common.left, &left_type);
@@ -86,7 +86,7 @@ static void eval_common(AST_NODE *tree, TYPE *ret) {
             if (left_type != INT_TYPE || right_type != INT_TYPE) {
                 error_not_equal(line);
             }
-            ret = BOOL_TYPE;
+            *ret = BOOL_TYPE;
             return;
         case OP_LEQ:
             eval(tree->common.left, &left_type);
@@ -94,7 +94,7 @@ static void eval_common(AST_NODE *tree, TYPE *ret) {
             if (left_type != INT_TYPE || right_type != INT_TYPE) {
                 error_less_equal(line);
             }
-            ret = BOOL_TYPE;
+            *ret = BOOL_TYPE;
             return;
         case OP_GEQ:
             eval(tree->common.left, &left_type);
@@ -102,7 +102,7 @@ static void eval_common(AST_NODE *tree, TYPE *ret) {
             if (left_type != INT_TYPE || right_type != INT_TYPE) {
                 error_greater_equal(line);
             }
-            ret = BOOL_TYPE;
+            *ret = BOOL_TYPE;
             return;
         case OP_AND:
             eval(tree->common.left, &left_type);
@@ -110,7 +110,7 @@ static void eval_common(AST_NODE *tree, TYPE *ret) {
             if (left_type != BOOL_TYPE || right_type != BOOL_TYPE) {
                 error_and(line);
             }
-            ret = BOOL_TYPE;
+            *ret = BOOL_TYPE;
             return;
         case OP_OR:
             eval(tree->common.left, &left_type);
@@ -118,14 +118,14 @@ static void eval_common(AST_NODE *tree, TYPE *ret) {
             if (left_type != BOOL_TYPE || right_type != BOOL_TYPE) {
                 error_or(line);
             }
-            ret = BOOL_TYPE;
+            *ret = BOOL_TYPE;
             return;
         case OP_NEG:
             eval(tree->common.left, &left_type);
             if (left_type != BOOL_TYPE) {
                 error_neg(line);
             }
-            ret = BOOL_TYPE;
+            *ret = BOOL_TYPE;
             return;
         case OP_ASSIGN: {
             // Left must be a TYPE_ID leaf
@@ -160,7 +160,7 @@ static void eval_common(AST_NODE *tree, TYPE *ret) {
         case OP_DECL_INT:
         case OP_DECL_BOOL:
             // Declaration already recorded in symbol table by parser; do not evaluate identifier
-            ret = (tree->common.op == OP_DECL_INT) ? INT_TYPE : BOOL_TYPE;
+            *ret = (tree->common.op == OP_DECL_INT) ? INT_TYPE : BOOL_TYPE;
             return;
         case OP_RETURN: {
             // Deberiamos corroborar el return dependiendo el tipo de retorno del metodo
@@ -230,10 +230,10 @@ static void eval_leaf(AST_NODE *tree, TYPE *ret){
     line = tree->line;
     switch (tree->leaf.leaf_type) {
         case TYPE_INT:
-            ret = INT_TYPE;
+            *ret = INT_TYPE;
             return;
         case TYPE_BOOL:
-            ret = BOOL_TYPE;
+            *ret = BOOL_TYPE;
             return;
         case TYPE_ID: {
             ID_TABLE *id = tree->leaf.value->id_leaf;
@@ -244,9 +244,9 @@ static void eval_leaf(AST_NODE *tree, TYPE *ret){
                 error_variable_used_before_init(line, id->id_name);
             }
             if (id->id_type == CONST_INT) {
-                ret = INT_TYPE;
+                *ret = INT_TYPE;
             } else if (id->id_type == CONST_BOOL) {
-                ret = BOOL_TYPE;
+                *ret = BOOL_TYPE;
             } else {
                 error_id_unknown_type(line, id->id_name);
             }
@@ -304,7 +304,7 @@ static void eval_method_call(AST_NODE *tree, TYPE *ret) {
 
 static void eval_method_decl(AST_NODE *tree, TYPE *ret) {
     line = tree->line;
-    eval(tree->method_decl.block, &ret);
+    eval(tree->method_decl.block, ret);
     return;
 }
 
