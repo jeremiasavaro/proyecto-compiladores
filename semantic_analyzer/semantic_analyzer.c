@@ -3,6 +3,7 @@
 #include "error_handling.h"
 
 int line = 0;
+TYPE method_return_type;
 
 /*
  * Recursively evaluates an AST_COMMON node and stores its type and value in ‘ret’.
@@ -146,8 +147,14 @@ static void eval_common(AST_NODE *tree, TYPE *ret) {
         case OP_RETURN: {
             if (tree->common.left) {
                 eval(tree->common.left, &left_type);
+                if (left_type != method_return_type) {
+                    printf("(1) error return type, is %d and should be %d, line %d \n", left_type, method_return_type, line);
+                }
                 memcpy(ret, &left_type, sizeof(TYPE));
             } else {
+                if (method_return_type != VOID_TYPE) {
+                    printf("(2) error return type \n");
+                }
                 *ret = VOID_TYPE;
             }
             return;
@@ -182,14 +189,6 @@ static void eval_block(AST_NODE *tree, TYPE *ret){
             memcpy(ret, &auxRet, sizeof(TYPE)); // When we find a return, we copy its type to ret, the other statements are ignored
         }
         aux = aux->next;
-    }
-    if (!returned && auxRet == VOID_TYPE) {
-        *ret = VOID_TYPE;
-        return;
-    }
-    if (auxRet != VOID_TYPE) {
-        *ret = auxRet;
-        return;
     }
 }
 
@@ -310,25 +309,23 @@ static void eval_method_call(AST_NODE *tree, TYPE *ret) {
  */
 static void eval_method_decl(AST_NODE *tree, TYPE *ret) {
     line = tree->line;
-    eval(tree->method_decl.block, ret);
     ID_TABLE* method = find_global(tree->method_decl.name);
     if (!method) {
         error_method_not_found(tree->method_decl.name);
     }
-    RETURN_TYPE auxType;
-    switch (*ret) {
-        case INT_TYPE:
-            auxType = RETURN_INT;
+    switch (method->method.return_type) {
+        case RETURN_INT:
+            method_return_type = INT_TYPE;
             break;
-        case BOOL_TYPE:
-            auxType = RETURN_BOOL;
+        case RETURN_BOOL:
+            method_return_type = BOOL_TYPE;
             break;
-        case VOID_TYPE:
-            auxType = RETURN_VOID;
+        case RETURN_VOID:
+            method_return_type = VOID_TYPE;
             break;
     }
-    if (auxType != method->method.return_type) {
-        error_type_mismatch_method(line, tree->method_decl.name, method->method.return_type);
+    if (!tree->method_decl.is_extern) {
+        eval(tree->method_decl.block, ret);
     }
 }
 
