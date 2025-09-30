@@ -146,7 +146,7 @@ static void eval_common(AST_NODE *tree, TYPE *ret) {
         case OP_RETURN: {
             if (tree->common.left) {
                 eval(tree->common.left, &left_type);
-                *ret = left_type;
+                memcpy(ret, &left_type, sizeof(TYPE));
             } else {
                 *ret = VOID_TYPE;
             }
@@ -167,13 +167,12 @@ static void eval_while(AST_NODE *tree){
     eval(tree->while_stmt.block, &retBlock);
 }
 
-
 static void eval_block(AST_NODE *tree, TYPE *ret){
     line = tree->line;
     AST_NODE_LIST *aux = tree->block.stmts;
-    TYPE auxRet;
+    TYPE auxRet = VOID_TYPE;
     int returned = 0;
-    while (aux != NULL){
+    while (aux != NULL) {
         eval(aux->first, &auxRet);
         if (returned) {
             printf("The line %d was ignored because a return statement was already executed\n", aux->first->line);
@@ -184,10 +183,14 @@ static void eval_block(AST_NODE *tree, TYPE *ret){
         }
         aux = aux->next;
     }
-    if (!returned) {
-        *ret = VOID_TYPE;   
+    if (!returned && auxRet == VOID_TYPE) {
+        *ret = VOID_TYPE;
+        return;
     }
-    return;
+    if (auxRet != VOID_TYPE) {
+        *ret = auxRet;
+        return;
+    }
 }
 
 static void eval_leaf(AST_NODE *tree, TYPE *ret){
@@ -221,7 +224,6 @@ static void eval_leaf(AST_NODE *tree, TYPE *ret){
     * First, evaluates the condition. If it is not a boolean, returns an error.
     * Then, evaluates the then_block and else_block.
 */
-
 static void eval_if(AST_NODE *tree, TYPE *ret) {
     line = tree->line;
     TYPE retCondition;
@@ -236,10 +238,20 @@ static void eval_if(AST_NODE *tree, TYPE *ret) {
     }
     eval(then_block, &retThen);
     eval(else_block, &retElse);
-    if(retThen && retElse) {
-        *ret = retThen;
+    if(retThen || retElse) {
+        if (retThen != retElse) {
+            error_different_return_types(line, (char*) retThen, (char*) retElse);
+        } else {
+            *ret = retThen;
+        }
     } else {
-        *ret = VOID_TYPE;
+        if (retThen) {
+            *ret = retThen;
+        } else if (retElse) {
+            *ret = retElse;
+        } else {
+            *ret = VOID_TYPE;
+        }
     }
 }
 
@@ -269,7 +281,7 @@ static void eval_method_call(AST_NODE *tree, TYPE *ret) {
     ARGS_LIST* method_args = method->method.arg_list;
     AST_NODE_LIST* call_args = tree->method_call.args;
     if (method->method.num_args != tree->method_call.num_args) {
-        fprintf(stderr, "Amount of args should be the same \n");
+        error_args_number(line, (char*) method->id_name, method->method.num_args);
     }
 
     while (method_args && call_args) {
@@ -278,10 +290,10 @@ static void eval_method_call(AST_NODE *tree, TYPE *ret) {
         switch (*ret) {
             case INT_TYPE:
                 auxType = CONST_INT;
-                return;
+                break;
             case BOOL_TYPE:
                 auxType = CONST_BOOL;
-                return;
+                break;
             default:
                 error_type_mismatch(line, method_args->arg->name, "INT or BOOL \n");
         }
@@ -296,7 +308,6 @@ static void eval_method_call(AST_NODE *tree, TYPE *ret) {
 /*
  * Only eval_block is called.
  */
-
 static void eval_method_decl(AST_NODE *tree, TYPE *ret) {
     line = tree->line;
     eval(tree->method_decl.block, ret);

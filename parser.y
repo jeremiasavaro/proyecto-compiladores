@@ -96,7 +96,7 @@ method_decl:
     }
   |
     VOID ID '(' method_args ')' EXTERN ';' {
-        $$ = new_method_decl_node($2, $4, NULL, NULL, 1);
+        $$ = new_method_decl_node($2, $4, NULL, get_this_scope(), 1);
         add_method($2, RETURN_VOID, get_this_scope());
         current_args_list = NULL;
         pop_scope();
@@ -112,7 +112,7 @@ method_decl:
     }
   |
     type ID '(' method_args ')' EXTERN ';' {
-        $$ = new_method_decl_node($2, $4, NULL, NULL, 1);
+        $$ = new_method_decl_node($2, $4, NULL, get_this_scope(), 1);
         if ($1 == INTEGER) add_method($2, RETURN_INT, get_this_scope());
         else if ($1 == BOOL) add_method($2, RETURN_BOOL, get_this_scope());
         current_args_list = NULL;

@@ -194,3 +194,13 @@ void error_greater_equal(int line){
     fprintf(stderr, "ERROR(line %d): operator >= is only for integers \n", line);
     exit(EXIT_FAILURE);
 }
+
+void error_different_return_types(int line, char* firstType, char* secondType) {
+    fprintf(stderr, "ERROR(line %d): returned types %s and %s are not the same \n", line, firstType, secondType);
+    exit(EXIT_FAILURE);
+}
+
+void error_args_number(int line, char* method, int num_args) {
+    fprintf(stderr, "ERROR(line %d): method %s should have %d args \n", line, method, num_args);
+    exit(EXIT_FAILURE);
+}
