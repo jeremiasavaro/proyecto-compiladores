@@ -25,6 +25,7 @@ AST_NODE* new_leaf_node(LEAF_TYPE type, void* value) {
     AST_NODE* node = alloc_node();
     node->type = AST_LEAF;
     node->leaf.leaf_type = type;
+    node->line = yylineno;
     if (type == TYPE_INT) {
         node->leaf.value = malloc(sizeof(union LEAF));
         node->leaf.value->int_leaf.type = TYPE_INT;
@@ -59,6 +60,7 @@ AST_NODE* new_binary_node(OPERATOR op, AST_NODE* left, AST_NODE* right) {
     node->common.right = right;
     if (left) left->father = node;
     if (right) right->father = node;
+    node->line = yylineno;
     return node;
 }
 
@@ -70,6 +72,7 @@ AST_NODE* new_unary_node(OPERATOR op, AST_NODE* left) {
     node->common.left = left;
     node->common.right = NULL;
     if (left) left->father = node;
+    node->line = yylineno;
     return node;
 }
 
@@ -82,6 +85,7 @@ AST_NODE* new_if_node(AST_NODE* condition, AST_NODE* then_block, AST_NODE* else_
     if (condition) condition->father = node;
     if (then_block) then_block->father = node;
     if (else_block) else_block->father = node;
+    node->line = yylineno;
     return node;
 }
 
@@ -92,6 +96,7 @@ AST_NODE* new_while_node(AST_NODE* condition, AST_NODE* block) {
     node->while_stmt.block = block;
     if (condition) condition->father = node;
     if (block) block->father = node;
+    node->line = yylineno;
     return node;
 }
 
@@ -103,6 +108,7 @@ AST_NODE* new_method_decl_node(char* name, AST_NODE_LIST* args, AST_NODE* block,
     node->method_decl.block = block;
     node->method_decl.scope = scope;
     node->method_decl.is_extern = is_extern;
+    node->line = yylineno;
     int num_args = 0;
     if (args) {
         AST_NODE_LIST* args_list = args;
@@ -139,6 +145,7 @@ AST_NODE* new_block_node(AST_NODE_LIST* stmts) {
     AST_NODE* node = alloc_node();
     node->type = AST_BLOCK;
     node->block.stmts = stmts;
+    node->line = yylineno;
     if (stmts) {
         AST_NODE_LIST* it = stmts;
         while (it) {
@@ -234,6 +241,7 @@ AST_NODE_LIST* append_expr(AST_NODE_LIST* list, AST_NODE* expr) {
     AST_NODE_LIST* new_node = malloc(sizeof(AST_NODE_LIST));
     new_node->first = expr;
     new_node->next = NULL;
+    new_node->first->line = yylineno;
     if (!list) {
         return new_node;
     } else {

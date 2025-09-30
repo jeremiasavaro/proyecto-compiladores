@@ -141,7 +141,6 @@ static void eval_common(AST_NODE *tree, TYPE *ret) {
             }
 
             *ret = right_type;
-            printf("%s \n", (char*) right_type);
             return;
         }
         case OP_RETURN: {
@@ -151,6 +150,7 @@ static void eval_common(AST_NODE *tree, TYPE *ret) {
             } else {
                 *ret = VOID_TYPE;
             }
+            return;
         }
     }
     error_unknown_operator(line);
@@ -177,6 +177,7 @@ static void eval_block(AST_NODE *tree, TYPE *ret){
         aux = aux->next;
     }
     memcpy(ret, &auxRet, sizeof(TYPE));
+    return;
 }
 
 static void eval_leaf(AST_NODE *tree, TYPE *ret){
@@ -262,10 +263,10 @@ static void eval_method_call(AST_NODE *tree, TYPE *ret) {
         switch (*ret) {
             case INT_TYPE:
                 auxType = CONST_INT;
-                break;
+                return;
             case BOOL_TYPE:
                 auxType = CONST_BOOL;
-                break;
+                return;
             default:
                 error_type_mismatch(line, method_args->arg->name, "INT or BOOL \n");
         }
@@ -301,7 +302,7 @@ static void eval_method_decl(AST_NODE *tree, TYPE *ret) {
             break;
     }
     if (auxType != method->method.return_type) {
-        error_type_mismatch(line, (char*) ret, tree->method_decl.name);
+        error_type_mismatch_method(line, tree->method_decl.name, method->method.return_type);
     }
 }
 
@@ -312,25 +313,25 @@ void eval(AST_NODE *tree, TYPE *ret){
     switch (tree->type) {
         case AST_COMMON:
             eval_common(tree, ret);
-            break;
+            return;
         case AST_IF:
             eval_if(tree);
-            break;
+            return;
         case AST_WHILE:
             eval_while(tree);
-            break;
+            return;
         case AST_METHOD_DECL:
             eval_method_decl(tree, ret);
-            break;
+            return;
         case AST_METHOD_CALL:
             eval_method_call(tree, ret);
-            break;
+            return;
         case AST_BLOCK:
             eval_block(tree, ret);
-            break;
+            return;
         case AST_LEAF:
             eval_leaf(tree, ret);
-            break;
+            return;
     }
 }
 
