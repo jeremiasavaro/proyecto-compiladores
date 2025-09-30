@@ -241,7 +241,6 @@ AST_NODE_LIST* append_expr(AST_NODE_LIST* list, AST_NODE* expr) {
     AST_NODE_LIST* new_node = malloc(sizeof(AST_NODE_LIST));
     new_node->first = expr;
     new_node->next = NULL;
-    new_node->first->line = yylineno;
     if (!list) {
         return new_node;
     } else {

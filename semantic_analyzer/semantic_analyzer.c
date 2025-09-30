@@ -172,11 +172,21 @@ static void eval_block(AST_NODE *tree, TYPE *ret){
     line = tree->line;
     AST_NODE_LIST *aux = tree->block.stmts;
     TYPE auxRet;
+    int returned = 0;
     while (aux != NULL){
         eval(aux->first, &auxRet);
+        if (returned) {
+            printf("The line %d was ignored because a return statement was already executed\n", aux->first->line);
+        }
+        if (aux->first->type == AST_COMMON && aux->first->common.op == OP_RETURN) {
+            returned = 1;
+            memcpy(ret, &auxRet, sizeof(TYPE)); // When we find a return, we copy its type to ret, the other statements are ignored
+        }
         aux = aux->next;
     }
-    memcpy(ret, &auxRet, sizeof(TYPE));
+    if (!returned) {
+        *ret = VOID_TYPE;   
+    }
     return;
 }
 
@@ -212,7 +222,7 @@ static void eval_leaf(AST_NODE *tree, TYPE *ret){
     * Then, evaluates the then_block and else_block.
 */
 
-static void eval_if(AST_NODE *tree) {
+static void eval_if(AST_NODE *tree, TYPE *ret) {
     line = tree->line;
     TYPE retCondition;
     TYPE retThen;
@@ -226,6 +236,11 @@ static void eval_if(AST_NODE *tree) {
     }
     eval(then_block, &retThen);
     eval(else_block, &retElse);
+    if(retThen && retElse) {
+        *ret = retThen;
+    } else {
+        *ret = VOID_TYPE;
+    }
 }
 
 /*
@@ -315,7 +330,7 @@ void eval(AST_NODE *tree, TYPE *ret){
             eval_common(tree, ret);
             return;
         case AST_IF:
-            eval_if(tree);
+            eval_if(tree, ret);
             return;
         case AST_WHILE:
             eval_while(tree);

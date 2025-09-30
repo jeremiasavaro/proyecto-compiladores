@@ -158,15 +158,8 @@ block:
             last_block_pushed = 1;
         }
     } var_decls statements '}' {
-        AST_NODE_LIST *merged = $3;
-        if (merged) {
-            AST_NODE_LIST *last = merged;
-            while (last->next) last = last->next;
-            last->next = $4;
-            $$ = new_block_node(merged);
-        } else {
-            $$ = new_block_node($4);
-        }
+        if ($4 == NULL) $$ = NULL;
+        $$ = new_block_node($4);
         if (last_block_pushed) {
             pop_scope();
         }
