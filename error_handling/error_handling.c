@@ -29,8 +29,24 @@ void error_variable_not_declared(int line, char* msg) {
     exit(EXIT_FAILURE);
 }
 
-void error_type_mismatch(int line, char* msg, char* type) {
-    fprintf(stderr, "Error(line %d): conflicting types for variable %s (should be %s) \n", line, msg, type);
+void error_type_mismatch(int line, char* variable, char* type) {
+    fprintf(stderr, "Error(line %d): conflicting types for variable %s (should be %s) \n", line, variable, type);
+    exit(EXIT_FAILURE);
+}
+
+void error_type_mismatch_method(int line, char* method, int type) {
+    switch (type)
+    {
+    case 0:
+        fprintf(stderr, "Error(line %d): conflicting types for return method %s (should be integer) \n", line, method);
+        break;
+    case 1:
+        fprintf(stderr, "Error(line %d): conflicting types for return method %s (should be bool) \n", line, method);
+        break;
+    default:
+        fprintf(stderr, "Error(line %d): conflicting types for return method %s (should not return a value) \n", line, method);
+        break;
+    }
     exit(EXIT_FAILURE);
 }
 
@@ -94,11 +110,6 @@ void error_division(int line){
     exit(EXIT_FAILURE);
 }
 
-void error_division_zero(int line){
-    fprintf(stderr, "ERROR(line %d): division by zero\n", line);
-    exit(EXIT_FAILURE);
-}
-
 void error_minus(int line){
     fprintf(stderr, "ERROR(line %d): minus is only for integers\n", line);
     exit(EXIT_FAILURE);
@@ -122,31 +133,6 @@ void error_neg(int line){
 void error_assign(int line){
     fprintf(stderr, "ERROR(line %d): invalid left-hand side of assignment\n", line);
     exit(EXIT_FAILURE);
-}
-
-void error_return_int(int line){
-    fprintf(stderr, "ERROR(line %d): main should return int\n", line);
-    exit(EXIT_FAILURE);
-}
-
-void error_return_bool(int line){
-    fprintf(stderr, "ERROR(line %d): main should return bool\n", line);
-    exit(EXIT_FAILURE);
-}
-
-void error_return_void(int line){
-    fprintf(stderr, "ERROR(line %d): main should return void\n", line);
-    exit(EXIT_FAILURE);
-}
-
-void error_unespected_return_int(int line){
-    fprintf(stderr, "ERROR(line %d): main returns void when it should return int\n", line);
-    exit(EXIT_FAILURE);   
-}
-
-void error_unespected_return_bool(int line){
-    fprintf(stderr, "ERROR(line %d): main returns void when it should return bool\n", line);
-    exit(EXIT_FAILURE);   
 }
 
 void error_unknown_operator(int line){
@@ -177,11 +163,6 @@ void error_noexistent_id(int line){
 void warning_already_returned(int line){
     fprintf(stderr, "WARNING(line %d): return statement ignored, already returned once\n", line);
     return;
-}
-
-void error_missing_return(int line){
-    fprintf(stderr, "ERROR(line %d): missing return statement in main\n", line);
-    exit(EXIT_FAILURE);
 }
 
 void error_lesser(int line){
