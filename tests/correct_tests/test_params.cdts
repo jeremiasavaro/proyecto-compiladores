@@ -1,0 +1,23 @@
+Program {
+    integer zero() {
+        return 0;
+    }
+    integer sum2(integer x, integer y) {
+        return x + y;
+    }
+
+    integer sum3(integer a, integer b, integer c) {
+        return sum2(a, b) + c;
+    }
+
+    void print_int(integer i) extern;
+    integer get_int() extern;
+
+    void main() {
+        integer r;
+        r = sum3(1, 2, zero());
+        print_int(r);
+        r = sum3(get_int(), 5, 6);
+        print_int(r);
+    }
+}

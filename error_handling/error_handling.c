@@ -30,6 +30,11 @@ void error_type_mismatch(int line, char* variable, char* type) {
     exit(EXIT_FAILURE);
 }
 
+void error_type_parameter(int line, char* parameter_name, char* type) {
+    fprintf(stderr, "Error(line %d): conflicting types for parameter %s (should be %s) \n", line, parameter_name, type);
+    exit(EXIT_FAILURE);
+}
+
 void error_type_mismatch_method(int line, char* method, int type) {
     switch (type)
     {

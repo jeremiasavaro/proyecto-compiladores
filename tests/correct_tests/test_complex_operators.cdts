@@ -1,0 +1,29 @@
+Program {
+    void print_int(integer i) extern;
+    void print_bool(bool b) extern;
+
+    integer complex_calc(integer a, integer b, integer c) {
+        /* probar + - * / % y paréntesis */
+        integer r = a * (b + -c) / ( (a % (b + 1)) + 1 );
+        return r + (a - b) * c;
+    }
+
+    bool logic_combo(bool p, bool q, integer k) {
+        /* probar AND, OR, NEG con comparaciones */
+        if ((p && (q || (k > 0)))) then {
+            return true;
+        } else {
+            return !(p && q);
+        }
+    }
+
+    void main() {
+        integer a;
+        bool b;
+        a = 10;
+        a = complex_calc(a, 3, -2);
+        print_int(a);
+        b = logic_combo(true, false, a);
+        print_bool(b);
+    }
+}

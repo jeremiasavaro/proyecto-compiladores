@@ -141,7 +141,7 @@ static void eval_common(AST_NODE *tree, TYPE *ret) {
 
             if ((id->id_type == CONST_INT && right_type != INT_TYPE) ||
                 (id->id_type == CONST_BOOL && right_type != BOOL_TYPE)) {
-                error_type_mismatch(line, id->id_name, id->id_type == CONST_INT ? "int" : "bool");
+                error_type_mismatch(line, id->id_name, (char*) id->id_type);
             }
 
             *ret = right_type;
@@ -296,7 +296,7 @@ static void eval_method_call(AST_NODE *tree, TYPE *ret) {
         error_method_not_found(tree->method_call.name);
     }
     if (method->id_type != METHOD) {
-        error_type_mismatch(line, tree->method_call.name, (char*)method->id_type);
+        error_type_mismatch(line, (char*) tree->method_call.name, (char*)method->id_type);
     }
     ARGS_LIST* method_args = method->method.arg_list;
     AST_NODE_LIST* call_args = tree->method_call.args;
@@ -315,10 +315,10 @@ static void eval_method_call(AST_NODE *tree, TYPE *ret) {
                 auxType = CONST_BOOL;
                 break;
             default:
-                error_type_mismatch(line, method_args->arg->name, "INT or BOOL \n");
+                error_type_mismatch(line,  method_args->arg->name, "INT or BOOL \n");
         }
         if (method_args->arg->type != auxType) {
-            error_type_mismatch(line, (char*) call_args->first->type, (char*) method_args->arg->type);
+            error_type_parameter(line,  method_args->arg->name, method_args->arg->type == CONST_INT ? "INT" : "BOOL");
         }
         method_args = method_args->next;
         call_args = call_args->next;

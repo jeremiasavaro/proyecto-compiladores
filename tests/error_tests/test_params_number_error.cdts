@@ -1,0 +1,9 @@
+Program {
+    integer add(integer x, integer y) {
+        return x + y;
+    }
+    void main() {
+        integer z;
+        z = add(1); /* llamada con 1 argumento, declaración requiere 2 */
+    }
+}

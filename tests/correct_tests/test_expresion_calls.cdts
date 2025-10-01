@@ -1,0 +1,21 @@
+Program {
+    void print_int(integer i) extern;
+    integer inc(integer x) {
+        return x + 1;
+    }
+    integer twice(integer f, integer x) {
+        return (x + x) * f;
+    }
+
+    integer caller() {
+        integer a;
+        a = 2;
+        a = twice(inc(a), inc(3)); /* llamada con expresiones y llamada anidada en args */
+        return a;
+    }
+
+    void main() {
+        print_int(caller());
+        print_int(inc(inc(inc(0)))); /* llamadas anidadas directas */
+    }
+}

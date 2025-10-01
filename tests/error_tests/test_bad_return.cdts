@@ -1,0 +1,8 @@
+Program {
+    integer bad_return() {
+        return 1 /* falta ';' aquí -> error sintáctico */
+    }
+    void main() {
+        bad_return();
+    }
+}

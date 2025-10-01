@@ -14,6 +14,7 @@ int error_open_file(char* filename);
 void error_variable_redeclaration(int line, char* msg);
 void error_variable_not_declared(int line, char* msg);
 void error_type_mismatch(int line, char* variable, char* type);
+void error_type_parameter(int line, char* parameter_name, char* type);
 void error_type_mismatch_method(int line, char* method, int type);
 void error_allocate_mem();
 void error_method_return_data();

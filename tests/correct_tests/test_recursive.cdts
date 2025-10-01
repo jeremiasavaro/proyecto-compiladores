@@ -1,0 +1,42 @@
+Program {
+    /* funciones extern para I/O */
+    integer get_int() extern;
+    void print_int(integer i) extern;
+    void print_bool(bool b) extern;
+
+    /* factorial recursivo */
+    integer factorial(integer n) {
+        if (n == 0) then {
+            return 1;
+        } else {
+            return n * factorial(n - 1);
+        }
+    }
+
+    /* recursión mutua: is_even / is_odd (devuelven bool) */
+    bool is_even(integer n) {
+        if (n == 0) then {
+            return true;
+        } else {
+            return is_odd(n - 1);
+        }
+    }
+
+    bool is_odd(integer n) {
+        if (n == 0) then {
+            return false;
+        } else {
+            return is_even(n - 1);
+        }
+    }
+
+    void main() {
+        integer x;
+        x = get_int();
+        if (is_even(x)) then {
+            print_int(factorial(x));
+        } else {
+            print_int(factorial(x - 1));
+        }
+    }
+}
