@@ -8,7 +8,8 @@
 typedef enum {
 	INT_TYPE,
 	BOOL_TYPE,
-	VOID_TYPE
+	VOID_TYPE,
+	NULL_TYPE,
 } TYPE;
 
 void semantic_analyzer(AST_ROOT* tree);

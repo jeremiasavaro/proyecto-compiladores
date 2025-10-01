@@ -3,6 +3,7 @@
 #include "error_handling.h"
 
 int line = 0;
+int returned_global = 0;
 TYPE method_return_type;
 
 /*
@@ -14,7 +15,6 @@ static void eval_common(AST_NODE *tree, TYPE *ret) {
     line = tree->line;
     TYPE left_type;
     TYPE right_type;
-    if (!tree) {printf("Tree doesnt exists \n");}
     switch (tree->common.op) {
         case OP_ADDITION:
             eval(tree->common.left, &left_type);
@@ -149,13 +149,17 @@ static void eval_common(AST_NODE *tree, TYPE *ret) {
                 eval(tree->common.left, &left_type);
                 if (left_type != method_return_type) {
                     printf("(1) error return type, is %d and should be %d, line %d \n", left_type, method_return_type, line);
+                    return;
                 }
                 memcpy(ret, &left_type, sizeof(TYPE));
+                returned_global = 1;
             } else {
                 if (method_return_type != VOID_TYPE) {
                     printf("(2) error return type \n");
+                    return;
                 }
                 *ret = VOID_TYPE;
+                returned_global = 1;
             }
             return;
         }
@@ -177,18 +181,24 @@ static void eval_while(AST_NODE *tree){
 static void eval_block(AST_NODE *tree, TYPE *ret){
     line = tree->line;
     AST_NODE_LIST *aux = tree->block.stmts;
-    TYPE auxRet = VOID_TYPE;
+    TYPE auxRet;
     int returned = 0;
     while (aux != NULL) {
+        if (returned_global) {
+            warning_ignored_line(aux->first->line);
+        }
         eval(aux->first, &auxRet);
         if (returned) {
-            printf("The line %d was ignored because a return statement was already executed\n", aux->first->line);
+            warning_ignored_line(aux->first->line);
         }
         if (aux->first->type == AST_COMMON && aux->first->common.op == OP_RETURN) {
             returned = 1;
             memcpy(ret, &auxRet, sizeof(TYPE)); // When we find a return, we copy its type to ret, the other statements are ignored
         }
         aux = aux->next;
+    }
+    if (!returned) {
+        *ret = NULL_TYPE;
     }
 }
 
@@ -226,8 +236,8 @@ static void eval_leaf(AST_NODE *tree, TYPE *ret){
 static void eval_if(AST_NODE *tree, TYPE *ret) {
     line = tree->line;
     TYPE retCondition;
-    TYPE retThen;
-    TYPE retElse;
+    TYPE retThen = NULL_TYPE;
+    TYPE retElse = NULL_TYPE;
     AST_NODE* condition = tree->if_stmt.condition;
     AST_NODE* then_block = tree->if_stmt.then_block;
     AST_NODE* else_block = tree->if_stmt.else_block;
@@ -236,21 +246,11 @@ static void eval_if(AST_NODE *tree, TYPE *ret) {
         error_conditional(line);
     }
     eval(then_block, &retThen);
-    eval(else_block, &retElse);
-    if(retThen || retElse) {
-        if (retThen != retElse) {
-            error_different_return_types(line, (char*) retThen, (char*) retElse);
-        } else {
-            *ret = retThen;
-        }
-    } else {
-        if (retThen) {
-            *ret = retThen;
-        } else if (retElse) {
-            *ret = retElse;
-        } else {
-            *ret = VOID_TYPE;
-        }
+    if (else_block) {
+        eval(else_block, &retElse);
+    }
+    if (retThen != NULL_TYPE && retElse != NULL_TYPE) { // if both blocks return something
+        returned_global = 1;
     }
 }
 
@@ -265,11 +265,6 @@ static void eval_if(AST_NODE *tree, TYPE *ret) {
 
 static void eval_method_call(AST_NODE *tree, TYPE *ret) {
     line = tree->line;
-    // Buscamos el metodo en la tabla de simbolos, si no esta retornamos error.
-    // Si esta, obtenemos los argumentos del metodo.
-    // Luego recorremos los argumentos del metodo y los parametros que estamos pasando en la llamada
-    // para ver si son del mismo tipo y si la cantidad de argumentos es la misma.
-    // Si alguna de estas dos condiciones no se cumple, retornamos error.
     ID_TABLE* method = find_global(tree->method_call.name);
     if (!method) {
         error_method_not_found(tree->method_call.name);
@@ -348,12 +343,16 @@ void eval(AST_NODE *tree, TYPE *ret){
             return;
         case AST_METHOD_DECL:
             eval_method_decl(tree, ret);
+            returned_global = 0;
             return;
         case AST_METHOD_CALL:
             eval_method_call(tree, ret);
             return;
         case AST_BLOCK:
             eval_block(tree, ret);
+            if (tree->father->type != AST_BLOCK && returned_global) {
+                returned_global = 0;
+            }
             return;
         case AST_LEAF:
             eval_leaf(tree, ret);

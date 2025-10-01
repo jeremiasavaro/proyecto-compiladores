@@ -204,3 +204,7 @@ void error_args_number(int line, char* method, int num_args) {
     fprintf(stderr, "ERROR(line %d): method %s should have %d args \n", line, method, num_args);
     exit(EXIT_FAILURE);
 }
+
+void warning_ignored_line(int line) {
+    printf("WARN: The line %d was ignored because a return statement was already executed\n", line);
+}
