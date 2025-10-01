@@ -75,7 +75,7 @@ void error_add_argument_method(char* method_name) {
     exit(EXIT_FAILURE);
 }
 
-void error_method_not_found(char* method_name) {
+void error_method_not_found(const char* method_name) {
     fprintf(stderr, "Error: method %s not found \n", method_name);
     exit(EXIT_FAILURE);
 }
@@ -155,8 +155,8 @@ void error_unknown_leaf_type(int line){
     exit(EXIT_FAILURE);
 }
 
-void error_noexistent_id(int line){
-    fprintf(stderr, "ERROR(line %d): nonexistent identifier '%s'\n", line);
+void error_non_existent_id(int line){
+    fprintf(stderr, "ERROR(line %d): non-existent identifier \n", line);
     exit(EXIT_FAILURE);
 }
 
@@ -211,9 +211,9 @@ void warning_ignored_line(int line) {
 
 void error_missing_return(char* method, int type){
     if (type == 0) {
-        fprintf(stderr, "ERROR: method %s should be return int\n", method);
+        fprintf(stderr, "ERROR: method %s should return int\n", method);
     } else {
-        fprintf(stderr, "ERROR: method %s should be return bool\n", method);
+        fprintf(stderr, "ERROR: method %s should return bool\n", method);
     }
     exit(EXIT_FAILURE);
 }

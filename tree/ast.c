@@ -109,11 +109,9 @@ AST_NODE* new_method_decl_node(char* name, AST_NODE_LIST* args, AST_NODE* block,
     node->method_decl.scope = scope;
     node->method_decl.is_extern = is_extern;
     node->line = yylineno;
-    int num_args = 0;
     if (args) {
         AST_NODE_LIST* args_list = args;
         while (args_list) {
-            num_args++;
             if (args_list->first) args_list->first->father = node; // asign father to each arg
             args_list = args_list->next;
         }

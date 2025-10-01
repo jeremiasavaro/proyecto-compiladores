@@ -66,17 +66,17 @@ var_decl:
       type ID '=' expr ';'
         {
           if ($1 == INTEGER) {
-            ID_TABLE* dir = add_id($2, CONST_INT);
+            add_id($2, CONST_INT);
           } else {
-            ID_TABLE* dir = add_id($2, CONST_BOOL);
+            add_id($2, CONST_BOOL);
           }
         }
     | type ID ';'
         {
           if ($1 == INTEGER) {
-            ID_TABLE* dir = add_id($2, CONST_INT);
+            add_id($2, CONST_INT);
           } else {
-            ID_TABLE* dir = add_id($2, CONST_BOOL);
+            add_id($2, CONST_BOOL);
           }
         }
     ;

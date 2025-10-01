@@ -225,6 +225,7 @@ void* get_data(char* name) {
             return aux->method.data;
         default:
             error_type_id_unknown();
+            break;
     }
 }
 
