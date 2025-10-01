@@ -42,7 +42,7 @@ int last_block_pushed = 0;
 %right UMINUS
 %right NEG
 
-%type <node> program decls decl var_decl method_decl block statement expr literal method_call
+%type <node> program decls decl var_decl method_decl block statement expr literal method_call else
 %type <nodelist> method_args arg_list expr_list call_args statements var_decls
 %type <ival> type
 
@@ -184,12 +184,17 @@ statement:
           $$ = new_binary_node(OP_ASSIGN, id, $3);
         }
     | method_call ';' { $$ = $1; }
-    | IF '(' expr ')' THEN block ELSE block { $$ = new_if_node($3, $6, $8); }
+    | IF '(' expr ')' THEN block else { $$ = new_if_node($3, $6, $7); }
     | WHILE '(' expr ')' block { $$ = new_while_node($3, $5); }
     | RETURN expr ';' { $$ = new_unary_node(OP_RETURN, $2); }
     | RETURN ';'  { $$ = new_unary_node(OP_RETURN, NULL); }
     | ';' { $$ = NULL; }
     | block { $$ = $1; }
+    ;
+
+else :
+        ELSE block { $$ = $2; }
+    |  /* empty */ { $$ = NULL; }
     ;
 
 expr:
