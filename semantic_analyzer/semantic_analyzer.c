@@ -193,11 +193,11 @@ static void eval_block(AST_NODE *tree, TYPE *ret){
         }
         if (aux->first->type == AST_COMMON && aux->first->common.op == OP_RETURN) {
             returned = 1;
-            memcpy(ret, &auxRet, sizeof(TYPE)); // When we find a return, we copy its type to ret, the other statements are ignored
+            memcpy(ret, &auxRet, sizeof(TYPE)); // When we find a return, we copy its type to ret, the other statements are ignored}
         }
         aux = aux->next;
     }
-    if (!returned) {
+    if (!returned && !returned_global) {
         *ret = NULL_TYPE;
     }
 }
@@ -249,8 +249,17 @@ static void eval_if(AST_NODE *tree, TYPE *ret) {
     if (else_block) {
         eval(else_block, &retElse);
     }
-    if (retThen != NULL_TYPE && retElse != NULL_TYPE) { // if both blocks return something
-        returned_global = 1;
+    if (retThen != 3) {
+        if (retElse != 3) { // if both blocks return something
+            returned_global = 1;
+        }
+        *ret = retThen;
+    } else {
+        if (retElse != 3) {
+            *ret = retElse;
+        } else {
+            *ret = 3;
+        }
     }
 }
 
