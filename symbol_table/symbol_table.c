@@ -227,6 +227,7 @@ void* get_data(char* name) {
             error_type_id_unknown();
             break;
     }
+    return NULL;
 }
 
 // add an argument to a given method
