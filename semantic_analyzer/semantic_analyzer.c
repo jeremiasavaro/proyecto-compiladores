@@ -145,7 +145,7 @@ static void eval_common(AST_NODE *tree, TYPE *ret) {
             return;
         }
         case OP_RETURN: {
-            if (tree->common.left) {
+            if (tree->common.left) {                
                 eval(tree->common.left, &left_type);
                 if (left_type != method_return_type) {
                     printf("(1) error return type, is %d and should be %d, line %d \n", left_type, method_return_type, line);
@@ -302,6 +302,9 @@ static void eval_method_call(AST_NODE *tree, TYPE *ret) {
         method_args = method_args->next;
         call_args = call_args->next;
     }
+
+    *ret = method->method.return_type;
+
 }
 
 /*
