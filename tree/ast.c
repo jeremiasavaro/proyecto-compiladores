@@ -1,26 +1,25 @@
-#include <stdbool.h>
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include "error_handling.h"
 #include "ast.h"
-#include "utils.h"
 
-int returnInt;
-int returnBool;
+/* Global pointers to the head and the end of the ast root list.
+ * Used for faster access.
+ */
 AST_ROOT *head_ast = NULL;
 AST_ROOT *end_ast = NULL;
 
 extern int yylineno;
 
-static AST_NODE* alloc_node(void) {
-    AST_NODE* node = (AST_NODE*) malloc(sizeof(AST_NODE));
+/* Function that allocates memory of a node and initialize all data in NULL.
+ */
+AST_NODE* alloc_node(void) {
+    AST_NODE* node = malloc(sizeof(AST_NODE));
     node->father = NULL;
     node->type = AST_NULL;
     node->line = -1;
     return node;
 }
 
+/* Function that creates a new node of type leaf, assigning its type and value.
+ */
 AST_NODE* new_leaf_node(LEAF_TYPE type, void* value) {
     AST_NODE* node = alloc_node();
     node->type = AST_LEAF;
@@ -35,22 +34,16 @@ AST_NODE* new_leaf_node(LEAF_TYPE type, void* value) {
         node->leaf.value->bool_leaf.type = TYPE_BOOL;
         node->leaf.value->bool_leaf.value = *((int*) value);
     } else if (type == TYPE_ID) {
-        /* Create ID leaf: store a copy of the identifier string */
         node->leaf.value = malloc(sizeof(union LEAF));
-        if (!node->leaf.value) {
-            free(node);
-            return NULL;
-        }
+        /* In case that the leaf contains an ID, save in the value field the pointer to the
+           block in the symbols table that contains that id. */
         node->leaf.value->id_leaf = (ID_TABLE*) value;
-        if (!node->leaf.value->id_leaf) {
-            free(node->leaf.value);
-            free(node);
-            return NULL;
-        }
     }
     return node;
 }
 
+/* Function that creates a new binary node, assigning its type and its children.
+ */
 AST_NODE* new_binary_node(OPERATOR op, AST_NODE* left, AST_NODE* right) {
     AST_NODE* node = alloc_node();
     node->type = AST_COMMON;
@@ -64,6 +57,9 @@ AST_NODE* new_binary_node(OPERATOR op, AST_NODE* left, AST_NODE* right) {
     return node;
 }
 
+/* Function that creates a new unary node, assigning its type and the child.
+ * Always assign the child to the left child of the node.
+ */
 AST_NODE* new_unary_node(OPERATOR op, AST_NODE* left) {
     AST_NODE* node = alloc_node();
     node->type = AST_COMMON;
@@ -76,6 +72,9 @@ AST_NODE* new_unary_node(OPERATOR op, AST_NODE* left) {
     return node;
 }
 
+/* Function that creates a new node of type if, assigning its condition and the then block and
+ * else block (if it is present).
+ */
 AST_NODE* new_if_node(AST_NODE* condition, AST_NODE* then_block, AST_NODE* else_block) {
     AST_NODE* node = alloc_node();
     node->type = AST_IF;
@@ -89,6 +88,8 @@ AST_NODE* new_if_node(AST_NODE* condition, AST_NODE* then_block, AST_NODE* else_
     return node;
 }
 
+/* Function that creates a new node of type while, assigning its condition and the body block
+ */
 AST_NODE* new_while_node(AST_NODE* condition, AST_NODE* block) {
     AST_NODE* node = alloc_node();
     node->type = AST_WHILE;
@@ -100,10 +101,13 @@ AST_NODE* new_while_node(AST_NODE* condition, AST_NODE* block) {
     return node;
 }
 
+/* Function that creates a new node of type method_decl, assigning its name, arguments, body block, scope and
+ * if it is externally defined.
+ */
 AST_NODE* new_method_decl_node(char* name, AST_NODE_LIST* args, AST_NODE* block, TABLE_STACK* scope, int is_extern) {
     AST_NODE* node = alloc_node();
     node->type = AST_METHOD_DECL;
-    node->method_decl.name = my_strdup(name); // save a copy of the name 
+    node->method_decl.name = my_strdup(name); // Save a copy of the name .
     node->method_decl.args = args; 
     node->method_decl.block = block;
     node->method_decl.scope = scope;
@@ -112,7 +116,7 @@ AST_NODE* new_method_decl_node(char* name, AST_NODE_LIST* args, AST_NODE* block,
     if (args) {
         AST_NODE_LIST* args_list = args;
         while (args_list) {
-            if (args_list->first) args_list->first->father = node; // asign father to each arg
+            if (args_list->first) args_list->first->father = node; // Assign father to each argument.
             args_list = args_list->next;
         }
     }
@@ -120,6 +124,8 @@ AST_NODE* new_method_decl_node(char* name, AST_NODE_LIST* args, AST_NODE* block,
     return node;
 }
 
+/* Function that creates a new node of type method_call, assigning its name and arguments.
+ */
 AST_NODE* new_method_call_node(char* name, AST_NODE_LIST* args) {
     AST_NODE* node = alloc_node();
     node->type = AST_METHOD_CALL;
@@ -139,6 +145,8 @@ AST_NODE* new_method_call_node(char* name, AST_NODE_LIST* args) {
     return node;
 }
 
+/* Function that creates a new node of type block, assigning its statements.
+ */
 AST_NODE* new_block_node(AST_NODE_LIST* stmts) {
     AST_NODE* node = alloc_node();
     node->type = AST_BLOCK;
@@ -147,13 +155,15 @@ AST_NODE* new_block_node(AST_NODE_LIST* stmts) {
     if (stmts) {
         AST_NODE_LIST* it = stmts;
         while (it) {
-            if (it->first) it->first->father = node; // asign father to each stmt
+            if (it->first) it->first->father = node; // Assign father to each statement.
             it = it->next;
         }
     }
     return node;
 }
 
+/* Function that creates the root of the ast.
+ */
 void create_root(AST_NODE* tree) {
     head_ast = (AST_ROOT*) malloc(sizeof(AST_ROOT));
     head_ast->sentence = tree;
@@ -161,6 +171,8 @@ void create_root(AST_NODE* tree) {
     end_ast = head_ast;
 }
 
+/* Function that adds a sentence to the ast.
+ */
 void add_sentence(AST_NODE* tree) {
     if (head_ast == NULL) {
         create_root(tree);
@@ -173,6 +185,8 @@ void add_sentence(AST_NODE* tree) {
     }
 }
 
+/* Function that frees memory recursively.
+ */
 void free_mem(AST_NODE* node) {
     if (!node) return;
     switch (node->type) {
@@ -233,7 +247,8 @@ void free_mem(AST_NODE* node) {
     free(node);
 }
 
-// method utilized for build lists of expressions (statements, args, etc)
+/* Function utilized for build lists of expressions (statements, args, etc)
+ */
 AST_NODE_LIST* append_expr(AST_NODE_LIST* list, AST_NODE* expr) {
     if (!expr) return list;
     AST_NODE_LIST* new_node = malloc(sizeof(AST_NODE_LIST));
@@ -241,10 +256,9 @@ AST_NODE_LIST* append_expr(AST_NODE_LIST* list, AST_NODE* expr) {
     new_node->next = NULL;
     if (!list) {
         return new_node;
-    } else {
-        AST_NODE_LIST* aux = list;
-        while (aux->next) aux = aux->next;
-        aux->next = new_node;
-        return list;
     }
+    AST_NODE_LIST* aux = list;
+    while (aux->next) aux = aux->next;
+    aux->next = new_node;
+    return list;
 }

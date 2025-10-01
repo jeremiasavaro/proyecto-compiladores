@@ -1,6 +1,13 @@
 #ifndef ERROR_HANDLING
 #define ERROR_HANDLING
 
+#include <stdio.h>
+#include <errno.h>
+#include <stdlib.h>
+#include <string.h>
+#include "symbol_table.h"
+#include "ast.h"
+
 void error_parse(int line, char* msg);
 void error_lexical(int line, char* msg);
 int error_open_file(char* filename);
@@ -31,15 +38,17 @@ void error_id_unknown_type(int line, char* variable);
 void error_unknown_leaf_type(int line);
 void error_non_existent_id(int line);
 void warning_already_returned(int line);
-void error_lesser(int line);
+void error_less(int line);
 void error_greater(int line);
 void error_equal(int line);
 void error_not_equal(int line);
 void error_less_equal(int line);
 void error_greater_equal(int line);
-void error_different_return_types(int line, char* firstType, char* secondType);
+void error_different_return_types(int line, char* firstType, char* second_type);
 void error_args_number(int line, char* method, int num_args);
 void warning_ignored_line(int line);
 void error_missing_return(char* method, int type);
+void error_return_type(int line, int type, int true_type);
+void error_return_type_void(int line, int true_type);
 
 #endif

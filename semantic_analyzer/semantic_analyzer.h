@@ -14,7 +14,7 @@ typedef enum {
 	NULL_TYPE,
 } TYPE;
 
+/* Public function: checks the semantic of a tree */
 void semantic_analyzer(AST_ROOT* tree);
-void eval(AST_NODE *tree, TYPE *ret);
 
 #endif

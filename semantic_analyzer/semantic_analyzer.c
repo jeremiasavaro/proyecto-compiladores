@@ -1,8 +1,14 @@
 #include "semantic_analyzer.h"
 
 int line = 0;
-int returned_global = 0;
-TYPE method_return_type;
+int returned_global = 0; // Global flag set when a return statement has been encountered and propagated.
+TYPE method_return_type; // Current method's expected return TYPE (used when checking return statements).
+
+/*
+ * Function that calls the correct evaluator depending on the AST node type.
+ * Also resets global variable returned_global when needed.
+ */
+void eval(AST_NODE *tree, TYPE *ret);
 
 /*
  * Recursively evaluates an AST_COMMON node and stores its type and value in ‘ret’.
@@ -58,7 +64,7 @@ static void eval_common(AST_NODE *tree, TYPE *ret) {
             eval(tree->common.left, &left_type);
             eval(tree->common.right, &right_type);
             if (left_type != INT_TYPE || right_type != INT_TYPE) {
-                error_lesser(line);
+                error_less(line);
             }
             *ret = BOOL_TYPE;
             return;
@@ -131,7 +137,6 @@ static void eval_common(AST_NODE *tree, TYPE *ret) {
                 error_assign(line);
             }
             ID_TABLE *id = tree->common.left->leaf.value->id_leaf;
-
             eval(tree->common.right, &right_type);
 
             if ((id->id_type == CONST_INT && right_type != INT_TYPE) ||
@@ -146,15 +151,13 @@ static void eval_common(AST_NODE *tree, TYPE *ret) {
             if (tree->common.left) {                
                 eval(tree->common.left, &left_type);
                 if (left_type != method_return_type) {
-                    printf("(1) error return type, is %d and should be %d, line %d \n", left_type, method_return_type, line);
-                    return;
+                    error_return_type(tree->line, left_type, method_return_type);
                 }
                 memcpy(ret, &left_type, sizeof(TYPE));
                 returned_global = 1;
             } else {
                 if (method_return_type != VOID_TYPE) {
-                    printf("(2) error return type, is VOID and should be %d\n", method_return_type);
-                    return;
+                    error_return_type_void(tree->line, method_return_type);
                 }
                 *ret = VOID_TYPE;
                 returned_global = 1;
@@ -165,6 +168,10 @@ static void eval_common(AST_NODE *tree, TYPE *ret) {
     error_unknown_operator(line);
 }
 
+/*
+ * Evaluates a while-statement node: checks if the loop condition is boolean and
+ * evaluates the loop body. Reports an error if condition is not boolean.
+ */
 static void eval_while(AST_NODE *tree){
     line = tree->line;
     TYPE retCond;
@@ -176,6 +183,11 @@ static void eval_while(AST_NODE *tree){
     eval(tree->while_stmt.block, &retBlock);
 }
 
+/*
+ * Evaluates a block of statements. Iterates statements, tracks and reports
+ * ignored code after returns, and sets `ret` to the returned type if a return
+ * is found; otherwise sets NULL_TYPE unless a return was globally flagged.
+ */
 static void eval_block(AST_NODE *tree, TYPE *ret){
     line = tree->line;
     AST_NODE_LIST *aux = tree->block.stmts;
@@ -191,15 +203,21 @@ static void eval_block(AST_NODE *tree, TYPE *ret){
         }
         if (aux->first->type == AST_COMMON && aux->first->common.op == OP_RETURN) {
             returned = 1;
-            memcpy(ret, &auxRet, sizeof(TYPE)); // When we find a return, we copy its type to ret, the other statements are ignored
+            memcpy(ret, &auxRet, sizeof(TYPE)); // When we find a return, we copy its type to ret, the other statements are ignored.
         }
         aux = aux->next;
     }
+
+    // If no statement was a return inside this block.
     if (!returned && !returned_global) {
         *ret = NULL_TYPE;
     }
 }
 
+/*
+ * Evaluates a leaf AST node (literal or identifier). Sets to ret the corresponding
+ * TYPE (INT_TYPE, BOOL_TYPE) or reports errors for unknown ID's/types.
+ */
 static void eval_leaf(AST_NODE *tree, TYPE *ret){
     line = tree->line;
     switch (tree->leaf.leaf_type) {
@@ -239,6 +257,7 @@ static void eval_if(AST_NODE *tree, TYPE *ret) {
     AST_NODE* condition = tree->if_stmt.condition;
     AST_NODE* then_block = tree->if_stmt.then_block;
     AST_NODE* else_block = tree->if_stmt.else_block;
+    // Ensure condition is boolean.
     eval(condition, &retCondition);
     if(retCondition != BOOL_TYPE) {
         error_conditional(line);
@@ -247,15 +266,16 @@ static void eval_if(AST_NODE *tree, TYPE *ret) {
     if (else_block) {
         eval(else_block, &retElse);
     }
+    // Checks if return statements were encountered inside then and (optional) else block.
     if (retThen != NULL_TYPE) {
-        if (retElse != NULL_TYPE) { // if both blocks return something
+        if (retElse != NULL_TYPE) { // If both blocks return something.
             returned_global = 1;
         }
         *ret = retThen;
     } else {
         if (retElse != NULL_TYPE) {
             *ret = retElse;
-        } else {
+        } else { // If no block returns anything.
             *ret = NULL_TYPE;
         }
     }
@@ -281,7 +301,7 @@ static void eval_method_call(AST_NODE *tree, TYPE *ret) {
     ARGS_LIST* method_args = method->method.arg_list;
     AST_NODE_LIST* call_args = tree->method_call.args;
     if (method->method.num_args != tree->method_call.num_args) {
-        error_args_number(line, (char*) method->id_name, method->method.num_args);
+        error_args_number(line, method->id_name, method->method.num_args);
     }
 
     while (method_args && call_args) {
@@ -320,7 +340,8 @@ static void eval_method_call(AST_NODE *tree, TYPE *ret) {
 }
 
 /*
- * Only eval_block is called.
+ * Evaluates a method declaration node: sets the expected method return type,
+ * evaluates the method body (unless extern), and checks for missing return when needed.
  */
 static void eval_method_decl(AST_NODE *tree, TYPE *ret) {
     line = tree->line;
@@ -342,11 +363,15 @@ static void eval_method_decl(AST_NODE *tree, TYPE *ret) {
     if (!tree->method_decl.is_extern) {
         eval(tree->method_decl.block, ret);
     }
-    if (*ret == NULL_TYPE && method_return_type != VOID_TYPE) {
-        error_missing_return((char*) tree->method_decl.name, method_return_type);
+    if (*ret == NULL_TYPE && method_return_type != VOID_TYPE) { // If no return was found and method should return something.
+        error_missing_return(tree->method_decl.name, method_return_type);
     }
 }
 
+/*
+ * Function that calls the correct evaluator depending on the AST node type.
+ * Also resets global variable returned_global when needed.
+ */
 void eval(AST_NODE *tree, TYPE *ret){
     if (!tree){
         error_null_node(-1);

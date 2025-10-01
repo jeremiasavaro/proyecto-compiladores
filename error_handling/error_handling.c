@@ -1,8 +1,4 @@
 #include "error_handling.h"
-#include <stdio.h>
-#include <errno.h>
-#include <stdlib.h>
-#include <string.h>
 
 void error_parse(int line, char* msg) {
     fprintf(stderr, "Parse error(line %d): %s \n", line, msg);
@@ -165,7 +161,7 @@ void warning_already_returned(int line){
     return;
 }
 
-void error_lesser(int line){
+void error_less(int line){
     fprintf(stderr, "ERROR(line %d): operator < is only for integers \n", line);
     exit(EXIT_FAILURE);
 }
@@ -195,8 +191,8 @@ void error_greater_equal(int line){
     exit(EXIT_FAILURE);
 }
 
-void error_different_return_types(int line, char* firstType, char* secondType) {
-    fprintf(stderr, "ERROR(line %d): returned types %s and %s are not the same \n", line, firstType, secondType);
+void error_different_return_types(int line, char* firstType, char* second_type) {
+    fprintf(stderr, "ERROR(line %d): returned types %s and %s are not the same \n", line, firstType, second_type);
     exit(EXIT_FAILURE);
 }
 
@@ -215,5 +211,57 @@ void error_missing_return(char* method, int type){
     } else {
         fprintf(stderr, "ERROR: method %s should return bool\n", method);
     }
+    exit(EXIT_FAILURE);
+}
+
+void error_return_type(int line, int type, int true_type) {
+    char* left_type_string;
+    switch (type) {
+        case 0:
+            left_type_string = "INT";
+            break;
+        case 1:
+            left_type_string = "BOOL";
+            break;
+        case 2:
+            left_type_string = "VOID";
+            break;
+        default:
+            left_type_string = "NULL";
+    }
+    char* method_return_type_string;
+    switch (true_type) {
+        case 0:
+            method_return_type_string = "INT";
+            break;
+        case 1:
+            method_return_type_string = "BOOL";
+            break;
+        case 2:
+            method_return_type_string = "VOID";
+            break;
+        default:
+            method_return_type_string = "NULL";
+    }
+    fprintf(stderr, "ERROR(line %d): return type is %s and should be %s \n", line, left_type_string, method_return_type_string);
+    exit(EXIT_FAILURE);
+}
+
+void error_return_type_void(int line, int true_type) {
+    char* method_return_type_string;
+    switch (true_type) {
+        case 0:
+            method_return_type_string = "INT";
+            break;
+        case 1:
+            method_return_type_string = "BOOL";
+            break;
+        case 2:
+            method_return_type_string = "VOID";
+            break;
+        default:
+            method_return_type_string = "NULL";
+    }
+    fprintf(stderr, "ERROR (line %d)(2) error return type, is VOID and should be %s \n", line, method_return_type_string);
     exit(EXIT_FAILURE);
 }
