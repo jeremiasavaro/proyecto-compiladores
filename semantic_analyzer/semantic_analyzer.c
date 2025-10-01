@@ -155,7 +155,7 @@ static void eval_common(AST_NODE *tree, TYPE *ret) {
                 returned_global = 1;
             } else {
                 if (method_return_type != VOID_TYPE) {
-                    printf("(2) error return type \n");
+                    printf("(2) error return type, is VOID and should be %d\n", method_return_type);
                     return;
                 }
                 *ret = VOID_TYPE;
@@ -324,6 +324,9 @@ static void eval_method_decl(AST_NODE *tree, TYPE *ret) {
     }
     if (!tree->method_decl.is_extern) {
         eval(tree->method_decl.block, ret);
+    }
+    if (*ret == NULL_TYPE && method_return_type != VOID_TYPE) {
+        error_missing_return((char*) tree->method_decl.name, method_return_type);
     }
 }
 

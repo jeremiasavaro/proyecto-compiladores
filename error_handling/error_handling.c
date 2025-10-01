@@ -208,3 +208,12 @@ void error_args_number(int line, char* method, int num_args) {
 void warning_ignored_line(int line) {
     printf("WARN: The line %d was ignored because a return statement was already executed\n", line);
 }
+
+void error_missing_return(char* method, int type){
+    if (type == 0) {
+        fprintf(stderr, "ERROR: method %s should be return int\n", method);
+    } else {
+        fprintf(stderr, "ERROR: method %s should be return bool\n", method);
+    }
+    exit(EXIT_FAILURE);
+}

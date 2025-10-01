@@ -40,5 +40,6 @@ void error_greater_equal(int line);
 void error_different_return_types(int line, char* firstType, char* secondType);
 void error_args_number(int line, char* method, int num_args);
 void warning_ignored_line(int line);
+void error_missing_return(char* method, int type);
 
 #endif
