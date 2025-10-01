@@ -4,6 +4,8 @@
 #include "ast.h"
 #include "symbol_table.h"
 #include <memory.h>
+#include "error_handling.h"
+#include <stdio.h>
 
 typedef enum {
 	INT_TYPE,

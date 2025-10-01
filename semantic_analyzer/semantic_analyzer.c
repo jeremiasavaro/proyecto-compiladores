@@ -1,6 +1,4 @@
-#include <stdio.h>
 #include "semantic_analyzer.h"
-#include "error_handling.h"
 
 int line = 0;
 int returned_global = 0;
@@ -188,7 +186,7 @@ static void eval_block(AST_NODE *tree, TYPE *ret){
             warning_ignored_line(aux->first->line);
         }
         eval(aux->first, &auxRet);
-        if (returned) {
+        if (returned && !returned_global) {
             warning_ignored_line(aux->first->line);
         }
         if (aux->first->type == AST_COMMON && aux->first->common.op == OP_RETURN) {
@@ -197,7 +195,7 @@ static void eval_block(AST_NODE *tree, TYPE *ret){
         }
         aux = aux->next;
     }
-    if (!returned) {
+    if (!returned && !returned_global) {
         *ret = NULL_TYPE;
     }
 }
@@ -214,7 +212,7 @@ static void eval_leaf(AST_NODE *tree, TYPE *ret){
         case TYPE_ID: {
             ID_TABLE *id = tree->leaf.value->id_leaf;
             if (!id) {
-                error_noexistent_id(line);
+                error_non_existent_id(line);
             }
             if (id->id_type == CONST_INT) {
                 *ret = INT_TYPE;
@@ -230,8 +228,8 @@ static void eval_leaf(AST_NODE *tree, TYPE *ret){
 }
 
 /*
-    * First, evaluates the condition. If it is not a boolean, returns an error.
-    * Then, evaluates the then_block and else_block.
+* First, evaluates the condition. If it is not a boolean, returns an error.
+* Then, evaluates the then_block and else_block.
 */
 static void eval_if(AST_NODE *tree, TYPE *ret) {
     line = tree->line;
@@ -249,8 +247,18 @@ static void eval_if(AST_NODE *tree, TYPE *ret) {
     if (else_block) {
         eval(else_block, &retElse);
     }
-    if (retThen != NULL_TYPE && retElse != NULL_TYPE) { // if both blocks return something
-        returned_global = 1;
+    if (retThen != NULL_TYPE) {
+        if (retElse != NULL_TYPE) { // if both blocks return something
+            returned_global = 1;
+        }
+        *ret = retThen;
+
+    } else {
+        if (retElse != NULL_TYPE) {
+            *ret = retElse;
+        } else {
+            *ret = NULL_TYPE;
+        }
     }
 }
 
@@ -262,7 +270,6 @@ static void eval_if(AST_NODE *tree, TYPE *ret) {
  * to see if they are of the same type and if the number of arguments is the same. 
  * If either of these two conditions is not met, we return an error.
  */
-
 static void eval_method_call(AST_NODE *tree, TYPE *ret) {
     line = tree->line;
     ID_TABLE* method = find_global(tree->method_call.name);
@@ -280,7 +287,7 @@ static void eval_method_call(AST_NODE *tree, TYPE *ret) {
 
     while (method_args && call_args) {
         eval(call_args->first, ret);
-        ID_TYPE auxType;
+        ID_TYPE auxType = UNKNOWN;
         switch (*ret) {
             case INT_TYPE:
                 auxType = CONST_INT;
@@ -298,8 +305,19 @@ static void eval_method_call(AST_NODE *tree, TYPE *ret) {
         call_args = call_args->next;
     }
 
-    *ret = method->method.return_type;
-
+    switch (method->method.return_type) {
+        case RETURN_INT:
+            *ret = INT_TYPE;
+            break;
+        case RETURN_BOOL:
+            *ret = BOOL_TYPE;
+            break;
+        case RETURN_VOID:
+            *ret = VOID_TYPE;
+            break;
+        default:
+            error_type_mismatch_method(line, method->id_name, method->method.return_type);
+    }
 }
 
 /*
@@ -363,7 +381,7 @@ void eval(AST_NODE *tree, TYPE *ret){
     }
 }
 
-/* Public function: interprets (evaluates) a tree */
+/* Public function: checks the semantic of a tree */
 void semantic_analyzer(AST_ROOT *tree) {
     TYPE ret;
     for (AST_ROOT* cur = tree; cur != NULL; cur = cur->next) {
