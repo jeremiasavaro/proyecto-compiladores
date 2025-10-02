@@ -270,3 +270,8 @@ void error_return_type_void(int line, int true_type) {
     fprintf(stderr, "ERROR (line %d)(2) error return type, is VOID and should be %s \n", line, method_return_type_string);
     exit(EXIT_FAILURE);
 }
+
+void error_main_missing() {
+    fprintf(stderr, "ERROR: main method not is declared\n");
+    exit(EXIT_FAILURE);
+}

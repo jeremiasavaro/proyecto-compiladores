@@ -3,6 +3,7 @@
 int line = 0;
 int returned_global = 0; // Global flag set when a return statement has been encountered and propagated.
 TYPE method_return_type; // Current method's expected return TYPE (used when checking return statements).
+int main_defined = 0; // Flag to check if main method is defined.
 
 /*
  * Function that calls the correct evaluator depending on the AST node type.
@@ -194,11 +195,11 @@ static void eval_block(AST_NODE *tree, TYPE *ret){
     TYPE auxRet;
     int returned = 0;
     while (aux != NULL) {
-        if (returned_global) {
+/*         if (returned_global) {
             warning_ignored_line(aux->first->line);
-        }
+        } */
         eval(aux->first, &auxRet);
-        if (returned && !returned_global) {
+        if (returned) {
             warning_ignored_line(aux->first->line);
         }
         if (aux->first->type == AST_COMMON && aux->first->common.op == OP_RETURN) {
@@ -349,6 +350,9 @@ static void eval_method_decl(AST_NODE *tree, TYPE *ret) {
     if (!method) {
         error_method_not_found(tree->method_decl.name);
     }
+    if (strcmp(method->id_name, "main") == 0) {
+        main_defined = 1;
+    }
     switch (method->method.return_type) {
         case RETURN_INT:
             method_return_type = INT_TYPE;
@@ -389,14 +393,16 @@ void eval(AST_NODE *tree, TYPE *ret){
         case AST_METHOD_DECL:
             eval_method_decl(tree, ret);
             returned_global = 0;
-            return;
+            return; 
         case AST_METHOD_CALL:
             eval_method_call(tree, ret);
             return;
         case AST_BLOCK:
             eval_block(tree, ret);
             if (tree->father->type != AST_BLOCK && returned_global) {
-                returned_global = 0;
+                if (tree->father->type != AST_IF){
+                    returned_global = 0;
+                }
             }
             return;
         case AST_LEAF:
@@ -412,5 +418,8 @@ void semantic_analyzer(AST_ROOT *tree) {
     TYPE ret;
     for (AST_ROOT* cur = tree; cur != NULL; cur = cur->next) {
         eval(cur->sentence, &ret);
+    }
+    if (!main_defined) {
+        error_main_missing();
     }
 }

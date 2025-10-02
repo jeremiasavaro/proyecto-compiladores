@@ -51,5 +51,6 @@ void warning_ignored_line(int line);
 void error_missing_return(char* method, int type);
 void error_return_type(int line, int type, int true_type);
 void error_return_type_void(int line, int true_type);
+void error_main_missing();
 
 #endif
