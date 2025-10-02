@@ -142,7 +142,7 @@ static void eval_common(AST_NODE *tree, TYPE *ret) {
 
             if ((id->id_type == CONST_INT && right_type != INT_TYPE) ||
                 (id->id_type == CONST_BOOL && right_type != BOOL_TYPE)) {
-                error_type_mismatch(line, id->id_name, (char*) id->id_type);
+                error_type_mismatch(line, id->id_name, id->id_type == CONST_INT ? "INT" : "BOOL");
             }
 
             *ret = right_type;
@@ -297,7 +297,7 @@ static void eval_method_call(AST_NODE *tree, TYPE *ret) {
         error_method_not_found(tree->method_call.name);
     }
     if (method->id_type != METHOD) {
-        error_type_mismatch(line, (char*) tree->method_call.name, (char*)method->id_type);
+        error_type_mismatch(line, tree->method_call.name, "METHOD");
     }
     ARGS_LIST* method_args = method->method.arg_list;
     AST_NODE_LIST* call_args = tree->method_call.args;
