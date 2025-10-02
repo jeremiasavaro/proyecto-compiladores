@@ -79,7 +79,7 @@ del trabajo en equipo.
 
 \subsection*{Diseño y decisiones clave}
 \begin{itemize}
-    \item La gramática permite declaraciones de variables, métodos y bloques de código.
+    \item La gramática permite declaraciones de variables, funciones y bloques de código.
     \item Se definió un \textbf{union} para manejar tokens con valores enteros o cadenas.
     \item Las expresiones incluyen operadores aritméticos, relacionales y lógicos con precedencias adecuadas.
     \item Se implementó un sistema de reporte de errores léxicos y sintácticos.
@@ -91,7 +91,7 @@ del trabajo en equipo.
 \subsection*{Problemas conocidos}
 \begin{itemize}
     \item Algunos casos límite no han sido exhaustivamente probados.
-    \item El manejo de comentarios multilinea podría fallar en comentarios no cerrados.
+    \item El manejo de comentarios multiline5a podría fallar en comentarios no cerrados.
 \end{itemize}
 
 \newpage
@@ -100,41 +100,44 @@ del trabajo en equipo.
 
 \subsection*{División de la segunda etapa}
 \begin{itemize}
-    \item \textbf{Mateo Cornejo:} implementación del AST incluyendo la definición de estructuras y métodos asociados. Desarrollo de funciones para la visualización del AST. Refactorización del manejo de errores hacia el módulo \texttt{error\_handling}. Participación en la implementación y correcciones del intérprete.
-    \item \textbf{Jeremias Avaro:} inicialización de la tabla de símbolos, planteando la estructura base y el mecanismo de scopes. Desarrollo conjunto del intérprete. 
-    \item \textbf{Máximo Marquez Regis:} finalización de la implementación de la tabla de símbolos, refinando el manejo de scopes y métodos. Correcciones posteriores en el intérprete.
+    \item \textbf{Mateo Cornejo:} implementación del AST incluyendo la definición de estructuras y funciones asociadas. Desarrollo de funciones para la visualización del AST. Refactorización del manejo de errores hacia el módulo \texttt{error\_handling}. Participación en la implementación y correcciones del analizador semántico.
+    \item \textbf{Jeremias Avaro:} inicialización de la tabla de símbolos, planteando la estructura base y el mecanismo de scopes. Desarrollo conjunto del analizador semántico. 
+    \item \textbf{Máximo Marquez Regis:} implementación general de la tabla de símbolos, refinamiento del manejo de scopes y funciones. Correcciones posteriores en el analizador semántico, documentación de código, creación de tests extras.
     \item Todos: participación en la discusión de decisiones de diseño, testeo y documentación.
 \end{itemize}
 
 \subsection*{Decisiones de diseño y aclaraciones}
 \begin{itemize}
     \item Se definió la función \texttt{my\_strdup} para duplicar strings, evitando el uso de \texttt{strdup}.
-    \item Se creó un enumerado para los tipos de nodos del AST (\texttt{AST\_NODE\_TYPE}). 
+    \item Si una función es de tipo \texttt{void}, es válido que exista un \texttt{return;} o no haya sentencia \texttt{return} en el bloque de la función.
     \item En la estructura \texttt{AST\_NODE}, se empleó una \texttt{union} para almacenar información específica según el tipo de nodo.
     \item Se diseñó la estructura \texttt{AST\_NODE\_LIST} para manejar listas de sentencias, declaraciones y argumentos.
     \item Se creó la carpeta \texttt{utils} para funciones de utilidad como \texttt{my\_strdup}.
+    \item Sólo se puede acceder al scope global de la tabla de símbolos, ya que cada id (variable o función) en el AST se almacena un puntero al bloque de la tabla de símbolos perteneciente a dicho id.
+	\item En el AST, cada función tiene un puntero a su bloque en la tabla de símbolos, que a su vez tiene un puntero al scope de la función.
+    
 \end{itemize}
 
 \subsection*{Diseño y decisiones clave}
 \begin{itemize}
     \item Se creó el enumerado \texttt{AST\_TYPE} para representar los distintos tipos de nodos.
     \item Se utilizó una \texttt{union} en \texttt{AST\_NODE} para reducir redundancia en la representación de nodos.
-    \item Se implementó \texttt{free\_mem} para liberar memoria del AST de manera recursiva.
+    \item Se implementó \texttt{free\_mem} para liberar memoria del AST de manera recursiva (por ahora no se utiliza).
     \item Se integraron los constructores de nodos en las acciones semánticas del parser.
     \item Se cambió la gramática a recursión por la izquierda para construir listas de statements y declaraciones, lo que permite almacenarlos e imprimirlos directamente en el orden fuente.
-    \item Se organizó el proyecto con la carpeta \texttt{utils}.
-    \item Se integró la impresión del AST y de la tabla de símbolos al final del análisis sintáctico.
+    \item Se integró la impresión del AST y del scope global tabla de símbolos al final del análisis sintáctico.
     \item Se incorporó el manejo de \textbf{scopes} para soportar bloques anidados.
-    \item Se implementó una pila de ámbitos (\texttt{TABLE\_STACK}), donde cada scope mantiene:
+    \item Se implementó una pila de scopes (\texttt{TABLE\_STACK}), donde cada scope mantiene:
     \begin{itemize}
-        \item \texttt{head\_block} y \texttt{end\_block}: lista de símbolos declarados en ese ámbito.
+        \item \texttt{head\_block} y \texttt{end\_block}: punteros al inicio y fin de la lista de símbolos declarados en ese ámbito.
         \item \texttt{up}: puntero al ámbito exterior inmediato, implementando encadenamiento léxico.
     \end{itemize}
-    \item La búsqueda de símbolos recorre desde el scope actual hacia los exteriores, logrando visibilidad léxica. Esto permite que variables internas oculten (shadow) a las externas.
-    \item La redeclaración se prohíbe únicamente dentro del mismo scope. En ámbitos anidados se permite el sombreado de símbolos.
-    \item Para soportar recursión y co-recursión, los métodos se predeclaran antes de analizar sus cuerpos. De esta manera, las llamadas recursivas encuentran el símbolo correspondiente.
-    \item Los métodos residen en el ámbito global. Cada bloque de método mantiene una lista de argumentos formales y un puntero al scope asociado.
-    \item Se desarrolló un intérprete con una función general \texttt{eval}, la cual deriva en evaluadores específicos según el tipo de nodo (\texttt{eval\_if}, \texttt{eval\_block}, etc.).
+    \item La búsqueda de símbolos recorre desde el scope actual hacia los superiores, logrando visibilidad léxica. Esto permite que variables internas oculten (shadow) a las externas.
+    \item La redeclaración se prohíbe únicamente dentro del mismo scope. En ámbitos anidados se permite el shadowing de símbolos.
+    \item Para soportar recursión y co-recursión, las funciones se predeclaran antes de analizar sus cuerpos. De esta manera, las llamadas recursivas encuentran el símbolo correspondiente.
+    \item Las funciones residen en el ámbito global (ya que no se permite declaraciones de funciones anidadas). Cada bloque de función mantiene una lista de argumentos formales y un puntero al scope asociado.
+    \item El bloque de cada función en la tabla de símbolos almacena una lista con los parámetros formales de dicha función, al momento de realizar el chequeo semántico se utiliza para comparar con las expresiones dadas como parámetro en la llamada a la función.
+    \item Se desarrolló un analizador semántico con una función general \texttt{eval}, la cual deriva en evaluadores específicos según el tipo de nodo (\texttt{eval\_if}, \texttt{eval\_block}, etc.).
     \item El proceso de evaluación recorre el AST hasta alcanzar las hojas, obteniendo tipos que luego se utilizan en el chequeo semántico.
     \item En cada evaluación se conserva la línea de origen (\texttt{line = tree->line}) para reportar errores con información precisa.
     \item En los bloques se registra si se ejecutó un \texttt{return}, lo que permite ignorar sentencias posteriores en ese mismo ámbito.
@@ -148,9 +151,9 @@ del trabajo en equipo.
     \begin{itemize}
         \item Casos de sombreado (shadowing) en distintos niveles anidados.
         \item Validación de la prohibición de redeclaración dentro del mismo scope.
-        \item Comportamiento de la predeclaración de métodos recursivos.
+        \item Comportamiento de la predeclaración de funciones recursivas.
     \end{itemize}
-    \item El intérprete requiere pruebas adicionales para:
+    \item El analizador semántico requiere pruebas adicionales para:
     \begin{itemize}
         \item Evaluación de bloques con múltiples sentencias y retornos anidados.
         \item Consistencia en el reporte de errores con número de línea.
