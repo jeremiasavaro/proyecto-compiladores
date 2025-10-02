@@ -115,7 +115,7 @@ del trabajo en equipo.
     \item Se creó la carpeta \texttt{utils} para funciones de utilidad como \texttt{my\_strdup}.
     \item Sólo se puede acceder al scope global de la tabla de símbolos, ya que cada id (variable o función) en el AST se almacena un puntero al bloque de la tabla de símbolos perteneciente a dicho id.
 	\item En el AST, cada función tiene un puntero a su bloque en la tabla de símbolos, que a su vez tiene un puntero al scope de la función.
-    
+	\item Se asume que en un archivo existe una y sólo una declaracion de una función \texttt{main}, puede ser que esté definido en el mismo archivo o externamente.    
 \end{itemize}
 
 \subsection*{Diseño y decisiones clave}
