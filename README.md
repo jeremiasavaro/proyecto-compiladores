@@ -20,6 +20,7 @@ called TDS25.
 
 ## Branches for tasks
 - Lexical and syntactic analyzer: syntactic-analyzer
+- Semantic analyzer: semantic-analyzer
 
 ## Dependencies
 - flex
