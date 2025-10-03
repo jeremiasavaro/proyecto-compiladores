@@ -1,0 +1,39 @@
+#include "ast.h"
+
+// Instruction types for the pseudo-assembly
+typedef enum {
+    I_LOAD,
+    I_LOADVAL,
+    I_STORE,
+    I_ADD,
+    I_SUB,
+    I_MUL,
+    I_DIV,
+    I_MOD,
+    I_MIN,
+    I_LES,
+    I_GRT,
+    I_EQ,
+    I_NEQ,
+    I_LEQ,
+    I_GEQ,
+    I_AND,
+    I_OR,
+    I_NEG,
+    I_RET,
+    I_DECL,
+} InstrType;
+
+// Instruction representation for the pseudo-assembly
+typedef struct {
+    InstrType type;
+    char var1[32]; // Buffer size (variable name or value)
+    char var2[32]; // Buffer size (variable name or value)
+    char reg[32]; // Buffer size (variable name or value)
+
+} Instr;
+
+
+void emit(InstrType t, const char* var1, const char* var2, const char* reg);
+void genCode(AST_NODE* node);
+void printCodeToFile(const char* filename);
