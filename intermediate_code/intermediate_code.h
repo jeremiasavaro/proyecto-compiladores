@@ -1,4 +1,10 @@
+#ifndef INTERMEDIATE_CODE_GENERATOR_H
+#define INTERMEDIATE_CODE_GENERATOR_H
+
 #include "ast.h"
+#include <stdbool.h>
+#include <stdio.h>
+#include "utils.h"
 
 // Instruction types for the pseudo-assembly
 typedef enum {
@@ -33,7 +39,8 @@ typedef struct {
 
 } Instr;
 
-
 void emit(InstrType t, const char* var1, const char* var2, const char* reg);
-void genCode(AST_NODE* node);
+void genCode(AST_NODE* node, char** result);
 void printCodeToFile(const char* filename);
+
+#endif

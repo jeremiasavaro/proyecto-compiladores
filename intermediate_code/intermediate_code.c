@@ -1,8 +1,4 @@
 #include "intermediate_code.h"
-#include "ast.h"
-#include <stdbool.h>
-#include <stdio.h>
-#include "utils.h"
 
 // Buffer for save all the instructions (pseudo-assembly)
 Instr code[1000];   // 1000 instructions for example
@@ -57,50 +53,58 @@ static void genCode_leaf(AST_NODE* node, char** result) {
 }
 
 static void genCode_common(AST_NODE* node, char** result) {
-    char* left;
-    char* right;
-    switch (node->common.op){
+    char* left = NULL;
+    char* right = NULL;
+    char* temp = NULL;
+
+    switch (node->common.op) {
         case OP_ADDITION:
             genCode(node->common.left, &left);
             genCode(node->common.right, &right);
-            char* temp = new_temp();
+            temp = new_temp();
             emit(I_ADD, left, right, temp);
             *result = temp;
             break;
+
         case OP_SUBTRACTION:
             genCode(node->common.left, &left);
             genCode(node->common.right, &right);
-            char* temp = new_temp();
+            temp = new_temp();
             emit(I_SUB, left, right, temp);
             *result = temp;
             break;
+
         case OP_MULTIPLICATION:
             genCode(node->common.left, &left);
             genCode(node->common.right, &right);
-            char* temp = new_temp();
+            temp = new_temp();
             emit(I_MUL, left, right, temp);
             *result = temp;
             break;
+
         case OP_DIVISION:
             genCode(node->common.left, &left);
             genCode(node->common.right, &right);
-            char* temp = new_temp();
+            temp = new_temp();
             emit(I_DIV, left, right, temp);
             *result = temp;
             break;
+
         case OP_MOD:
             genCode(node->common.left, &left);
             genCode(node->common.right, &right);
-            char* temp = new_temp();
+            temp = new_temp();
             emit(I_MOD, left, right, temp);
             *result = temp;
             break;
+
         case OP_MINUS:
             genCode(node->common.left, &left);
-            char* temp = new_temp();
+            temp = new_temp();
             emit(I_MIN, left, NULL, temp);
             *result = temp;
             break;
+
         case OP_RETURN:
             if (node->common.left) {
                 genCode(node->common.left, &left);
@@ -109,87 +113,105 @@ static void genCode_common(AST_NODE* node, char** result) {
                 emit(I_RET, NULL, NULL, NULL);
             }
             break;
+
         case OP_LES:
             genCode(node->common.left, &left);
             genCode(node->common.right, &right);
-            char* temp = new_temp();
+            temp = new_temp();
             emit(I_LES, left, right, temp);
             *result = temp;
             break;
+
         case OP_GRT:
             genCode(node->common.left, &left);
             genCode(node->common.right, &right);
-            char* temp = new_temp();
+            temp = new_temp();
             emit(I_GRT, left, right, temp);
             *result = temp;
             break;
+
         case OP_EQ:
             genCode(node->common.left, &left);
             genCode(node->common.right, &right);
-            char* temp = new_temp();
+            temp = new_temp();
             emit(I_EQ, left, right, temp);
             *result = temp;
             break;
+
         case OP_NEQ:
             genCode(node->common.left, &left);
             genCode(node->common.right, &right);
-            char* temp = new_temp();
+            temp = new_temp();
             emit(I_NEQ, left, right, temp);
             *result = temp;
             break;
+
         case OP_LEQ:
             genCode(node->common.left, &left);
             genCode(node->common.right, &right);
-            char* temp = new_temp();
+            temp = new_temp();
             emit(I_LEQ, left, right, temp);
             *result = temp;
             break;
+
         case OP_GEQ:
             genCode(node->common.left, &left);
             genCode(node->common.right, &right);
-            char* temp = new_temp();
+            temp = new_temp();
             emit(I_GEQ, left, right, temp);
             *result = temp;
             break;
+
         case OP_AND:
             genCode(node->common.left, &left);
             genCode(node->common.right, &right);
-            char* temp = new_temp();
+            temp = new_temp();
             emit(I_AND, left, right, temp);
             *result = temp;
             break;
+
         case OP_OR:
             genCode(node->common.left, &left);
             genCode(node->common.right, &right);
-            char* temp = new_temp();
+            temp = new_temp();
             emit(I_OR, left, right, temp);
             *result = temp;
             break;
+
         case OP_NEG:
             genCode(node->common.left, &left);
-            char* temp = new_temp();
+            temp = new_temp();
             emit(I_NEG, left, NULL, temp);
             *result = temp;
             break;
+
         case OP_ASSIGN:
             genCode(node->common.left, &left);
             genCode(node->common.right, &right);
             emit(I_STORE, right, NULL, left);
             break;
+
+        default:
+            break;
     }
 }
+
 static void genCode_if(AST_NODE* node, char** result) {
     return;
 }
+
 static void genCode_while(AST_NODE* node, char** result) {
     return;
 }
+
 static void genCode_method_decl(AST_NODE* node, char** result) {
     return;
 }
+
 static void genCode_method_call(AST_NODE* node, char** result) {
     return;
 }
+
 static void genCode_block(AST_NODE* node, char** result) {
     return;
 }
