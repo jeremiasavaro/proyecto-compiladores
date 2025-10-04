@@ -7,6 +7,7 @@
 #include "print_funcs.h"
 #include "symbol_table.h"
 #include "semantic_analyzer.h"
+#include "intermediate_code.h"
 
 extern int yylex();
 extern int yylineno;
@@ -83,7 +84,7 @@ var_decl:
 
 var_decls:
             var_decls var_decl { $$ = append_expr($1, $2); }
-        | /* empty */ { $$ = NULL; }     
+        | /* empty */ { $$ = NULL; }
         ;
 
 method_decl:
@@ -174,7 +175,7 @@ statements:
     ;
 
 statement:
-      ID '=' expr ';' 
+      ID '=' expr ';'
         {
           ID_TABLE* dir = find($1);
           if (!dir) {
@@ -265,5 +266,11 @@ int main(int argc, char *argv[]) {
     print_full_ast(head_ast);
     print_symbol_table(global_level);
     semantic_analyzer(head_ast);
+  // Generate intermediate code for each top-level method declaration
+  resetCode();
+  for (AST_ROOT* cur = head_ast; cur != NULL; cur = cur->next) {
+    genCode(cur->sentence, NULL);
+  }
+  printCodeToFile("intermediate_code.out");
     return 0;
 }
