@@ -72,6 +72,13 @@ static void node_label(AST_NODE *node, char *buf, size_t bufsz) {
         case AST_BLOCK:
             snprintf(buf, bufsz, "BLOCK");
             return;
+        case AST_DECL:
+            if (node->decl.id && node->decl.id->id_name) {
+                snprintf(buf, bufsz, "DECL %s", node->decl.id->id_name);
+            } else {
+                snprintf(buf, bufsz, "DECL ?");
+            }
+            return;
         case AST_NULL:
             snprintf(buf, bufsz, "NULL");
             return;
