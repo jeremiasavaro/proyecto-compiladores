@@ -46,8 +46,8 @@ typedef struct {
 } Instr;
 
 void emit(InstrType t, const char* var1, const char* var2, const char* reg);
-void genCode(AST_NODE* node, char** result);
-void printCodeToFile(const char* filename);
-void resetCode();
+void gen_code(AST_NODE* node, char** result);
+void print_code_to_file(const char* filename);
+void reset_code();
 
 #endif

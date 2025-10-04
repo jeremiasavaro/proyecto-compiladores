@@ -66,22 +66,22 @@ decl:
 var_decl:
       type ID '=' expr ';'
         {
+          ID_TABLE* dir;
           if ($1 == INTEGER) {
-            add_id($2, CONST_INT);
+            dir = add_id($2, CONST_INT);
           } else {
-            add_id($2, CONST_BOOL);
+            dir = add_id($2, CONST_BOOL);
           }
-          ID_TABLE* dir = find($2);
           $$ = new_decl_node(dir, $4);
         }
     | type ID ';'
         {
+          ID_TABLE* dir;
           if ($1 == INTEGER) {
-            add_id($2, CONST_INT);
+            dir = add_id($2, CONST_INT);
           } else {
-            add_id($2, CONST_BOOL);
+            dir = add_id($2, CONST_BOOL);
           }
-          ID_TABLE* dir = find($2);
           $$ = new_decl_node(dir, NULL);
         }
     ;
@@ -165,8 +165,8 @@ block:
             last_block_pushed = 1;
         }
   } var_decls statements '}' {
-    /* Fusionar listas: primero las declaraciones (que pueden contener asignaciones
-       generadas para inicializaciones), luego las demás sentencias. */
+    /* Merge lists: statements first (which may contain assignments generated for
+                   initializations), then the other statements. */
     AST_NODE_LIST* merged = $3; /* var_decls */
     AST_NODE_LIST* it = $4;     /* statements */
     while (it) {
