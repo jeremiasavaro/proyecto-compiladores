@@ -162,6 +162,17 @@ AST_NODE* new_block_node(AST_NODE_LIST* stmts) {
     return node;
 }
 
+/* Function that creates a new node of type declaration */
+AST_NODE* new_decl_node(ID_TABLE* id, AST_NODE* init_expr) {
+    AST_NODE* node = alloc_node();
+    node->type = AST_DECL;
+    node->decl.id = id;
+    node->decl.init_expr = init_expr;
+    if (init_expr) init_expr->father = node;
+    node->line = yylineno;
+    return node;
+}
+
 /* Function that creates the root of the ast.
  */
 void create_root(AST_NODE* tree) {

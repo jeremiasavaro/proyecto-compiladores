@@ -66,17 +66,18 @@ struct BOOL_LEAF {
 union LEAF {
     INT_LEAF int_leaf;
     BOOL_LEAF bool_leaf;
-    ID_TABLE* id_leaf; 
+    ID_TABLE* id_leaf;
 };
 
 // Enum for different AST node types.
 typedef enum {
-    AST_COMMON, 
+    AST_COMMON,
     AST_IF,
     AST_WHILE,
     AST_METHOD_DECL,
     AST_METHOD_CALL,
     AST_BLOCK,
+    AST_DECL,
     AST_LEAF,
     AST_NULL, // Type created for initialization.
 } AST_TYPE;
@@ -122,6 +123,11 @@ struct AST_NODE {
         struct {
             AST_NODE_LIST* stmts; // Statements list.
         } block;
+
+        struct {
+            ID_TABLE* id;        // Variable identifier
+            AST_NODE* init_expr; // Initialization expression (can be NULL)
+        } decl;
 
         // For leaf nodes.
         struct {
@@ -171,6 +177,9 @@ AST_NODE* new_block_node(AST_NODE_LIST* stmts);
 /* Function that creates a new node of type method_call, assigning its name and arguments.
  */
 AST_NODE* new_method_call_node(char* name, AST_NODE_LIST* args);
+/* Function that creates a new node of type declaration (variable declaration with optional initialization)
+ */
+AST_NODE* new_decl_node(ID_TABLE* id, AST_NODE* init_expr);
 /* Function utilized for build lists of expressions (statements, args, etc)
  */
 AST_NODE_LIST* append_expr(AST_NODE_LIST* list, AST_NODE* expr);

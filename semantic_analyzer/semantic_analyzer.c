@@ -405,6 +405,22 @@ void eval(AST_NODE *tree, TYPE *ret){
                 }
             }
             return;
+        case AST_DECL: {
+            // If there is an init expression, evaluate it to validate type. The symbol already exists in table.
+            if (tree->decl.init_expr) {
+                TYPE init_t;
+                eval(tree->decl.init_expr, &init_t);
+                // Basic type checking: match symbol kind
+                if (tree->decl.id) {
+                    if ((tree->decl.id->id_type == CONST_INT && init_t != INT_TYPE) ||
+                        (tree->decl.id->id_type == CONST_BOOL && init_t != BOOL_TYPE)) {
+                        error_type_mismatch(tree->line, tree->decl.id->id_name, tree->decl.id->id_type == CONST_INT ? "INT" : "BOOL");
+                    }
+                }
+            }
+            *ret = NULL_TYPE; // Declaration itself does not yield a runtime value
+            return;
+        }
         case AST_LEAF:
             eval_leaf(tree, ret);
             return;
