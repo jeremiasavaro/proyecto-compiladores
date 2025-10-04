@@ -273,7 +273,20 @@ static void genCode_method_call(AST_NODE* node, char** result) {
 }
 
 static void genCode_block(AST_NODE* node, char** result) {
-    return;
+    // Iterate statements generating code; last expression result not propagated unless explicitly requested.
+    AST_NODE_LIST* cur = node->block.stmts;
+    char* last_temp = NULL;
+    while (cur) {
+        char* stmt_res = NULL;
+        genCode(cur->first, &stmt_res);
+        if (stmt_res) {
+            last_temp = stmt_res; // Track last result
+        }
+        cur = cur->next;
+    }
+    if (result && last_temp) {
+        *result = last_temp;
+    }
 }
 
 void printCodeToFile(const char* filename) {
@@ -349,6 +362,27 @@ void printCodeToFile(const char* filename) {
             case I_NEG:
                 fprintf(f, "NEG %s, %s\n", code[i].var1, code[i].reg);
                 break;
+            case I_LABEL:
+                fprintf(f, "%s:\n", code[i].var1);
+                break;
+            case I_JMP:
+                fprintf(f, "JMP %s\n", code[i].var1);
+                break;
+            case I_JMPF:
+                fprintf(f, "JMPF %s, %s\n", code[i].var1, code[i].reg);
+                break;
+            case I_PARAM:
+                fprintf(f, "PARAM %s\n", code[i].var1);
+                break;
+            case I_CALL:
+                fprintf(f, "CALL %s, %s\n", code[i].var1, code[i].reg);
+                break;
+            case I_ENTER:
+                fprintf(f, "ENTER %s\n", code[i].var1);
+                break;
+            case I_LEAVE:
+                fprintf(f, "LEAVE %s\n", code[i].var1);
+                break;
             default:
                 fprintf(f, "UNKNOWN\n");
                 break;
@@ -385,4 +419,10 @@ void genCode(AST_NODE* node, char** result) {
         default:
             break;
     }
+}
+
+void resetCode() {
+    code_size = 0;
+    temp_counter = 0;
+    label_counter = 0;
 }
