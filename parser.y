@@ -71,6 +71,8 @@ var_decl:
           } else {
             add_id($2, CONST_BOOL);
           }
+          ID_TABLE* dir = find($2);
+          $$ = new_decl_node(dir, $4);
         }
     | type ID ';'
         {
@@ -79,6 +81,8 @@ var_decl:
           } else {
             add_id($2, CONST_BOOL);
           }
+          ID_TABLE* dir = find($2);
+          $$ = new_decl_node(dir, NULL);
         }
     ;
 
@@ -160,9 +164,19 @@ block:
             push_scope();
             last_block_pushed = 1;
         }
-    } var_decls statements '}' {
-        if ($4 == NULL) $$ = NULL;
-        $$ = new_block_node($4);
+  } var_decls statements '}' {
+    /* Fusionar listas: primero las declaraciones (que pueden contener asignaciones
+       generadas para inicializaciones), luego las demás sentencias. */
+    AST_NODE_LIST* merged = $3; /* var_decls */
+    AST_NODE_LIST* it = $4;     /* statements */
+    while (it) {
+      if (it->first) {
+        merged = append_expr(merged, it->first);
+      }
+      it = it->next;
+    }
+    if (merged == NULL) $$ = NULL; /* Bloque vacío */
+    $$ = new_block_node(merged);
         if (last_block_pushed) {
             pop_scope();
         }
