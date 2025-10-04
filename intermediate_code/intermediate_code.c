@@ -249,11 +249,27 @@ static void genCode_while(AST_NODE* node, char** result) {
 }
 
 static void genCode_method_decl(AST_NODE* node, char** result) {
-    return;
+    emit(I_ENTER, node->method_decl.name, NULL, NULL);
+    if (!node->method_decl.is_extern && node->method_decl.block) {
+        genCode(node->method_decl.block, NULL);
+    }
+    emit(I_LEAVE, node->method_decl.name, NULL, NULL);
 }
 
 static void genCode_method_call(AST_NODE* node, char** result) {
-    return;
+    AST_NODE_LIST* arg = node->method_call.args;
+    while (arg) {
+        char* arg_temp = NULL;
+        genCode(arg->first, &arg_temp);
+        emit(I_PARAM, arg_temp, NULL, NULL);
+        arg = arg->next;
+    }
+    // Allocate a temp for return value always.
+    char* ret_temp = new_temp();
+    emit(I_CALL, node->method_call.name, NULL, ret_temp);
+    if (result) {
+        *result = ret_temp;
+    }
 }
 
 static void genCode_block(AST_NODE* node, char** result) {
