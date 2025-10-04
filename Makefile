@@ -64,4 +64,5 @@ intermediate_code/%.o: intermediate_code/%.c
 
 clean:
 	rm -f $(OBJS) $(TARGET) $(GEN_LEX_SRC) $(GEN_Y_TAB_C) $(GEN_Y_TAB_H)
-	rm -f error_handling/*.o rm -f tree/*.o print_utilities/*.o symbol_table/*.o utils/*.o semantic_analyzer/*.o intermediate_code/*.o
+	rm -f error_handling/*.o tree/*.o print_utilities/*.o symbol_table/*.o utils/*.o semantic_analyzer/*.o intermediate_code/*.o
+	rm -f tests/output/*
