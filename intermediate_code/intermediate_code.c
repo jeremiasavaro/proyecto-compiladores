@@ -304,9 +304,6 @@ void printCodeToFile(const char* filename) {
             case I_LOAD:
                 fprintf(f, "LOAD %s\n", code[i].var1);
                 break;
-            case I_DECL:
-                fprintf(f, "DECL %s\n", code[i].var1);
-                break;
             case I_STORE:
                 fprintf(f, "STORE %s, %s\n", code[i].var1, code[i].reg);
                 break;
@@ -413,6 +410,14 @@ void genCode(AST_NODE* node, char** result) {
         case AST_BLOCK:
             genCode_block(node, result);
             break;
+        case AST_DECL: {
+            if (node->decl.id && node->decl.init_expr) {
+                char* init_temp = NULL;
+                genCode(node->decl.init_expr, &init_temp);
+                emit(I_STORE, init_temp, NULL, node->decl.id->id_name);
+            }
+            break;
+        }
         case AST_LEAF:
             genCode_leaf(node, result);
             break;

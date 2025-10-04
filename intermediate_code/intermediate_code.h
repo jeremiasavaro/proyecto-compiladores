@@ -27,7 +27,6 @@ typedef enum {
     I_OR,
     I_NEG,
     I_RET,
-    I_DECL,
     I_LABEL,     // Label pseudo instruction
     I_JMP,       // Unconditional jump
     I_JMPF,      // Jump if false (0)
