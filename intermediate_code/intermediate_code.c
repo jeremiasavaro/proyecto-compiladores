@@ -5,9 +5,19 @@ Instr code[1000];   // 1000 instructions for example
 int code_size = 0;  // Number of instructions saved
 
 static int temp_counter = 0;
+static int label_counter = 0;
+
+// Function to generate new temporary variables
 char* new_temp() {
     char buf[32];
     sprintf(buf, "T%d", temp_counter++);
+    return my_strdup(buf);
+}
+
+// Function to generate new labels for jumps
+static char* new_label() {
+    char buf[32];
+    sprintf(buf, "L%d", label_counter++);
     return my_strdup(buf);
 }
 
@@ -19,7 +29,7 @@ void emit(InstrType t, const char* var1, const char* var2, const char* reg) {
     } else {
         code[code_size].var1[0] = '\0';     //If received NULL, save empty string
     }
-    if (var2) { 
+    if (var2) {
         strcpy(code[code_size].var2, var2);
     } else {
         code[code_size].var2[0] = '\0';     //If received NULL, save empty string
