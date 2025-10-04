@@ -28,6 +28,13 @@ typedef enum {
     I_NEG,
     I_RET,
     I_DECL,
+    I_LABEL,     // Label pseudo instruction
+    I_JMP,       // Unconditional jump
+    I_JMPF,      // Jump if false (0)
+    I_PARAM,     // Pass parameter (argument) before a call
+    I_CALL,      // Call a method (var1 = method name, reg = temp for return if any)
+    I_ENTER,     // Method prologue (var1 = method name)
+    I_LEAVE      // Method epilogue (var1 = method name)
 } InstrType;
 
 // Instruction representation for the pseudo-assembly
@@ -42,5 +49,6 @@ typedef struct {
 void emit(InstrType t, const char* var1, const char* var2, const char* reg);
 void genCode(AST_NODE* node, char** result);
 void printCodeToFile(const char* filename);
+void resetCode();
 
 #endif
