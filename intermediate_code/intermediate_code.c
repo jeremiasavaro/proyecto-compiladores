@@ -215,11 +215,37 @@ static void genCode_common(AST_NODE* node, char** result) {
 }
 
 static void genCode_if(AST_NODE* node, char** result) {
-    return;
+    char* cond_temp = NULL;
+    genCode(node->if_stmt.condition, &cond_temp);
+    char* else_label = new_label();
+    char* end_label = new_label();
+
+    // Jump for false to else (or end if no else block)
+    emit(I_JMPF, cond_temp, NULL, else_label);
+    // Then block
+    genCode(node->if_stmt.then_block, NULL);
+    // Jump to end after then
+    emit(I_JMP, end_label, NULL, NULL);
+    // Else label
+    emit(I_LABEL, else_label, NULL, NULL);
+    if (node->if_stmt.else_block) {
+        genCode(node->if_stmt.else_block, NULL);
+    }
+    // End label
+    emit(I_LABEL, end_label, NULL, NULL);
 }
 
 static void genCode_while(AST_NODE* node, char** result) {
-    return;
+    char* start_label = new_label();
+    char* end_label = new_label();
+
+    emit(I_LABEL, start_label, NULL, NULL);
+    char* cond_temp = NULL;
+    genCode(node->while_stmt.condition, &cond_temp);
+    emit(I_JMPF, cond_temp, NULL, end_label);
+    genCode(node->while_stmt.block, NULL);
+    emit(I_JMP, start_label, NULL, NULL);
+    emit(I_LABEL, end_label, NULL, NULL);
 }
 
 static void genCode_method_decl(AST_NODE* node, char** result) {
