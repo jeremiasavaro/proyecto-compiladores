@@ -44,21 +44,29 @@ void emit(InstrType t, const char* var1, const char* var2, const char* reg) {
 
 static void genCode_leaf(AST_NODE* node, char** result) {
     char buf[32];
-    switch (node->leaf.leaf_type){
-        case TYPE_INT:
+    switch (node->leaf.leaf_type) {
+        case TYPE_INT: {
             sprintf(buf, "%d", node->leaf.value->int_leaf.value);
-            *result = buf;
-            emit(I_LOADVAL, buf, NULL, NULL);
+            char* val = my_strdup(buf);
+            emit(I_LOADVAL, val, NULL, NULL);
+            if (result) *result = val;
             break;
-        case TYPE_BOOL:
+        }
+        case TYPE_BOOL: {
             sprintf(buf, "%d", node->leaf.value->bool_leaf.value);
-            *result = buf;
-            emit(I_LOADVAL, buf, NULL, NULL);
+            char* val = my_strdup(buf);
+            emit(I_LOADVAL, val, NULL, NULL);
+            if (result) *result = val;
             break;
-        case TYPE_ID:
-            emit(I_LOAD, node->leaf.value->id_leaf, NULL, NULL);
-            *result = node->leaf.value->id_leaf;
+        }
+        case TYPE_ID: {
+            ID_TABLE* sym = node->leaf.value->id_leaf; // Symbol
+            if (sym) {
+                emit(I_LOAD, sym->id_name, NULL, NULL);
+                if (result) *result = sym->id_name; // Stable name
+            }
             break;
+        }
     }
 }
 
