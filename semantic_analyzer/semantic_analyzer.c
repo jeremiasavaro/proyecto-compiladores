@@ -132,6 +132,22 @@ static void eval_common(AST_NODE *tree, TYPE *ret) {
             }
             *ret = BOOL_TYPE;
             return;
+        case OP_DECL:
+            if (tree->common.right) {
+                eval(tree->common.left, &left_type);
+                eval(tree->common.right, &right_type);
+                ID_TABLE *var = tree->common.left->leaf.value->id_leaf;
+                char* var_name = var->id_name;
+                if (left_type != right_type && right_type == INT_TYPE) {
+                    error_type_mismatch(line, var_name, "INT");
+                } else if (left_type != right_type && right_type == BOOL_TYPE) {
+                    error_type_mismatch(line, var_name, "BOOL");
+                }
+                *ret = right_type;
+                return;
+            }
+            *ret = NULL_TYPE;
+            return;
         case OP_ASSIGN: {
             // Left must be a TYPE_ID leaf
             if (!tree->common.left || tree->common.left->type != AST_LEAF || tree->common.left->leaf.leaf_type != TYPE_ID) {
@@ -378,6 +394,7 @@ static void eval_method_decl(AST_NODE *tree, TYPE *ret) {
  */
 void eval(AST_NODE *tree, TYPE *ret){
     if (!tree){
+        printf("DEBUG: NULL node detected in eval() at line %d\n", line);
         error_null_node(-1);
     }
     switch (tree->type) {
@@ -405,22 +422,6 @@ void eval(AST_NODE *tree, TYPE *ret){
                 }
             }
             return;
-        case AST_DECL: {
-            // If there is an init expression, evaluate it to validate type. The symbol already exists in table.
-            if (tree->decl.init_expr) {
-                TYPE init_t;
-                eval(tree->decl.init_expr, &init_t);
-                // Basic type checking: match symbol kind
-                if (tree->decl.id) {
-                    if ((tree->decl.id->id_type == CONST_INT && init_t != INT_TYPE) ||
-                        (tree->decl.id->id_type == CONST_BOOL && init_t != BOOL_TYPE)) {
-                        error_type_mismatch(tree->line, tree->decl.id->id_name, tree->decl.id->id_type == CONST_INT ? "INT" : "BOOL");
-                    }
-                }
-            }
-            *ret = NULL_TYPE; // Declaration itself does not yield a runtime value
-            return;
-        }
         case AST_LEAF:
             eval_leaf(tree, ret);
             return;

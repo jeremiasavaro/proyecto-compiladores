@@ -21,6 +21,7 @@ static const char *op_to_string(OPERATOR op) {
         case OP_NEG:             return "!";
         case OP_ASSIGN:          return "=";
         case OP_RETURN:          return "return";
+        case OP_DECL:       return "decl";
         default:                 return "?";
     }
 }
@@ -71,13 +72,6 @@ static void node_label(AST_NODE *node, char *buf, size_t bufsz) {
             return;
         case AST_BLOCK:
             snprintf(buf, bufsz, "BLOCK");
-            return;
-        case AST_DECL:
-            if (node->decl.id && node->decl.id->id_name) {
-                snprintf(buf, bufsz, "DECL %s", node->decl.id->id_name);
-            } else {
-                snprintf(buf, bufsz, "DECL ?");
-            }
             return;
         case AST_NULL:
             snprintf(buf, bufsz, "NULL");

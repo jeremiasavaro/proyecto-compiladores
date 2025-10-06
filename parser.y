@@ -44,7 +44,7 @@ int last_block_pushed = 0;
 %right NEG
 
 %type <node> program decls decl var_decl method_decl block statement expr literal method_call else
-%type <nodelist> method_args arg_list expr_list call_args statements var_decls
+%type <nodelist> method_args arg_list expr_list call_args statements var_decls 
 %type <ival> type
 
 %%
@@ -54,35 +54,41 @@ program:
     ;
 
 decls:
-      decls decl { $$ = NULL; }
-    | /* empty */ { $$ = NULL; }
+      decls decl {  if ($2) add_sentence($2); }
+    | /* empty */ { $$ = NULL; }  
     ;
 
 decl:
       var_decl    { $$ = $1; }
-    | method_decl { $$ = $1; if ($1) add_sentence($1); }
+    | method_decl { $$ = $1; }
     ;
 
 var_decl:
       type ID '=' expr ';'
         {
           ID_TABLE* dir;
+          AST_NODE* id;
           if ($1 == INTEGER) {
             dir = add_id($2, CONST_INT);
+            id = new_leaf_node(TYPE_ID, dir);
           } else {
             dir = add_id($2, CONST_BOOL);
+            id = new_leaf_node(TYPE_ID, dir);
           }
-          $$ = new_decl_node(dir, $4);
+          $$ = new_binary_node(OP_DECL, id, $4);
         }
     | type ID ';'
         {
           ID_TABLE* dir;
+          AST_NODE* id;
           if ($1 == INTEGER) {
             dir = add_id($2, CONST_INT);
+            id = new_leaf_node(TYPE_ID, dir);
           } else {
             dir = add_id($2, CONST_BOOL);
+            id = new_leaf_node(TYPE_ID, dir);
           }
-          $$ = new_decl_node(dir, NULL);
+          $$ = new_unary_node(OP_DECL, id);
         }
     ;
 
