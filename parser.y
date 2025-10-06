@@ -175,7 +175,7 @@ block:
       }
       it = it->next;
     }
-    if (merged == NULL) $$ = NULL; /* Bloque vacío */
+    if (merged == NULL) $$ = NULL; /* Empty block */
     $$ = new_block_node(merged);
         if (last_block_pushed) {
             pop_scope();
@@ -280,11 +280,11 @@ int main(int argc, char *argv[]) {
     print_full_ast(head_ast);
     print_symbol_table(global_level);
     semantic_analyzer(head_ast);
-  // Generate intermediate code for each top-level method declaration
-  resetCode();
-  for (AST_ROOT* cur = head_ast; cur != NULL; cur = cur->next) {
-    genCode(cur->sentence, NULL);
-  }
-  printCodeToFile("intermediate_code.out");
+    // Generate intermediate code for each top-level method declaration
+    reset_code();
+    for (AST_ROOT* cur = head_ast; cur != NULL; cur = cur->next) {
+        gen_code(cur->sentence, NULL);
+    }
+    print_code_to_file("intermediate_code.out");
     return 0;
 }
