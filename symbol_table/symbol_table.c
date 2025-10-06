@@ -7,8 +7,6 @@ TABLE_STACK* stack_level = NULL;
 extern int yylineno;
 
 ID_TABLE* allocate_mem();
-ARGS_LIST* allocate_args_list_mem();
-ARGS* allocate_args_mem();
 
 /* Creates a new scope associated with its superior scope.
  */
@@ -48,16 +46,18 @@ void pop_scope(void) {
 /* Creates a new node with id_name = name and returns its memory direction
  * and doesn't allow to create two symbols with the same id in the same scope level.
  */
-ID_TABLE* add_id(char* name, const ID_TYPE type) {
+ID_TABLE* add_id(char* name, const TYPE type) {
     if (!stack_level) st_init();
     if (find_in_current_scope(name) != NULL) {
         error_variable_redeclaration(yylineno, name);
     }
 
     ID_TABLE* aux = allocate_mem();
-    aux->id_name = my_strdup(name);
-    if (!aux->id_name) error_allocate_mem();
-    aux->id_type = type;
+    aux->info = allocate_info_mem();
+    aux->info->id.name = my_strdup(name);
+    aux->info->type = TABLE_ID;
+    if (!aux->info->id.name) error_allocate_mem();
+    aux->info->id.type = type;
 
     if (stack_level->head_block == NULL) {
         stack_level->head_block = aux;
@@ -66,20 +66,22 @@ ID_TABLE* add_id(char* name, const ID_TYPE type) {
         stack_level->end_block->next = aux;
         stack_level->end_block = aux;
     }
+
     return stack_level->end_block;
 }
 
 /* Adds an id to the global scope.
  */
-ID_TABLE* add_global_id(char* name, const ID_TYPE type) {
+ID_TABLE* add_global_id(char* name, TYPE id_type) {
     if (find(name) != NULL) {
         error_variable_redeclaration(yylineno, name);
     }
 
     ID_TABLE* aux = allocate_mem();
-    aux->id_name = my_strdup(name);
-    if (!aux->id_name) error_allocate_mem();
-    aux->id_type = type;
+    aux->info = allocate_info_mem();
+    aux->info->id.name = my_strdup(name);
+    if (!aux->info->id.name) error_allocate_mem();
+    aux->info->id.type = id_type;
 
     if (!global_level) st_init();
 
@@ -94,85 +96,40 @@ ID_TABLE* add_global_id(char* name, const ID_TYPE type) {
     return global_level->end_block;
 }
 
-/* Declare a method in the actual scope with its return value.
+/* Declare a method in the global scope with its return value.
  */
-ID_TABLE* add_method(char* name, const RETURN_TYPE ret_type, TABLE_STACK* method_scope) {
-    ID_TABLE* id = add_global_id(name, METHOD);
-    id->method.return_type = ret_type;
-    id->method.num_args = 0;
-    id->method.arg_list = NULL;
-    id->method.method_scope = method_scope;
-    id->method.data = NULL;
-    return id;
+ID_TABLE* add_method(char* name, const RETURN_TYPE ret_type, TABLE_STACK* method_scope, int is_extern) {
+    if (find(name) != NULL) {
+        error_variable_redeclaration(yylineno, name);
+    }
+
+    ID_TABLE* aux = allocate_mem();
+    aux->info = allocate_info_mem();
+    aux->info->type = AST_METHOD_DECL;
+    aux->info->method_decl.name = my_strdup(name);
+    aux->info->method_decl.return_type = ret_type;
+    aux->info->method_decl.num_args = 0;
+    aux->info->method_decl.args = NULL;
+    aux->info->method_decl.scope = method_scope;
+    aux->info->method_decl.is_extern = is_extern;
+
+    if (!global_level) st_init();
+
+    if (global_level->head_block == NULL) {
+        global_level->head_block = aux;
+        global_level->end_block = aux;
+    } else {
+        global_level->end_block->next = aux;
+        global_level->end_block = aux;
+    }
+
+    return global_level->end_block;
 }
 
 /* Return the actual scope (TABLE_STACK).
  */
 TABLE_STACK* get_this_scope() {
     return stack_level;
-}
-
-/* Adds data to the variable name node.
- */
-void add_data(char* name, const ID_TYPE type, const void* data) {
-    ID_TABLE* aux = find(name);
-    if (aux == NULL) {
-        error_variable_not_declared(yylineno, name);
-    }
-    if (aux->id_type == METHOD) {
-        error_method_return_data();
-    }
-    if (aux->id_type != type) {
-        error_type_mismatch(yylineno, name, (char*) aux->id_type);
-    }
-
-    if (aux->common.data != NULL) {
-        free(aux->common.data);
-    }
-
-    switch(type) {
-        case CONST_BOOL:
-        case CONST_INT:
-            aux->common.data = malloc(sizeof(int));
-            if (!aux->common.data) error_allocate_mem();
-            memcpy(aux->common.data, data, sizeof(int));
-            return;
-        default:
-            error_type_mismatch(yylineno, name, (char*) aux->id_type);
-    }
-}
-
-/* Adds data to the method's return value.
- */
-void add_method_return_data(char* name, const RETURN_TYPE type, const void* data) {
-    ID_TABLE* aux = find_global(name);
-    if (aux == NULL) {
-        error_variable_not_declared(yylineno, name);
-    }
-    if (aux->id_type != METHOD) {
-        error_method_data();
-    }
-    if (type == RETURN_VOID) {
-        error_type_mismatch_method(yylineno, name, (int) type);
-    }
-    if (aux->method.return_type != type) {
-        error_type_mismatch(yylineno, name, (char*) aux->id_type);
-    }
-
-    if (aux->method.data != NULL) {
-        free(aux->method.data);
-    }
-
-    switch(type) {
-        case CONST_INT:
-        case CONST_BOOL:
-            aux->method.data = malloc(sizeof(int));
-            if (!aux->method.data) error_allocate_mem();
-            memcpy(aux->method.data, data, sizeof(int));
-            return;
-        default:
-            error_type_mismatch(yylineno, name, (char*) aux->id_type);
-    }
 }
 
 /* Returns the memory direction of the node with id_name = name.
@@ -183,8 +140,14 @@ void add_method_return_data(char* name, const RETURN_TYPE type, const void* data
 ID_TABLE* find(const char* name) {
     for (const TABLE_STACK* current_level = stack_level; current_level != NULL; current_level = current_level->up) {
         for (ID_TABLE* current_id = current_level->head_block; current_id; current_id = current_id->next) {
-            if (current_id->id_name && strcmp(current_id->id_name, name) == 0) {
-                return current_id;
+            if (current_id->info->type == AST_METHOD_DECL) {
+                if (current_id->info->method_decl.name && strcmp(current_id->info->method_decl.name, name) == 0) {
+                    return current_id;
+                }
+            } else {
+                if (current_id->info->id.name && strcmp(current_id->info->id.name, name) == 0) {
+                    return current_id;
+                }
             }
         }
     }
@@ -197,7 +160,11 @@ ID_TABLE* find(const char* name) {
 ID_TABLE* find_in_current_scope(const char* name) {
     if (!stack_level) return NULL;
     for (ID_TABLE* id = stack_level->head_block; id; id = id->next) {
-        if (id->id_name && strcmp(id->id_name, name) == 0) return id;
+        if (id->info->type == AST_METHOD_DECL) {
+            if (id->info->method_decl.name && strcmp(id->info->method_decl.name, name) == 0) return id;
+        } else {
+            if (id->info->id.name && strcmp(id->info->id.name, name) == 0) return id;
+        }
     }
     return NULL;
 }
@@ -208,7 +175,11 @@ ID_TABLE* find_in_current_scope(const char* name) {
 ID_TABLE* find_global(const char* name) {
     if (!global_level) return NULL;
     for (ID_TABLE* id = global_level->head_block; id; id = id->next) {
-        if (id->id_name && strcmp(id->id_name, name) == 0) return id;
+        if (id->info->type == AST_METHOD_DECL) {
+            if (id->info->method_decl.name && strcmp(id->info->method_decl.name, name) == 0) return id;
+        } else {
+            if (id->info->id.name && strcmp(id->info->id.name, name) == 0) return id;
+        }
     }
     return NULL;
 }
@@ -222,36 +193,15 @@ ID_TABLE* allocate_mem() {
     return aux;
 }
 
-/* Retrieves data of id from table.
- */
-void* get_data(char* name) {
-    const ID_TABLE* aux = find(name);
-    if (aux == NULL) {
-        error_variable_not_declared(yylineno, name);
-    }
-
-    switch (aux->id_type) {
-        case CONST_INT:
-        case CONST_BOOL:
-            return aux->common.data;
-        case METHOD:
-            return aux->method.data;
-        default:
-            error_type_id_unknown();
-            break;
-    }
-    return NULL;
-}
-
 /* Adds an argument to a given method.
  */
-void add_arg(char* method_name, const ID_TYPE arg_type, const char* arg_name) {
-    ID_TABLE* aux_table = find(method_name);
-    if (!aux_table || aux_table->id_type != METHOD) {
+void add_arg(char* method_name, const TYPE arg_type, const char* arg_name) {
+    ID_TABLE* aux_table = find_global(method_name);
+    if (!aux_table || aux_table->info->type != AST_METHOD_DECL) {
         error_add_argument_method(method_name);
     }
 
-    ARGS_LIST* aux_arg = aux_table->method.arg_list;
+    ARGS_LIST* aux_arg = aux_table->info->method_decl.args;
     if (aux_arg == NULL) {
         create_args_list(aux_table, arg_type, arg_name);
     } else {
@@ -266,45 +216,29 @@ void add_arg(char* method_name, const ID_TYPE arg_type, const char* arg_name) {
         ARGS_LIST* new_arg_place = allocate_args_list_mem();
         aux_arg->next = new_arg_place;
         new_arg_place->arg = new_arg;
-        aux_table->method.num_args++;
+        aux_table->info->method_decl.num_args++;
     }
 }
 
 /* Creates the argument list of a given method.
  */
-ARGS_LIST* create_args_list(ID_TABLE* method, const ID_TYPE arg_type, const char* arg_name) {
+ARGS_LIST* create_args_list(ID_TABLE* method, const TYPE arg_type, const char* arg_name) {
     if (method == NULL) {
         error_method_not_found((char*) method);
     }
 
-    method->method.arg_list = allocate_args_list_mem();
-    method->method.arg_list->arg = allocate_args_mem();
-    method->method.arg_list->arg->name = my_strdup(arg_name);
-    if (!method->method.arg_list->arg->name) error_allocate_mem();
-    method->method.arg_list->arg->type = arg_type;
-    method->method.num_args = 1;
-    return method->method.arg_list;
-}
-
-/* Allocates memory for ARGS_LIST and initializes all fields in NULL.
- */
-ARGS_LIST* allocate_args_list_mem() {
-    ARGS_LIST* aux = calloc(1, sizeof(ARGS_LIST));
-    if (!aux) error_allocate_mem();
-    return aux;
-}
-
-/* Allocates memory for ARGS and initializes all fields in NULL.
- */
-ARGS* allocate_args_mem() {
-    ARGS* aux = calloc(1, sizeof(ARGS));
-    if (!aux) error_allocate_mem();
-    return aux;
+    method->info->method_decl.args = allocate_args_list_mem();
+    method->info->method_decl.args->arg = allocate_args_mem();
+    method->info->method_decl.args->arg->name = my_strdup(arg_name);
+    if (!method->info->method_decl.args->arg->name) error_allocate_mem();
+    method->info->method_decl.args->arg->type = arg_type;
+    method->info->method_decl.num_args = 1;
+    return method->info->method_decl.args;
 }
 
 /* Adds an argument node into a temporary ARGS_LIST being built during parsing.
  */
-ARGS_LIST* add_arg_current_list(ARGS_LIST* list, const char* name, ID_TYPE type) {
+ARGS_LIST* add_arg_current_list(ARGS_LIST* list, const char* name, TYPE type) {
     if (list) {
         ARGS_LIST* tail = list;
         while (tail->next) tail = tail->next;
@@ -330,21 +264,21 @@ ARGS_LIST* add_arg_current_list(ARGS_LIST* list, const char* name, ID_TYPE type)
  */
 void add_current_list(char* name, ARGS_LIST* list) {
     ID_TABLE* meth = find_global(name);
-    if (!meth || meth->id_type != METHOD) {
+    if (!meth) {
         error_add_argument_method(name);
     }
-    meth->method.arg_list = list;
+    meth->info->method_decl.args = list;
     int count = 0;
     for (ARGS_LIST* it = list; it; it = it->next) count++;
-    meth->method.num_args = count;
+    meth->info->method_decl.num_args = count;
 }
 
 /* Returns the argument list of a method.
  */
 ARGS_LIST* get_method_args(const char* name) {
     ID_TABLE* meth = find_global(name);
-    if (!meth || meth->id_type != METHOD) {
+    if (!meth) {
         error_method_not_found(name);
     }
-    return meth->method.arg_list;
+    return meth->info->method_decl.args;
 }

@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include "utils.h"
+#include "symbol.h"
 
 // Instruction types for the pseudo-assembly
 typedef enum {
@@ -43,7 +44,6 @@ typedef struct {
     char var1[32]; // Buffer size (variable name or value)
     char var2[32]; // Buffer size (variable name or value)
     char reg[32]; // Buffer size (variable name or value)
-
 } Instr;
 
 void emit(InstrType t, const char* var1, const char* var2, const char* reg);

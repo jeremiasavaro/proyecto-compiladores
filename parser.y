@@ -8,6 +8,7 @@
 #include "symbol_table.h"
 #include "semantic_analyzer.h"
 #include "intermediate_code.h"
+#include "symbol.h"
 
 extern int yylex();
 extern int yylineno;
@@ -69,10 +70,10 @@ var_decl:
           ID_TABLE* dir;
           AST_NODE* id;
           if ($1 == INTEGER) {
-            dir = add_id($2, CONST_INT);
+            dir = add_id($2, TYPE_INT);
             id = new_leaf_node(TYPE_ID, dir);
           } else {
-            dir = add_id($2, CONST_BOOL);
+            dir = add_id($2, TYPE_BOOL);
             id = new_leaf_node(TYPE_ID, dir);
           }
           $$ = new_binary_node(OP_DECL, id, $4);
@@ -82,10 +83,10 @@ var_decl:
           ID_TABLE* dir;
           AST_NODE* id;
           if ($1 == INTEGER) {
-            dir = add_id($2, CONST_INT);
+            dir = add_id($2, TYPE_INT);
             id = new_leaf_node(TYPE_ID, dir);
           } else {
-            dir = add_id($2, CONST_BOOL);
+            dir = add_id($2, TYPE_BOOL);
             id = new_leaf_node(TYPE_ID, dir);
           }
           $$ = new_unary_node(OP_DECL, id);
@@ -99,35 +100,35 @@ var_decls:
 
 method_decl:
     VOID ID '(' method_args ')' block {
-        $$ = new_method_decl_node($2, $4, $6, get_this_scope(), 0);
-        add_method($2, RETURN_VOID, get_this_scope());
+        add_method($2, RETURN_VOID, get_this_scope(), 0);
         add_current_list($2, current_args_list);
+        $$ = new_method_decl_node($2, $6);
         current_args_list = NULL;
         pop_scope();
     }
   |
     VOID ID '(' method_args ')' EXTERN ';' {
-        $$ = new_method_decl_node($2, $4, NULL, get_this_scope(), 1);
-        add_method($2, RETURN_VOID, get_this_scope());
+        add_method($2, RETURN_VOID, get_this_scope(), 1);
         add_current_list($2, current_args_list);
+        $$ = new_method_decl_node($2, NULL);
         current_args_list = NULL;
         pop_scope();
     }
   |
     type ID '(' method_args ')' block {
-        $$ = new_method_decl_node($2, $4, $6, get_this_scope(), 0);
-        if ($1 == INTEGER) add_method($2, RETURN_INT, get_this_scope());
-        else if ($1 == BOOL) add_method($2, RETURN_BOOL, get_this_scope());
+        if ($1 == INTEGER) add_method($2, RETURN_INT, get_this_scope(), 0);
+        else if ($1 == BOOL) add_method($2, RETURN_BOOL, get_this_scope(), 0);
         add_current_list($2, current_args_list);
+        $$ = new_method_decl_node($2, $6);
         current_args_list = NULL;
         pop_scope();
     }
   |
     type ID '(' method_args ')' EXTERN ';' {
-        $$ = new_method_decl_node($2, $4, NULL, get_this_scope(), 1);
-        if ($1 == INTEGER) add_method($2, RETURN_INT, get_this_scope());
-        else if ($1 == BOOL) add_method($2, RETURN_BOOL, get_this_scope());
+        if ($1 == INTEGER) add_method($2, RETURN_INT, get_this_scope(), 1);
+        else if ($1 == BOOL) add_method($2, RETURN_BOOL, get_this_scope(), 1);
         add_current_list($2, current_args_list);
+        $$ = new_method_decl_node($2, NULL);
         current_args_list = NULL;
         pop_scope();
     }
@@ -144,14 +145,14 @@ method_args
 
 arg_list
     : type ID  {
-        ID_TABLE *dir = add_id($2, ($1 == INTEGER) ? CONST_INT : CONST_BOOL);
+        ID_TABLE *dir = add_id($2, ($1 == INTEGER) ? TYPE_INT : TYPE_BOOL);
         $$ = append_expr(NULL, new_leaf_node(TYPE_ID, dir));
-        current_args_list = add_arg_current_list(current_args_list, $2, ($1 == INTEGER) ? CONST_INT : CONST_BOOL);
+        current_args_list = add_arg_current_list(current_args_list, $2, ($1 == INTEGER) ? TYPE_INT : TYPE_BOOL);
       }
     | arg_list ',' type ID {
-        ID_TABLE *dir = add_id($4, ($3 == INTEGER) ? CONST_INT : CONST_BOOL);
+        ID_TABLE *dir = add_id($4, ($3 == INTEGER) ? TYPE_INT : TYPE_BOOL);
         $$ = append_expr($1, new_leaf_node(TYPE_ID, dir));
-        current_args_list = add_arg_current_list(current_args_list, $4, ($3 == INTEGER) ? CONST_INT : CONST_BOOL);
+        current_args_list = add_arg_current_list(current_args_list, $4, ($3 == INTEGER) ? TYPE_INT : TYPE_BOOL);
       }
     ;
 
@@ -181,11 +182,14 @@ block:
       }
       it = it->next;
     }
-    if (merged == NULL) $$ = NULL; /* Empty block */
-    $$ = new_block_node(merged);
-        if (last_block_pushed) {
-            pop_scope();
-        }
+    if (merged == NULL) {
+        $$ = NULL;
+    } else {
+        $$ = new_block_node(merged);
+    }
+    if (last_block_pushed) {
+        pop_scope();
+    }
     }
 ;
 
@@ -291,6 +295,6 @@ int main(int argc, char *argv[]) {
     for (AST_ROOT* cur = head_ast; cur != NULL; cur = cur->next) {
         gen_code(cur->sentence, NULL);
     }
-    print_code_to_file("intermediate_code/intermediate_code.out");
+    print_code_to_file("intermediate_code.out");
     return 0;
 }

@@ -12,7 +12,7 @@ typedef enum {
 	BOOL_TYPE,
 	VOID_TYPE,
 	NULL_TYPE,
-} TYPE;
+} RET_TYPE;
 
 /* Public function: checks the semantic of a tree */
 void semantic_analyzer(AST_ROOT* tree);

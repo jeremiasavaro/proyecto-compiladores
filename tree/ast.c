@@ -12,32 +12,31 @@ extern int yylineno;
  */
 AST_NODE* alloc_node(void) {
     AST_NODE* node = malloc(sizeof(AST_NODE));
+    node->info = allocate_info_mem();
     node->father = NULL;
-    node->type = AST_NULL;
+    node->info->type = AST_NULL;
     node->line = -1;
     return node;
 }
 
 /* Function that creates a new node of type leaf, assigning its type and value.
  */
-AST_NODE* new_leaf_node(LEAF_TYPE type, void* value) {
+AST_NODE* new_leaf_node(TYPE type, void* value) {
     AST_NODE* node = alloc_node();
-    node->type = AST_LEAF;
-    node->leaf.leaf_type = type;
+    node->info->type = AST_LEAF;
+    node->info->leaf.value = malloc(sizeof(LEAF_UNION));
+    node->info->leaf.type = type;
     node->line = yylineno;
     if (type == TYPE_INT) {
-        node->leaf.value = malloc(sizeof(union LEAF));
-        node->leaf.value->int_leaf.type = TYPE_INT;
-        node->leaf.value->int_leaf.value = *((int*) value);
+        node->info->leaf.type = TYPE_INT;
+        node->info->leaf.value->int_value = *(int*) value;
     } else if (type == TYPE_BOOL) {
-        node->leaf.value = malloc(sizeof(union LEAF));
-        node->leaf.value->bool_leaf.type = TYPE_BOOL;
-        node->leaf.value->bool_leaf.value = *((int*) value);
+        node->info->leaf.type = TYPE_BOOL;
+        node->info->leaf.value->int_value = *(int*) value;
     } else if (type == TYPE_ID) {
-        node->leaf.value = malloc(sizeof(union LEAF));
         /* In case that the leaf contains an ID, save in the value field the pointer to the
            block in the symbols table that contains that id. */
-        node->leaf.value->id_leaf = (ID_TABLE*) value;
+        node->info->leaf.value->id_leaf = (ID_TABLE*) value;
     }
     return node;
 }
@@ -46,11 +45,11 @@ AST_NODE* new_leaf_node(LEAF_TYPE type, void* value) {
  */
 AST_NODE* new_binary_node(OPERATOR op, AST_NODE* left, AST_NODE* right) {
     AST_NODE* node = alloc_node();
-    node->type = AST_COMMON;
-    node->common.arity = BINARY;
-    node->common.op = op;
-    node->common.left = left;
-    node->common.right = right;
+    node->info->type = AST_COMMON;
+    node->info->common.arity = BINARY;
+    node->info->common.op = op;
+    node->info->common.left = left;
+    node->info->common.right = right;
     if (left) left->father = node;
     if (right) right->father = node;
     node->line = yylineno;
@@ -62,11 +61,11 @@ AST_NODE* new_binary_node(OPERATOR op, AST_NODE* left, AST_NODE* right) {
  */
 AST_NODE* new_unary_node(OPERATOR op, AST_NODE* left) {
     AST_NODE* node = alloc_node();
-    node->type = AST_COMMON;
-    node->common.arity = UNARY;
-    node->common.op = op;
-    node->common.left = left;
-    node->common.right = NULL;
+    node->info->type = AST_COMMON;
+    node->info->common.arity = UNARY;
+    node->info->common.op = op;
+    node->info->common.left = left;
+    node->info->common.right = NULL;
     if (left) left->father = node;
     node->line = yylineno;
     return node;
@@ -77,10 +76,10 @@ AST_NODE* new_unary_node(OPERATOR op, AST_NODE* left) {
  */
 AST_NODE* new_if_node(AST_NODE* condition, AST_NODE* then_block, AST_NODE* else_block) {
     AST_NODE* node = alloc_node();
-    node->type = AST_IF;
-    node->if_stmt.condition = condition;
-    node->if_stmt.then_block = then_block;
-    node->if_stmt.else_block = else_block;
+    node->info->type = AST_IF;
+    node->info->if_stmt.condition = condition;
+    node->info->if_stmt.then_block = then_block;
+    node->info->if_stmt.else_block = else_block;
     if (condition) condition->father = node;
     if (then_block) then_block->father = node;
     if (else_block) else_block->father = node;
@@ -92,9 +91,9 @@ AST_NODE* new_if_node(AST_NODE* condition, AST_NODE* then_block, AST_NODE* else_
  */
 AST_NODE* new_while_node(AST_NODE* condition, AST_NODE* block) {
     AST_NODE* node = alloc_node();
-    node->type = AST_WHILE;
-    node->while_stmt.condition = condition;
-    node->while_stmt.block = block;
+    node->info->type = AST_WHILE;
+    node->info->while_stmt.condition = condition;
+    node->info->while_stmt.block = block;
     if (condition) condition->father = node;
     if (block) block->father = node;
     node->line = yylineno;
@@ -104,22 +103,15 @@ AST_NODE* new_while_node(AST_NODE* condition, AST_NODE* block) {
 /* Function that creates a new node of type method_decl, assigning its name, arguments, body block, scope and
  * if it is externally defined.
  */
-AST_NODE* new_method_decl_node(char* name, AST_NODE_LIST* args, AST_NODE* block, TABLE_STACK* scope, int is_extern) {
+AST_NODE* new_method_decl_node(const char* name, AST_NODE* block) {
     AST_NODE* node = alloc_node();
-    node->type = AST_METHOD_DECL;
-    node->method_decl.name = my_strdup(name); // Save a copy of the name .
-    node->method_decl.args = args; 
-    node->method_decl.block = block;
-    node->method_decl.scope = scope;
-    node->method_decl.is_extern = is_extern;
-    node->line = yylineno;
-    if (args) {
-        AST_NODE_LIST* args_list = args;
-        while (args_list) {
-            if (args_list->first) args_list->first->father = node; // Assign father to each argument.
-            args_list = args_list->next;
-        }
+    ID_TABLE* aux = find_global(name);
+    if (!aux) {
+        error_method_not_found(name);
     }
+    node->info = aux->info;
+    node->info->method_decl.block = block;
+    node->line = yylineno;
     if (block) block->father = node;
     return node;
 }
@@ -128,9 +120,9 @@ AST_NODE* new_method_decl_node(char* name, AST_NODE_LIST* args, AST_NODE* block,
  */
 AST_NODE* new_method_call_node(char* name, AST_NODE_LIST* args) {
     AST_NODE* node = alloc_node();
-    node->type = AST_METHOD_CALL;
-    node->method_call.name = my_strdup(name);
-    node->method_call.args = args;
+    node->info->type = AST_METHOD_CALL;
+    node->info->method_call.name = my_strdup(name);
+    node->info->method_call.args = args;
     node->line = yylineno;
     int num_args = 0;
     if (args) {
@@ -141,7 +133,7 @@ AST_NODE* new_method_call_node(char* name, AST_NODE_LIST* args) {
             args_list = args_list->next;
         }
     }
-    node->method_decl.num_args = num_args;
+    node->info->method_decl.num_args = num_args;
     return node;
 }
 
@@ -149,8 +141,8 @@ AST_NODE* new_method_call_node(char* name, AST_NODE_LIST* args) {
  */
 AST_NODE* new_block_node(AST_NODE_LIST* stmts) {
     AST_NODE* node = alloc_node();
-    node->type = AST_BLOCK;
-    node->block.stmts = stmts;
+    node->info->type = AST_BLOCK;
+    node->info->block.stmts = stmts;
     node->line = yylineno;
     if (stmts) {
         AST_NODE_LIST* it = stmts;
@@ -187,65 +179,65 @@ void add_sentence(AST_NODE* tree) {
 
 /* Function that frees memory recursively.
  */
-void free_mem(AST_NODE* node) {
-    if (!node) return;
-    switch (node->type) {
-        case AST_IF:
-            free_mem(node->if_stmt.condition);
-            free_mem(node->if_stmt.then_block);
-            free_mem(node->if_stmt.else_block);
-            break;
-        case AST_WHILE:
-            free_mem(node->while_stmt.condition);
-            free_mem(node->while_stmt.block);
-            break;
-        case AST_BLOCK: {
-            AST_NODE_LIST* list_stmts = node->block.stmts;
-            while (list_stmts) {
-                if (list_stmts->first) free_mem(list_stmts->first);
-                AST_NODE_LIST* next = list_stmts->next;
-                free(list_stmts);
-                list_stmts = next;
-            }
-            break;
-        }
-        case AST_METHOD_DECL: {
-            free(node->method_decl.name);
-            AST_NODE_LIST* args_list = node->method_decl.args;
-            while (args_list) {
-                if (args_list->first) free_mem(args_list->first);
-                AST_NODE_LIST* next = args_list->next;
-                free(args_list);
-                args_list = next;
-            }
-            free_mem(node->method_decl.block);
-            break;
-        }
-        case AST_METHOD_CALL:
-            free(node->method_call.name);
-            AST_NODE_LIST* args_list = node->method_call.args;
-            while (args_list) {
-                if (args_list->first) free_mem(args_list->first);
-                AST_NODE_LIST* next = args_list->next;
-                free(args_list);
-                args_list = next;
-            }
-            break;
-        case AST_COMMON:
-            free_mem(node->common.left);
-            free_mem(node->common.right);
-            break;
-
-        case AST_LEAF:
-            if (node->leaf.leaf_type == TYPE_INT || node->leaf.leaf_type == TYPE_BOOL) {
-                free(node->leaf.value);
-            }
-            break;
-        default:
-            break;
-    }
-    free(node);
-}
+// void free_mem(AST_NODE* node) {
+//     if (!node) return;
+//     switch (node->type) {
+//         case AST_IF:
+//             free_mem(node->if_stmt.condition);
+//             free_mem(node->if_stmt.then_block);
+//             free_mem(node->if_stmt.else_block);
+//             break;
+//         case AST_WHILE:
+//             free_mem(node->while_stmt.condition);
+//             free_mem(node->while_stmt.block);
+//             break;
+//         case AST_BLOCK: {
+//             AST_NODE_LIST* list_stmts = node->block.stmts;
+//             while (list_stmts) {
+//                 if (list_stmts->first) free_mem(list_stmts->first);
+//                 AST_NODE_LIST* next = list_stmts->next;
+//                 free(list_stmts);
+//                 list_stmts = next;
+//             }
+//             break;
+//         }
+//         case AST_METHOD_DECL: {
+//             free(node->method_decl.name);
+//             AST_NODE_LIST* args_list = node->method_decl.args;
+//             while (args_list) {
+//                 if (args_list->first) free_mem(args_list->first);
+//                 AST_NODE_LIST* next = args_list->next;
+//                 free(args_list);
+//                 args_list = next;
+//             }
+//             free_mem(node->method_decl.block);
+//             break;
+//         }
+//         case AST_METHOD_CALL:
+//             free(node->method_call.name);
+//             AST_NODE_LIST* args_list = node->method_call.args;
+//             while (args_list) {
+//                 if (args_list->first) free_mem(args_list->first);
+//                 AST_NODE_LIST* next = args_list->next;
+//                 free(args_list);
+//                 args_list = next;
+//             }
+//             break;
+//         case AST_COMMON:
+//             free_mem(node->common.left);
+//             free_mem(node->common.right);
+//             break;
+//
+//         case AST_LEAF:
+//             if (node->leaf.leaf_type == TYPE_INT || node->leaf.leaf_type == TYPE_BOOL) {
+//                 free(node->leaf.value);
+//             }
+//             break;
+//         default:
+//             break;
+//     }
+//     free(node);
+// }
 
 /* Function utilized for build lists of expressions (statements, args, etc)
  */
