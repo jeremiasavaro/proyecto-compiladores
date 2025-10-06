@@ -66,3 +66,6 @@ parser
 parser.output
 
 tests/output
+
+# Intermediate code files
+intermediate_code/intermediate_code.out

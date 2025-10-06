@@ -202,20 +202,24 @@ static void gen_code_common(AST_NODE* node, char** result) {
             emit(I_OR, left, right, temp);
             *result = temp;
             break;
-
         case OP_NEG:
             gen_code(node->common.left, &left);
             temp = new_temp();
             emit(I_NEG, left, NULL, temp);
             *result = temp;
             break;
-
         case OP_ASSIGN:
             gen_code(node->common.left, &left);
             gen_code(node->common.right, &right);
             emit(I_STORE, right, NULL, left);
             break;
-
+        case OP_DECL:
+            gen_code(node->common.left, &left);
+            if (node->common.right) {
+                gen_code(node->common.right, &right);
+                emit(I_STORE, right, NULL, left);
+            }
+            break;
         default:
             break;
     }
@@ -262,6 +266,10 @@ static void gen_code_while(AST_NODE* node, char** result) {
 /* Function that generates code for method declarations
  */
 static void gen_code_method_decl(AST_NODE* node, char** result) {
+    if (node->method_decl.is_extern) {
+        emit(I_EXTERN, node->method_decl.name, NULL, NULL);
+        return;
+    }
     emit(I_ENTER, node->method_decl.name, NULL, NULL);
     if (!node->method_decl.is_extern && node->method_decl.block) {
         gen_code(node->method_decl.block, NULL);
@@ -397,6 +405,9 @@ void print_code_to_file(const char* filename) {
             case I_LEAVE:
                 fprintf(f, "LEAVE %s\n", code[i].var1);
                 break;
+            case I_EXTERN: 
+                fprintf(f, "EXTERN %s\n", code[i].var1);
+                break;
             default:
                 fprintf(f, "UNKNOWN\n");
                 break;
@@ -428,14 +439,6 @@ void gen_code(AST_NODE* node, char** result) {
         case AST_BLOCK:
             gen_code_block(node, result);
             break;
-        case AST_DECL: {
-            if (node->decl.id && node->decl.init_expr) {
-                char* init_temp = NULL;
-                gen_code(node->decl.init_expr, &init_temp);
-                emit(I_STORE, init_temp, NULL, node->decl.id->id_name);
-            }
-            break;
-        }
         case AST_LEAF:
             gen_code_leaf(node, result);
             break;

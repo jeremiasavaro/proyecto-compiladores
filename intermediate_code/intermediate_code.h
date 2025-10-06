@@ -33,7 +33,8 @@ typedef enum {
     I_PARAM,     // Pass parameter (argument) before a call
     I_CALL,      // Call a method (var1 = method name, reg = temp for return if any)
     I_ENTER,     // Method prologue (var1 = method name)
-    I_LEAVE      // Method epilogue (var1 = method name)
+    I_LEAVE,      // Method epilogue (var1 = method name)
+    I_EXTERN,     // Extern method prologue 
 } InstrType;
 
 // Instruction representation for the pseudo-assembly
