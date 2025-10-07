@@ -20,166 +20,152 @@ static void eval_common(AST_NODE *tree, RET_TYPE *ret) {
     line = tree->line;
     RET_TYPE left_type;
     RET_TYPE right_type;
-    switch (tree->info->common.op) {
-        case OP_ADDITION:
+    // RETURN and DECL operations are treated separately, as they can have null children.    
+    if (tree->info->common.op == OP_DECL) {
+        if (tree->info->common.right) {
             eval(tree->info->common.left, &left_type);
             eval(tree->info->common.right, &right_type);
-            if (left_type != INT_TYPE || right_type != INT_TYPE) {
-                error_additional(line);
+            ID_TABLE *var = tree->info->common.left->info->leaf.value->id_leaf;
+            char* var_name = var->info->id.name;
+            if (left_type != right_type && right_type == INT_TYPE) {
+                error_type_mismatch(line, var_name, "INT");
+            } else if (left_type != right_type && right_type == BOOL_TYPE) {
+                error_type_mismatch(line, var_name, "BOOL");
             }
-            *ret = INT_TYPE;
-            return;
-        case OP_SUBTRACTION:
-            eval(tree->info->common.left, &left_type);
-            eval(tree->info->common.right, &right_type);
-            if (left_type != INT_TYPE || right_type != INT_TYPE) {
-                error_substraction(line);
-            }
-            *ret = INT_TYPE;
-            return;
-        case OP_MULTIPLICATION:
-            eval(tree->info->common.left, &left_type);
-            eval(tree->info->common.right, &right_type);
-            if (left_type != INT_TYPE || right_type != INT_TYPE) {
-                error_multiplication(line);
-            }
-            *ret = INT_TYPE;
-            return;
-        case OP_DIVISION:
-        case OP_MOD:
-            eval(tree->info->common.left, &left_type);
-            eval(tree->info->common.right, &right_type);
-            if (left_type != INT_TYPE || right_type != INT_TYPE) {
-                error_division(line);
-            }
-            *ret = INT_TYPE;
-            return;
-        case OP_MINUS:
-            eval(tree->info->common.left, &left_type);
-            if (left_type != INT_TYPE) {
-               error_minus(line);
-            }
-            *ret = INT_TYPE;
-            return;
-        case OP_LES:
-            eval(tree->info->common.left, &left_type);
-            eval(tree->info->common.right, &right_type);
-            if (left_type != INT_TYPE || right_type != INT_TYPE) {
-                error_less(line);
-            }
-            *ret = BOOL_TYPE;
-            return;
-        case OP_GRT:
-            eval(tree->info->common.left, &left_type);
-            eval(tree->info->common.right, &right_type);
-            if (left_type != INT_TYPE || right_type != INT_TYPE) {
-                error_greater(line);
-            }
-            *ret = BOOL_TYPE;
-            return;
-        case OP_EQ:
-            eval(tree->info->common.left, &left_type);
-            eval(tree->info->common.right, &right_type);
-            if (left_type != INT_TYPE || right_type != INT_TYPE) {
-                error_equal(line);
-            }
-            *ret = BOOL_TYPE;
-            return;
-        case OP_NEQ:
-            eval(tree->info->common.left, &left_type);
-            eval(tree->info->common.right, &right_type);
-            if (left_type != INT_TYPE || right_type != INT_TYPE) {
-                error_not_equal(line);
-            }
-            *ret = BOOL_TYPE;
-            return;
-        case OP_LEQ:
-            eval(tree->info->common.left, &left_type);
-            eval(tree->info->common.right, &right_type);
-            if (left_type != INT_TYPE || right_type != INT_TYPE) {
-                error_less_equal(line);
-            }
-            *ret = BOOL_TYPE;
-            return;
-        case OP_GEQ:
-            eval(tree->info->common.left, &left_type);
-            eval(tree->info->common.right, &right_type);
-            if (left_type != INT_TYPE || right_type != INT_TYPE) {
-                error_greater_equal(line);
-            }
-            *ret = BOOL_TYPE;
-            return;
-        case OP_AND:
-            eval(tree->info->common.left, &left_type);
-            eval(tree->info->common.right, &right_type);
-            if (left_type != BOOL_TYPE || right_type != BOOL_TYPE) {
-                error_and(line);
-            }
-            *ret = BOOL_TYPE;
-            return;
-        case OP_OR:
-            eval(tree->info->common.left, &left_type);
-            eval(tree->info->common.right, &right_type);
-            if (left_type != BOOL_TYPE || right_type != BOOL_TYPE) {
-                error_or(line);
-            }
-            *ret = BOOL_TYPE;
-            return;
-        case OP_NEG:
-            eval(tree->info->common.left, &left_type);
-            if (left_type != BOOL_TYPE) {
-                error_neg(line);
-            }
-            *ret = BOOL_TYPE;
-            return;
-        case OP_DECL:
-            if (tree->info->common.right) {
-                eval(tree->info->common.left, &left_type);
-                eval(tree->info->common.right, &right_type);
-                ID_TABLE *var = tree->info->common.left->info->leaf.value->id_leaf;
-                char* var_name = var->info->id.name;
-                if (left_type != right_type && right_type == INT_TYPE) {
-                    error_type_mismatch(line, var_name, "INT");
-                } else if (left_type != right_type && right_type == BOOL_TYPE) {
-                    error_type_mismatch(line, var_name, "BOOL");
-                }
-                *ret = right_type;
-                return;
-            }
-            *ret = NULL_TYPE;
-            return;
-        case OP_ASSIGN: {
-            // Left must be a TYPE_ID leaf
-            if (!tree->info->common.left || tree->info->common.left->info->type != AST_LEAF || tree->info->common.left->info->leaf.type != TYPE_ID) {
-                error_assign(line);
-            }
-            ID_TABLE *id = tree->info->common.left->info->leaf.value->id_leaf;
-            eval(tree->info->common.right, &right_type);
-
-            if ((id->info->id.type == TYPE_INT && right_type != INT_TYPE) ||
-                (id->info->id.type == TYPE_BOOL && right_type != BOOL_TYPE)) {
-                error_type_mismatch(line, id->info->id.name, id->info->id.type == TYPE_INT ? "INT" : "BOOL");
-            }
-
             *ret = right_type;
             return;
         }
-        case OP_RETURN: {
-            if (tree->info->common.left) {                
-                eval(tree->info->common.left, &left_type);
-                if (left_type != method_return_type) {
-                    error_return_type(tree->line, left_type, method_return_type);
-                }
-                memcpy(ret, &left_type, sizeof(RET_TYPE));
-                returned_global = 1;
-            } else {
-                if (method_return_type != VOID_TYPE) {
-                    error_return_type_void(tree->line, method_return_type);
-                }
-                *ret = VOID_TYPE;
-                returned_global = 1;
+        *ret = NULL_TYPE;
+        return;
+    } else  if (tree->info->common.op == OP_RETURN) {
+        if (tree->info->common.left) {    
+            eval(tree->info->common.left, &left_type);            
+            if (left_type != method_return_type) {
+                error_return_type(tree->line, left_type, method_return_type);
             }
-            return;
+            memcpy(ret, &left_type, sizeof(RET_TYPE));
+            returned_global = 1;
+        } else {
+            if (method_return_type != VOID_TYPE) {
+                error_return_type_void(tree->line, method_return_type);
+            }
+            *ret = VOID_TYPE;
+            returned_global = 1;
+        }
+        return;
+    }
+
+    if (tree->info->common.arity == BINARY) {
+        eval(tree->info->common.left, &left_type);
+        eval(tree->info->common.right, &right_type);
+        switch (tree->info->common.op) {
+            case OP_ADDITION:
+                if (left_type != INT_TYPE || right_type != INT_TYPE) {
+                    error_additional(line);
+                }
+                *ret = INT_TYPE;
+                return;
+            case OP_SUBTRACTION:
+                if (left_type != INT_TYPE || right_type != INT_TYPE) {
+                    error_substraction(line);
+                }
+                *ret = INT_TYPE;
+                return;
+            case OP_MULTIPLICATION:
+                if (left_type != INT_TYPE || right_type != INT_TYPE) {
+                    error_multiplication(line);
+                }
+                *ret = INT_TYPE;
+                return;
+            case OP_DIVISION:
+            case OP_MOD:
+                if (left_type != INT_TYPE || right_type != INT_TYPE) {
+                    error_division(line);
+                }
+                *ret = INT_TYPE;
+                return;
+            case OP_LES:
+                if (left_type != INT_TYPE || right_type != INT_TYPE) {
+                    error_less(line);
+                }
+                *ret = BOOL_TYPE;
+                return;
+            case OP_GRT:
+                if (left_type != INT_TYPE || right_type != INT_TYPE) {
+                    error_greater(line);
+                }
+                *ret = BOOL_TYPE;
+                return;
+            case OP_EQ:
+                if (left_type != INT_TYPE || right_type != INT_TYPE) {
+                    error_equal(line);
+                }
+                *ret = BOOL_TYPE;
+                return;
+            case OP_NEQ:
+                if (left_type != INT_TYPE || right_type != INT_TYPE) {
+                    error_not_equal(line);
+                }
+                *ret = BOOL_TYPE;
+                return;
+            case OP_LEQ:
+                if (left_type != INT_TYPE || right_type != INT_TYPE) {
+                    error_less_equal(line);
+                }
+                *ret = BOOL_TYPE;
+                return;
+            case OP_GEQ:
+                if (left_type != INT_TYPE || right_type != INT_TYPE) {
+                    error_greater_equal(line);
+                }
+                *ret = BOOL_TYPE;
+                return;
+            case OP_AND:
+                if (left_type != BOOL_TYPE || right_type != BOOL_TYPE) {
+                    error_and(line);
+                }
+                *ret = BOOL_TYPE;
+                return;
+            case OP_OR:
+                if (left_type != BOOL_TYPE || right_type != BOOL_TYPE) {
+                    error_or(line);
+                }
+                *ret = BOOL_TYPE;
+                return;
+            case OP_ASSIGN:
+                // Left must be a TYPE_ID leaf
+                if (!tree->info->common.left || tree->info->common.left->info->type != AST_LEAF || tree->info->common.left->info->leaf.type != TYPE_ID) {
+                    error_assign(line);
+                }
+                ID_TABLE *id = tree->info->common.left->info->leaf.value->id_leaf;
+
+                if ((id->info->id.type == TYPE_INT && right_type != INT_TYPE) ||
+                    (id->info->id.type == TYPE_BOOL && right_type != BOOL_TYPE)) {
+                    error_type_mismatch(line, id->info->id.name, id->info->id.type == TYPE_INT ? "INT" : "BOOL");
+                }
+
+                *ret = right_type;
+                return;
+            default:
+                break;
+        }
+    } else { // UNARY
+        eval(tree->info->common.left, &left_type);
+        switch (tree->info->common.op) {
+            case OP_MINUS:
+                if (left_type != INT_TYPE) {
+                    error_minus(line);
+                }
+                *ret = INT_TYPE;
+                return;
+            case OP_NEG:
+                if (left_type != BOOL_TYPE) {
+                    error_neg(line);
+                }
+                *ret = BOOL_TYPE;
+                return;
+            default:
+                break;
         }
     }
     error_unknown_operator(line);
@@ -323,7 +309,7 @@ static void eval_method_call(AST_NODE *tree, RET_TYPE *ret) {
 
     while (method_args && call_args) {
         eval(call_args->first, ret);
-        TYPE auxType = {};
+        TYPE auxType;
         switch (*ret) {
             case INT_TYPE:
                 auxType = TYPE_INT;

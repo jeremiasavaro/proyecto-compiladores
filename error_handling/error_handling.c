@@ -137,7 +137,7 @@ void error_assign(int line){
 }
 
 void error_unknown_operator(int line){
-    fprintf(stderr, "ERROR(line %d): unknown operator in interpreter\n", line);
+    fprintf(stderr, "ERROR(line %d): unknown operator in semantic-analyzer\n", line);
     exit(EXIT_FAILURE);
 }
 

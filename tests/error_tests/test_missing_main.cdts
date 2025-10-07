@@ -1,0 +1,19 @@
+Program {
+    integer inc (integer x) {
+        return x + 1;
+    }
+    bool isEven (integer y) {
+        if (y % 2 == 0) then {
+            return true;
+        } else {
+            return false;
+        }
+    }
+    void program () {
+        integer a = 10;
+        bool aux;
+        a = inc(a);
+        aux = isEven(a);
+        return;
+    }
+}

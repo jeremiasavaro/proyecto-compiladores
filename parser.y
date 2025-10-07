@@ -295,6 +295,6 @@ int main(int argc, char *argv[]) {
     for (AST_ROOT* cur = head_ast; cur != NULL; cur = cur->next) {
         gen_code(cur->sentence, NULL);
     }
-    print_code_to_file("intermediate_code.out");
+    print_code_to_file("intermediate_code/intermediate_code.out");
     return 0;
 }
