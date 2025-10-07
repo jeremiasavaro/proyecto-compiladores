@@ -133,10 +133,6 @@ static void eval_common(AST_NODE *tree, RET_TYPE *ret) {
                 *ret = BOOL_TYPE;
                 return;
             case OP_ASSIGN:
-                // Left must be a TYPE_ID leaf
-                if (!tree->info->common.left || tree->info->common.left->info->type != AST_LEAF || tree->info->common.left->info->leaf.type != TYPE_ID) {
-                    error_assign(line);
-                }
                 ID_TABLE *id = tree->info->common.left->info->leaf.value->id_leaf;
 
                 if ((id->info->id.type == TYPE_INT && right_type != INT_TYPE) ||
