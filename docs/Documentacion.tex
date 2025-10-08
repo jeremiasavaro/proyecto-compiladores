@@ -161,6 +161,32 @@ del trabajo en equipo.
     \end{itemize}
 \end{itemize}
 
+\section{Tercer etapa}
+
+\subsection*{División de la tercer etapa}
+\begin{itemize}
+	\item \textbf{Mateo Cornejo:} Implementación de la base del generador de código intermedio y correción de errores.
+	\item \textbf{Jeremias Avaro:} Implementación general del generador de código intermedio.
+	\item \textbf{Máximo Marquez Regis:} Refactorización de las estructuas del compilador.
+	\item Todos: participación en la discusión de decisiones de diseño, testeo y documentación.
+\end{itemize}
+
+\subsection*{Decisiones de diseño y aclaraciones}
+\begin{itemize}
+	\item Se optó por cambiar las estructuras del compilador y unificarlas en una para facilitar la generación de código intermedio.
+	\item En la generación de código intermedio se utiliza la la estructura \texttt{Info} para mantener información sobre variables y operadores.
+\end{itemize}
+
+\subsection*{Diseño y decisiones clave}
+\begin{itemize}
+	\item
+\end{itemize}
+
+\subsection*{Problemas conocidos}
+\begin{itemize}
+	\item Al tener una sola estructura para el \texttt{AST} y para la tabla de símbolos, se hace más engorroso acceder a los distintos campos de la estructura.
+\end{itemize}
+
 
 
 \end{document}
