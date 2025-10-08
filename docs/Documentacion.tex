@@ -174,12 +174,21 @@ del trabajo en equipo.
 \subsection*{Decisiones de diseño y aclaraciones}
 \begin{itemize}
 	\item Se optó por cambiar las estructuras del compilador y unificarlas en una para facilitar la generación de código intermedio.
-	\item En la generación de código intermedio se utiliza la la estructura \texttt{Info} para mantener información sobre variables y operadores.
+	\item En la generación de código intermedio se utiliza la estructura \texttt{Info} para mantener información sobre variables y operadores.
+	\item Se volvió a agregar la operación \texttt{DECL} al AST para facilitar la generación de código intermedio y chequear que el tipo de los ID se corresponda con su declaración.
+    \item Para la generación de código intermedio se recorre el AST de igual manera que el Semantic Analyzer. Cada nodo del árbol sintáctico abstracto es procesado por funciones especializadas según su tipo (expresiones, asignaciones, declaraciones, bloques, etc.).
+    \item Se hace uso de un temporal en todas las instrucciones del código de tres direcciones. En cada operación, se genera un nombre de temporal único (por ejemplo, T1, T2, ...) mediante la función new\_temp(). El resultado relevante de la operación se almacena en ese temporal, permitiendo encadenar instrucciones y facilitar la traducción a código máquina o ensamblador posteriormente.
+    \item El buffer de instrucciones (code[ ]) almacena cada instrucción generada, incluyendo los operandos y el temporal asociado.
+    \item Se tomo como decisión que las operaciones (instrucciones) tambien sean almacenadas en la estructura \texttt{Info}, para facilitar la generación de código intermedio.
 \end{itemize}
 
 \subsection*{Diseño y decisiones clave}
 \begin{itemize}
-	\item
+    \item Se definió una estructura unificada de datos para el compilador, permitiendo compartir información entre las distintas etapas.
+    \item El diseño del AST se mantuvo modular: cada tipo de nodo (expresiones, asignaciones, declaraciones, etc.) tiene una función de procesamiento específica, lo que facilita la extensión futura del lenguaje.
+    \item Se implementó un generador de temporales (\texttt{new\_temp()}) y un contador global para asegurar que cada temporal sea único, garantizando trazabilidad y evitando colisiones durante la generación de código.
+    \item El buffer de código (\texttt{code[]}) se diseñó como una lista secuencial de instrucciones que pueden recorrerse o traducirse sin necesidad de reconstruir el árbol sintáctico.
+    \item Se decidió volver a incorporar la operación de declaracion para los nodos de tipo common, ya que no se chequeaba si el tipo de la inicialización era el correcto.
 \end{itemize}
 
 \subsection*{Problemas conocidos}
