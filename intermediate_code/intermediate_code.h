@@ -35,19 +35,19 @@ typedef enum {
     I_CALL,      // Call a method (var1 = method name, reg = temp for return if any)
     I_ENTER,     // Method prologue (var1 = method name)
     I_LEAVE,      // Method epilogue (var1 = method name)
-    I_EXTERN,     // Extern method prologue 
+    I_EXTERN,     // Extern method prologue
 } InstrType;
 
 // Instruction representation for the pseudo-assembly
 typedef struct {
     InstrType type;
-    char var1[32]; // Buffer size (variable name or value)
-    char var2[32]; // Buffer size (variable name or value)
-    char reg[32]; // Buffer size (variable name or value)
+    INFO* var1; // Buffer size (variable name or value)
+    INFO* var2; // Buffer size (variable name or value)
+    INFO* reg; // Buffer size (variable name or value)
 } Instr;
 
-void emit(InstrType t, const char* var1, const char* var2, const char* reg);
-void gen_code(AST_NODE* node, char** result);
+void emit(InstrType t, INFO* var1, INFO* var2, INFO* reg);
+void gen_code(AST_NODE* node, INFO* result);
 void print_code_to_file(const char* filename);
 void reset_code();
 

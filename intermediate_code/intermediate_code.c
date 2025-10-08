@@ -25,50 +25,67 @@ static char* new_label() {
 
 /* Function for save instructions in the buffer
  */
-void emit(InstrType t, const char* var1, const char* var2, const char* reg) {
+/* Function for save instructions in the buffer
+ */
+void emit(InstrType t, INFO* var1, INFO* var2, INFO* reg) {
     code[code_size].type = t;
+
+    // Dynamically allocate and copy INFO structs
     if (var1) {
-        strcpy(code[code_size].var1, var1);
+        code[code_size].var1 = (INFO*)malloc(sizeof(INFO));
+        *(code[code_size].var1) = *var1;
     } else {
-        code[code_size].var1[0] = '\0';     //If received NULL, save empty string
+        code[code_size].var1 = NULL;
     }
+
     if (var2) {
-        strcpy(code[code_size].var2, var2);
+        code[code_size].var2 = (INFO*)malloc(sizeof(INFO));
+        *(code[code_size].var2) = *var2;
     } else {
-        code[code_size].var2[0] = '\0';     //If received NULL, save empty string
+        code[code_size].var2 = NULL;
     }
+
     if(reg) {
-        strcpy(code[code_size].reg, reg);
+        code[code_size].reg = (INFO*)malloc(sizeof(INFO));
+        *(code[code_size].reg) = *reg;
     } else {
-        code[code_size].reg[0] = '\0';     //If received NULL, save empty string
+        code[code_size].reg = NULL;
     }
+
     code_size++;
 }
 
 /* Function that generates code for leaf nodes
  */
-static void gen_code_leaf(AST_NODE* node, char** result) {
+static void gen_code_leaf(AST_NODE* node, INFO* result) {
     char buf[32];
+    INFO temp_info;
+    temp_info.type = TABLE_ID;
+
     switch (node->info->leaf.type) {
         case TYPE_INT: {
             sprintf(buf, "%d", node->info->leaf.value->int_value);
-            char* val = my_strdup(buf);
-            emit(I_LOADVAL, val, NULL, NULL);
-            if (result) *result = val;
+            temp_info.id.name = my_strdup(buf);
+            temp_info.id.type = TYPE_INT;
+            emit(I_LOADVAL, &temp_info, NULL, NULL);
+            if (result) *result = temp_info;
             break;
         }
         case TYPE_BOOL: {
             sprintf(buf, "%d", node->info->leaf.value->bool_value);
-            char* val = my_strdup(buf);
-            emit(I_LOADVAL, val, NULL, NULL);
-            if (result) *result = val;
+            temp_info.id.name = my_strdup(buf);
+            temp_info.id.type = TYPE_BOOL;
+            emit(I_LOADVAL, &temp_info, NULL, NULL);
+            if (result) *result = temp_info;
             break;
         }
         case TYPE_ID: {
-            ID_TABLE* sym = node->info->leaf.value->id_leaf; // Symbol
+            ID_TABLE* sym = node->info->leaf.value->id_leaf;
             if (sym) {
-                emit(I_LOAD, sym->info->id.name, NULL, NULL);
-                if (result) *result = sym->info->id.name; // Stable name
+                temp_info.id.name = sym->info->id.name;
+                temp_info.id.type = sym->info->id.type;
+                emit(I_LOAD, &temp_info, NULL, NULL);
+                if (result) *result = temp_info;
             }
             break;
         }
@@ -77,62 +94,74 @@ static void gen_code_leaf(AST_NODE* node, char** result) {
 
 /* Function that generates code for common expressions
  */
-static void gen_code_common(AST_NODE* node, char** result) {
-    char* left = NULL;
-    char* right = NULL;
-    char* temp = NULL;
+static void gen_code_common(AST_NODE* node, INFO* result) {
+    INFO left_info, right_info, temp_info;
+    INFO* left = &left_info;
+    INFO* right = &right_info;
+    INFO* temp = &temp_info;
+
+    // Initialize all INFO structs as TABLE_ID type
+    left->type = TABLE_ID;
+    right->type = TABLE_ID;
+    temp->type = TABLE_ID;
 
     switch (node->info->common.op) {
         case OP_ADDITION:
-            gen_code(node->info->common.left, &left);
-            gen_code(node->info->common.right, &right);
-            temp = new_temp();
+            gen_code(node->info->common.left, left);
+            gen_code(node->info->common.right, right);
+            temp->id.name = new_temp();
+            temp->id.type = TYPE_INT;
             emit(I_ADD, left, right, temp);
-            *result = temp;
+            if (result) *result = *temp;
             break;
 
         case OP_SUBTRACTION:
-            gen_code(node->info->common.left, &left);
-            gen_code(node->info->common.right, &right);
-            temp = new_temp();
+            gen_code(node->info->common.left, left);
+            gen_code(node->info->common.right, right);
+            temp->id.name = new_temp();
+            temp->id.type = TYPE_INT;
             emit(I_SUB, left, right, temp);
-            *result = temp;
+            if (result) *result = *temp;
             break;
 
         case OP_MULTIPLICATION:
-            gen_code(node->info->common.left, &left);
-            gen_code(node->info->common.right, &right);
-            temp = new_temp();
+            gen_code(node->info->common.left, left);
+            gen_code(node->info->common.right, right);
+            temp->id.name = new_temp();
+            temp->id.type = TYPE_INT;
             emit(I_MUL, left, right, temp);
-            *result = temp;
+            if (result) *result = *temp;
             break;
 
         case OP_DIVISION:
-            gen_code(node->info->common.left, &left);
-            gen_code(node->info->common.right, &right);
-            temp = new_temp();
+            gen_code(node->info->common.left, left);
+            gen_code(node->info->common.right, right);
+            temp->id.name = new_temp();
+            temp->id.type = TYPE_INT;
             emit(I_DIV, left, right, temp);
-            *result = temp;
+            if (result) *result = *temp;
             break;
 
         case OP_MOD:
-            gen_code(node->info->common.left, &left);
-            gen_code(node->info->common.right, &right);
-            temp = new_temp();
+            gen_code(node->info->common.left, left);
+            gen_code(node->info->common.right, right);
+            temp->id.name = new_temp();
+            temp->id.type = TYPE_INT;
             emit(I_MOD, left, right, temp);
-            *result = temp;
+            if (result) *result = *temp;
             break;
 
         case OP_MINUS:
-            gen_code(node->info->common.left, &left);
-            temp = new_temp();
+            gen_code(node->info->common.left, left);
+            temp->id.name = new_temp();
+            temp->id.type = TYPE_INT;
             emit(I_MIN, left, NULL, temp);
-            *result = temp;
+            if (result) *result = *temp;
             break;
 
         case OP_RETURN:
             if (node->info->common.left) {
-                gen_code(node->info->common.left, &left);
+                gen_code(node->info->common.left, left);
                 emit(I_RET, left, NULL, NULL);
             } else {
                 emit(I_RET, NULL, NULL, NULL);
@@ -140,86 +169,99 @@ static void gen_code_common(AST_NODE* node, char** result) {
             break;
 
         case OP_LES:
-            gen_code(node->info->common.left, &left);
-            gen_code(node->info->common.right, &right);
-            temp = new_temp();
+            gen_code(node->info->common.left, left);
+            gen_code(node->info->common.right, right);
+            temp->id.name = new_temp();
+            temp->id.type = TYPE_BOOL;
             emit(I_LES, left, right, temp);
-            *result = temp;
+            if (result) *result = *temp;
             break;
 
         case OP_GRT:
-            gen_code(node->info->common.left, &left);
-            gen_code(node->info->common.right, &right);
-            temp = new_temp();
+            gen_code(node->info->common.left, left);
+            gen_code(node->info->common.right, right);
+            temp->id.name = new_temp();
+            temp->id.type = TYPE_BOOL;
             emit(I_GRT, left, right, temp);
-            *result = temp;
+            if (result) *result = *temp;
             break;
 
         case OP_EQ:
-            gen_code(node->info->common.left, &left);
-            gen_code(node->info->common.right, &right);
-            temp = new_temp();
+            gen_code(node->info->common.left, left);
+            gen_code(node->info->common.right, right);
+            temp->id.name = new_temp();
+            temp->id.type = TYPE_BOOL;
             emit(I_EQ, left, right, temp);
-            *result = temp;
+            if (result) *result = *temp;
             break;
 
         case OP_NEQ:
-            gen_code(node->info->common.left, &left);
-            gen_code(node->info->common.right, &right);
-            temp = new_temp();
+            gen_code(node->info->common.left, left);
+            gen_code(node->info->common.right, right);
+            temp->id.name = new_temp();
+            temp->id.type = TYPE_BOOL;
             emit(I_NEQ, left, right, temp);
-            *result = temp;
+            if (result) *result = *temp;
             break;
 
         case OP_LEQ:
-            gen_code(node->info->common.left, &left);
-            gen_code(node->info->common.right, &right);
-            temp = new_temp();
+            gen_code(node->info->common.left, left);
+            gen_code(node->info->common.right, right);
+            temp->id.name = new_temp();
+            temp->id.type = TYPE_BOOL;
             emit(I_LEQ, left, right, temp);
-            *result = temp;
+            if (result) *result = *temp;
             break;
 
         case OP_GEQ:
-            gen_code(node->info->common.left, &left);
-            gen_code(node->info->common.right, &right);
-            temp = new_temp();
+            gen_code(node->info->common.left, left);
+            gen_code(node->info->common.right, right);
+            temp->id.name = new_temp();
+            temp->id.type = TYPE_BOOL;
             emit(I_GEQ, left, right, temp);
-            *result = temp;
+            if (result) *result = *temp;
             break;
 
         case OP_AND:
-            gen_code(node->info->common.left, &left);
-            gen_code(node->info->common.right, &right);
-            temp = new_temp();
+            gen_code(node->info->common.left, left);
+            gen_code(node->info->common.right, right);
+            temp->id.name = new_temp();
+            temp->id.type = TYPE_BOOL;
             emit(I_AND, left, right, temp);
-            *result = temp;
+            if (result) *result = *temp;
             break;
 
         case OP_OR:
-            gen_code(node->info->common.left, &left);
-            gen_code(node->info->common.right, &right);
-            temp = new_temp();
+            gen_code(node->info->common.left, left);
+            gen_code(node->info->common.right, right);
+            temp->id.name = new_temp();
+            temp->id.type = TYPE_BOOL;
             emit(I_OR, left, right, temp);
-            *result = temp;
+            if (result) *result = *temp;
             break;
+
         case OP_NEG:
-            gen_code(node->info->common.left, &left);
-            temp = new_temp();
+            gen_code(node->info->common.left, left);
+            temp->id.name = new_temp();
+            temp->id.type = TYPE_BOOL;
             emit(I_NEG, left, NULL, temp);
-            *result = temp;
+            if (result) *result = *temp;
             break;
+
         case OP_ASSIGN:
-            gen_code(node->info->common.left, &left);
-            gen_code(node->info->common.right, &right);
+            gen_code(node->info->common.left, left);
+            gen_code(node->info->common.right, right);
             emit(I_STORE, right, NULL, left);
             break;
+
         case OP_DECL:
-            gen_code(node->info->common.left, &left);
+            gen_code(node->info->common.left, left);
             if (node->info->common.right) {
-                gen_code(node->info->common.right, &right);
+                gen_code(node->info->common.right, right);
                 emit(I_STORE, right, NULL, left);
             }
             break;
+
         default:
             break;
     }
@@ -227,90 +269,108 @@ static void gen_code_common(AST_NODE* node, char** result) {
 
 /* Function that generates code for if expressions
  */
-static void gen_code_if(AST_NODE* node, char** result) {
-    char* cond_temp = NULL;
-    gen_code(node->info->if_stmt.condition, &cond_temp);
-    char* else_label = new_label();
-    char* end_label = new_label();
+static void gen_code_if(AST_NODE* node, INFO* result) {
+    INFO cond_info, else_label_info, end_label_info;
 
-    // Jump for false to else (or end if no else block)
-    emit(I_JMPF, cond_temp, NULL, else_label);
-    // Then block
+    cond_info.type = TABLE_ID;
+    else_label_info.type = TABLE_ID;
+    end_label_info.type = TABLE_ID;
+
+    gen_code(node->info->if_stmt.condition, &cond_info);
+
+    else_label_info.id.name = new_label();
+    end_label_info.id.name = new_label();
+
+    emit(I_JMPF, &cond_info, NULL, &else_label_info);
     gen_code(node->info->if_stmt.then_block, NULL);
-    // Jump to end after then
-    emit(I_JMP, end_label, NULL, NULL);
-    // Else label
-    emit(I_LABEL, else_label, NULL, NULL);
+    emit(I_JMP, &end_label_info, NULL, NULL);
+    emit(I_LABEL, &else_label_info, NULL, NULL);
     if (node->info->if_stmt.else_block) {
         gen_code(node->info->if_stmt.else_block, NULL);
     }
-    // End label
-    emit(I_LABEL, end_label, NULL, NULL);
+    emit(I_LABEL, &end_label_info, NULL, NULL);
 }
 
 /* Function that generates code for while expressions
  */
-static void gen_code_while(AST_NODE* node, char** result) {
-    char* start_label = new_label();
-    char* end_label = new_label();
+static void gen_code_while(AST_NODE* node, INFO* result) {
+    INFO start_label_info, end_label_info, cond_info;
 
-    emit(I_LABEL, start_label, NULL, NULL);
-    char* cond_temp = NULL;
-    gen_code(node->info->while_stmt.condition, &cond_temp);
-    emit(I_JMPF, cond_temp, NULL, end_label);
+    start_label_info.type = TABLE_ID;
+    end_label_info.type = TABLE_ID;
+    cond_info.type = TABLE_ID;
+
+    start_label_info.id.name = new_label();
+    end_label_info.id.name = new_label();
+
+    emit(I_LABEL, &start_label_info, NULL, NULL);
+    gen_code(node->info->while_stmt.condition, &cond_info);
+    emit(I_JMPF, &cond_info, NULL, &end_label_info);
     gen_code(node->info->while_stmt.block, NULL);
-    emit(I_JMP, start_label, NULL, NULL);
-    emit(I_LABEL, end_label, NULL, NULL);
+    emit(I_JMP, &start_label_info, NULL, NULL);
+    emit(I_LABEL, &end_label_info, NULL, NULL);
 }
 
 /* Function that generates code for method declarations
  */
-static void gen_code_method_decl(AST_NODE* node, char** result) {
+static void gen_code_method_decl(AST_NODE* node, INFO* result) {
+    INFO name_info;
+    name_info.type = TABLE_ID;
+    name_info.id.name = node->info->method_decl.name;
+
     if (node->info->method_decl.is_extern) {
-        emit(I_EXTERN, node->info->method_decl.name, NULL, NULL);
+        emit(I_EXTERN, &name_info, NULL, NULL);
         return;
     }
-    emit(I_ENTER, node->info->method_decl.name, NULL, NULL);
+    emit(I_ENTER, &name_info, NULL, NULL);
     if (!node->info->method_decl.is_extern && node->info->method_decl.block) {
         gen_code(node->info->method_decl.block, NULL);
     }
-    emit(I_LEAVE, node->info->method_decl.name, NULL, NULL);
+    emit(I_LEAVE, &name_info, NULL, NULL);
 }
 
 /* Function that generates code for method calls
  */
-static void gen_code_method_call(AST_NODE* node, char** result) {
+static void gen_code_method_call(AST_NODE* node, INFO* result) {
     AST_NODE_LIST* arg = node->info->method_call.args;
     while (arg) {
-        char* arg_temp = NULL;
-        gen_code(arg->first, &arg_temp);
-        emit(I_PARAM, arg_temp, NULL, NULL);
+        INFO arg_info;
+        arg_info.type = TABLE_ID;
+        gen_code(arg->first, &arg_info);
+        emit(I_PARAM, &arg_info, NULL, NULL);
         arg = arg->next;
     }
-    // Allocate a temp for return value always.
-    char* ret_temp = new_temp();
-    emit(I_CALL, node->info->method_call.name, NULL, ret_temp);
+
+    INFO name_info, ret_info;
+    name_info.type = TABLE_ID;
+    ret_info.type = TABLE_ID;
+    name_info.id.name = node->info->method_call.name;
+    ret_info.id.name = new_temp();
+    emit(I_CALL, &name_info, NULL, &ret_info);
     if (result) {
-        *result = ret_temp;
+        *result = ret_info;
     }
 }
 
 /* Function that generates code for blocks
  */
-static void gen_code_block(AST_NODE* node, char** result) {
-    // Iterate statements generating code; last expression result not propagated unless explicitly requested.
+static void gen_code_block(AST_NODE* node, INFO* result) {
     AST_NODE_LIST* cur = node->info->block.stmts;
-    char* last_temp = NULL;
+    INFO last_info;
+    last_info.type = TABLE_ID;
+    int has_last = 0;
+
     while (cur) {
-        char* stmt_res = NULL;
-        gen_code(cur->first, &stmt_res);
-        if (stmt_res) {
-            last_temp = stmt_res; // Track last result
-        }
+        INFO stmt_info;
+        stmt_info.type = TABLE_ID;
+        gen_code(cur->first, &stmt_info);
+        last_info = stmt_info;
+        has_last = 1;
         cur = cur->next;
     }
-    if (result && last_temp) {
-        *result = last_temp;
+
+    if (result && has_last) {
+        *result = last_info;
     }
 }
 
@@ -322,91 +382,121 @@ void print_code_to_file(const char* filename) {
     }
 
     for (int i = 0; i < code_size; i++) {
+        INFO* v1 = code[i].var1;
+        INFO* v2 = code[i].var2;
+        INFO* reg = code[i].reg;
+
         switch (code[i].type) {
             case I_LOADVAL:
-                fprintf(f, "LOADVAL %s\n", code[i].var1);
+                if (v1 && v1->id.name)
+                    fprintf(f, "LOADVAL %s\n", v1->id.name);
                 break;
             case I_LOAD:
-                fprintf(f, "LOAD %s\n", code[i].var1);
+                if (v1 && v1->id.name)
+                    fprintf(f, "LOAD %s\n", v1->id.name);
                 break;
             case I_STORE:
-                fprintf(f, "STORE %s, %s\n", code[i].var1, code[i].reg);
+                if (v1 && v1->id.name && reg && reg->id.name)
+                    fprintf(f, "STORE %s, %s\n", v1->id.name, reg->id.name);
                 break;
             case I_ADD:
-                fprintf(f, "ADD %s, %s, %s\n", code[i].var1, code[i].var2, code[i].reg);
+                if (v1 && v1->id.name && v2 && v2->id.name && reg && reg->id.name)
+                    fprintf(f, "ADD %s, %s, %s\n", v1->id.name, v2->id.name, reg->id.name);
                 break;
             case I_SUB:
-                fprintf(f, "SUB %s, %s, %s\n", code[i].var1, code[i].var2, code[i].reg);
+                if (v1 && v1->id.name && v2 && v2->id.name && reg && reg->id.name)
+                    fprintf(f, "SUB %s, %s, %s\n", v1->id.name, v2->id.name, reg->id.name);
                 break;
             case I_MUL:
-                fprintf(f, "MUL %s, %s, %s\n", code[i].var1, code[i].var2, code[i].reg);
+                if (v1 && v1->id.name && v2 && v2->id.name && reg && reg->id.name)
+                    fprintf(f, "MUL %s, %s, %s\n", v1->id.name, v2->id.name, reg->id.name);
                 break;
             case I_DIV:
-                fprintf(f, "DIV %s, %s, %s\n", code[i].var1, code[i].var2, code[i].reg);
+                if (v1 && v1->id.name && v2 && v2->id.name && reg && reg->id.name)
+                    fprintf(f, "DIV %s, %s, %s\n", v1->id.name, v2->id.name, reg->id.name);
                 break;
             case I_MOD:
-                fprintf(f, "MOD %s, %s, %s\n", code[i].var1, code[i].var2, code[i].reg);
+                if (v1 && v1->id.name && v2 && v2->id.name && reg && reg->id.name)
+                    fprintf(f, "MOD %s, %s, %s\n", v1->id.name, v2->id.name, reg->id.name);
                 break;
             case I_MIN:
-                fprintf(f, "MIN %s, %s\n", code[i].var1, code[i].reg);
+                if (v1 && v1->id.name && reg && reg->id.name)
+                    fprintf(f, "MIN %s, %s\n", v1->id.name, reg->id.name);
                 break;
             case I_RET:
-                if (code[i].var1[0] != '\0') {
-                    fprintf(f, "RET %s\n", code[i].var1);
+                if (v1 && v1->id.name) {
+                    fprintf(f, "RET %s\n", v1->id.name);
                 } else {
                     fprintf(f, "RET\n");
                 }
                 break;
             case I_LES:
-                fprintf(f, "LES %s, %s, %s\n", code[i].var1, code[i].var2, code[i].reg);
+                if (v1 && v1->id.name && v2 && v2->id.name && reg && reg->id.name)
+                    fprintf(f, "LES %s, %s, %s\n", v1->id.name, v2->id.name, reg->id.name);
                 break;
             case I_GRT:
-                fprintf(f, "GRT %s, %s, %s\n", code[i].var1, code[i].var2, code[i].reg);
+                if (v1 && v1->id.name && v2 && v2->id.name && reg && reg->id.name)
+                    fprintf(f, "GRT %s, %s, %s\n", v1->id.name, v2->id.name, reg->id.name);
                 break;
             case I_EQ:
-                fprintf(f, "EQ %s, %s, %s\n", code[i].var1, code[i].var2, code[i].reg);
+                if (v1 && v1->id.name && v2 && v2->id.name && reg && reg->id.name)
+                    fprintf(f, "EQ %s, %s, %s\n", v1->id.name, v2->id.name, reg->id.name);
                 break;
             case I_NEQ:
-                fprintf(f, "NEQ %s, %s, %s\n", code[i].var1, code[i].var2, code[i].reg);
+                if (v1 && v1->id.name && v2 && v2->id.name && reg && reg->id.name)
+                    fprintf(f, "NEQ %s, %s, %s\n", v1->id.name, v2->id.name, reg->id.name);
                 break;
             case I_LEQ:
-                fprintf(f, "LEQ %s, %s, %s\n", code[i].var1, code[i].var2, code[i].reg);
+                if (v1 && v1->id.name && v2 && v2->id.name && reg && reg->id.name)
+                    fprintf(f, "LEQ %s, %s, %s\n", v1->id.name, v2->id.name, reg->id.name);
                 break;
             case I_GEQ:
-                fprintf(f, "GEQ %s, %s, %s\n", code[i].var1, code[i].var2, code[i].reg);
+                if (v1 && v1->id.name && v2 && v2->id.name && reg && reg->id.name)
+                    fprintf(f, "GEQ %s, %s, %s\n", v1->id.name, v2->id.name, reg->id.name);
                 break;
             case I_AND:
-                fprintf(f, "AND %s, %s, %s\n", code[i].var1, code[i].var2, code[i].reg);
+                if (v1 && v1->id.name && v2 && v2->id.name && reg && reg->id.name)
+                    fprintf(f, "AND %s, %s, %s\n", v1->id.name, v2->id.name, reg->id.name);
                 break;
             case I_OR:
-                fprintf(f, "OR %s, %s, %s\n", code[i].var1, code[i].var2, code[i].reg);
+                if (v1 && v1->id.name && v2 && v2->id.name && reg && reg->id.name)
+                    fprintf(f, "OR %s, %s, %s\n", v1->id.name, v2->id.name, reg->id.name);
                 break;
             case I_NEG:
-                fprintf(f, "NEG %s, %s\n", code[i].var1, code[i].reg);
+                if (v1 && v1->id.name && reg && reg->id.name)
+                    fprintf(f, "NEG %s, %s\n", v1->id.name, reg->id.name);
                 break;
             case I_LABEL:
-                fprintf(f, "%s:\n", code[i].var1);
+                if (v1 && v1->id.name)
+                    fprintf(f, "%s:\n", v1->id.name);
                 break;
             case I_JMP:
-                fprintf(f, "JMP %s\n", code[i].var1);
+                if (v1 && v1->id.name)
+                    fprintf(f, "JMP %s\n", v1->id.name);
                 break;
             case I_JMPF:
-                fprintf(f, "JMPF %s, %s\n", code[i].var1, code[i].reg);
+                if (v1 && v1->id.name && reg && reg->id.name)
+                    fprintf(f, "JMPF %s, %s\n", v1->id.name, reg->id.name);
                 break;
             case I_PARAM:
-                fprintf(f, "PARAM %s\n", code[i].var1);
+                if (v1 && v1->id.name)
+                    fprintf(f, "PARAM %s\n", v1->id.name);
                 break;
             case I_CALL:
-                fprintf(f, "CALL %s, %s\n", code[i].var1, code[i].reg);
+                if (v1 && v1->id.name && reg && reg->id.name)
+                    fprintf(f, "CALL %s, %s\n", v1->id.name, reg->id.name);
                 break;
             case I_ENTER:
-                fprintf(f, "ENTER %s\n", code[i].var1);
+                if (v1 && v1->id.name)
+                    fprintf(f, "ENTER %s\n", v1->id.name);
                 break;
             case I_LEAVE:
-                fprintf(f, "LEAVE %s\n", code[i].var1);
+                if (v1 && v1->id.name)
+                    fprintf(f, "LEAVE %s\n", v1->id.name);
                 break;
-            case I_EXTERN: 
-                fprintf(f, "EXTERN %s\n", code[i].var1);
+            case I_EXTERN:
+                if (v1 && v1->id.name)
+                    fprintf(f, "EXTERN %s\n", v1->id.name);
                 break;
             default:
                 fprintf(f, "UNKNOWN\n");
@@ -418,7 +508,7 @@ void print_code_to_file(const char* filename) {
 
 /* Function that generates the pseudo-assembly
  */
-void gen_code(AST_NODE* node, char** result) {
+void gen_code(AST_NODE* node, INFO* result) {
     if (!node) return;
     switch (node->info->type) {
         case AST_COMMON:
@@ -448,7 +538,31 @@ void gen_code(AST_NODE* node, char** result) {
 }
 
 void reset_code() {
+    // Free allocated memory before resetting
+    for (int i = 0; i < code_size; i++) {
+        if (code[i].var1) free(code[i].var1);
+        if (code[i].var2) free(code[i].var2);
+        if (code[i].reg) free(code[i].reg);
+    }
+
     code_size = 0;
     temp_counter = 0;
     label_counter = 0;
+}
+
+void cleanup_code() {
+    for (int i = 0; i < code_size; i++) {
+        if (code[i].var1) {
+            free(code[i].var1);
+            code[i].var1 = NULL;
+        }
+        if (code[i].var2) {
+            free(code[i].var2);
+            code[i].var2 = NULL;
+        }
+        if (code[i].reg) {
+            free(code[i].reg);
+            code[i].reg = NULL;
+        }
+    }
 }

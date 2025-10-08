@@ -2,7 +2,7 @@
 LEX     = flex
 BISON   = bison
 CC      = gcc
-CFLAGS  = -g -Wall -O1 -fsanitize=address -fno-omit-frame-pointer -Wextra -std=c11 -I. -Ierror_handling -Itree -Iprint_utilities -Isymbol_table -Iutils -Isemantic_analyzer -Iintermediate_code
+CFLAGS  = -g -Wall -Wextra -std=c11 -I. -Ierror_handling -Itree -Iprint_utilities -Isymbol_table -Iutils -Isemantic_analyzer -Iintermediate_code
 TARGET  = parser
 
 # -O1 -fsanitize=address -fno-omit-frame-pointer    for debugging
