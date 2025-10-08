@@ -61,24 +61,30 @@ void emit(INSTR_TYPE t, INFO* var1, INFO* var2, INFO* reg) {
  */
 static void gen_code_leaf(AST_NODE* node, INFO* result) {
     char buf[32];
-    INFO temp_info;
+    INFO temp_info, temp_info2;
+    INFO* temp = &temp_info2;
     temp_info.type = TABLE_ID;
+    temp_info2.type = TABLE_ID;
 
     switch (node->info->leaf.type) {
         case TYPE_INT: {
             sprintf(buf, "%d", node->info->leaf.value->int_value);
             temp_info.id.name = my_strdup(buf);
             temp_info.id.type = TYPE_INT;
-            emit(I_LOADVAL, &temp_info, NULL, NULL);
-            if (result) *result = temp_info;
+            temp->id.name = new_temp();
+            temp->id.type = TYPE_INT;
+            emit(I_LOADVAL, &temp_info, NULL, temp);
+            if (result) *result = *temp;
             break;
         }
         case TYPE_BOOL: {
             sprintf(buf, "%d", node->info->leaf.value->bool_value);
             temp_info.id.name = my_strdup(buf);
             temp_info.id.type = TYPE_BOOL;
-            emit(I_LOADVAL, &temp_info, NULL, NULL);
-            if (result) *result = temp_info;
+            temp->id.name = new_temp();
+            temp->id.type = TYPE_BOOL;
+            emit(I_LOADVAL, &temp_info, NULL, temp);
+            if (result) *result = *temp;
             break;
         }
         case TYPE_ID: {
@@ -390,8 +396,8 @@ void print_code_to_file(const char* filename) {
 
         switch (code[i].instruct->instruct.type_instruct) {
             case I_LOADVAL:
-                if (v1 && v1->id.name)
-                    fprintf(f, "LOADVAL %s\n", v1->id.name);
+                if (v1 && v1->id.name && reg && reg->id.name)
+                    fprintf(f, "LOADVAL %s, %s\n", v1->id.name, reg->id.name);
                 break;
             case I_LOAD:
                 if (v1 && v1->id.name)
