@@ -61,41 +61,41 @@ void emit(INSTR_TYPE t, INFO* var1, INFO* var2, INFO* reg) {
  */
 static void gen_code_leaf(AST_NODE* node, INFO* result) {
     char buf[32];
-    INFO temp_info, temp_info2;
-    INFO* temp = &temp_info2;
-    temp_info.type = TABLE_ID;
-    temp_info2.type = TABLE_ID;
+    INFO aux, temp_info;
+    INFO* temp = &temp_info;
+    aux.type = TABLE_ID;
+    temp->type = TABLE_ID;
 
     switch (node->info->leaf.type) {
         case TYPE_INT: {
             sprintf(buf, "%d", node->info->leaf.value->int_value);
-            temp_info.id.name = my_strdup(buf);
-            temp_info.id.type = TYPE_INT;
+            aux.id.name = my_strdup(buf);
+            aux.id.type = TYPE_INT;
             temp->id.name = new_temp();
             temp->id.type = TYPE_INT;
-            emit(I_LOADVAL, &temp_info, NULL, temp);
+            emit(I_LOADVAL, &aux, NULL, temp);
             if (result) *result = *temp;
             break;
         }
         case TYPE_BOOL: {
             sprintf(buf, "%d", node->info->leaf.value->bool_value);
-            temp_info.id.name = my_strdup(buf);
-            temp_info.id.type = TYPE_BOOL;
+            aux.id.name = my_strdup(buf);
+            aux.id.type = TYPE_BOOL;
             temp->id.name = new_temp();
             temp->id.type = TYPE_BOOL;
-            emit(I_LOADVAL, &temp_info, NULL, temp);
+            emit(I_LOADVAL, &aux, NULL, temp);
             if (result) *result = *temp;
             break;
         }
         case TYPE_ID: {
             ID_TABLE* sym = node->info->leaf.value->id_leaf;
             if (sym) {
-                temp_info.id.name = sym->info->id.name;
-                temp_info.id.type = sym->info->id.type;
+                aux.id.name = sym->info->id.name;
+                aux.id.type = sym->info->id.type;
                 if (node->father->info->common.op != OP_ASSIGN && node->father->info->common.op != OP_DECL) {
-                    emit(I_LOAD, &temp_info, NULL, NULL);
+                    emit(I_LOAD, &aux, NULL, NULL);
                 }
-                if (result) *result = temp_info;
+                if (result) *result = aux;
             }
             break;
         }
