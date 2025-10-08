@@ -37,6 +37,37 @@ typedef enum {
 	OP_RETURN,
 } OPERATOR;
 
+// Instruction types for the pseudo-assembly
+typedef enum {
+    I_LOAD,
+    I_LOADVAL,
+    I_STORE,
+    I_ADD,
+    I_SUB,
+    I_MUL,
+    I_DIV,
+    I_MOD,
+    I_MIN,
+    I_LES,
+    I_GRT,
+    I_EQ,
+    I_NEQ,
+    I_LEQ,
+    I_GEQ,
+    I_AND,
+    I_OR,
+    I_NEG,
+    I_RET,
+    I_LABEL,     // Label pseudo instruction
+    I_JMP,       // Unconditional jump
+    I_JMPF,      // Jump if false (0)
+    I_PARAM,     // Pass parameter (argument) before a call
+    I_CALL,      // Call a method (var1 = method name, reg = temp for return if any)
+    I_ENTER,     // Method prologue (var1 = method name)
+    I_LEAVE,      // Method epilogue (var1 = method name)
+    I_EXTERN,     // Extern method prologue
+} INSTR_TYPE;
+
 typedef enum {
 	AST_COMMON,
 	AST_IF,
@@ -129,6 +160,10 @@ typedef struct INFO {
 			char* name;
 			TYPE type;
 		} id;
+
+		struct {
+			INSTR_TYPE type_instruct;
+		} instruct;
 	};
 } INFO;
 

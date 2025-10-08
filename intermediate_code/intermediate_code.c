@@ -27,10 +27,12 @@ static char* new_label() {
  */
 /* Function for save instructions in the buffer
  */
-void emit(InstrType t, INFO* var1, INFO* var2, INFO* reg) {
-    code[code_size].type = t;
+void emit(INSTR_TYPE t, INFO* var1, INFO* var2, INFO* reg) {
+    // reserve space for a new instruction
+    code[code_size].instruct = (INFO*)malloc(sizeof(INFO));
+    code[code_size].instruct->type = TABLE_ID;
+    code[code_size].instruct->instruct.type_instruct = t;
 
-    // Dynamically allocate and copy INFO structs
     if (var1) {
         code[code_size].var1 = (INFO*)malloc(sizeof(INFO));
         *(code[code_size].var1) = *var1;
@@ -45,7 +47,7 @@ void emit(InstrType t, INFO* var1, INFO* var2, INFO* reg) {
         code[code_size].var2 = NULL;
     }
 
-    if(reg) {
+    if (reg) {
         code[code_size].reg = (INFO*)malloc(sizeof(INFO));
         *(code[code_size].reg) = *reg;
     } else {
@@ -386,7 +388,7 @@ void print_code_to_file(const char* filename) {
         INFO* v2 = code[i].var2;
         INFO* reg = code[i].reg;
 
-        switch (code[i].type) {
+        switch (code[i].instruct->instruct.type_instruct) {
             case I_LOADVAL:
                 if (v1 && v1->id.name)
                     fprintf(f, "LOADVAL %s\n", v1->id.name);
@@ -563,6 +565,10 @@ void cleanup_code() {
         if (code[i].reg) {
             free(code[i].reg);
             code[i].reg = NULL;
+        }
+        if (code[i].instruct) {
+            free(code[i].instruct);
+            code[i].instruct = NULL;
         }
     }
 }
