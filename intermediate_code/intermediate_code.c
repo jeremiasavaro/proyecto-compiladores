@@ -92,7 +92,9 @@ static void gen_code_leaf(AST_NODE* node, INFO* result) {
             if (sym) {
                 temp_info.id.name = sym->info->id.name;
                 temp_info.id.type = sym->info->id.type;
-                emit(I_LOAD, &temp_info, NULL, NULL);
+                if (node->father->info->common.op != OP_ASSIGN && node->father->info->common.op != OP_DECL) {
+                    emit(I_LOAD, &temp_info, NULL, NULL);
+                }
                 if (result) *result = temp_info;
             }
             break;
