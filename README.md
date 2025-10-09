@@ -21,6 +21,7 @@ called TDS25.
 ## Branches for tasks
 - Lexical and syntactic analyzer: syntactic-analyzer
 - Semantic analyzer: semantic-analyzer
+- Intermediate code generator: intermediate-code-generate
 
 ## Dependencies
 - flex
