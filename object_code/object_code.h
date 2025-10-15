@@ -9,6 +9,12 @@
 #include "symbol.h"
 #include "ast.h"
 
+typedef struct {
+    char* name;
+    int offset;
+} VarLocation;
+
+
 void generate_object_code(FILE* out_file);
 
 #endif
