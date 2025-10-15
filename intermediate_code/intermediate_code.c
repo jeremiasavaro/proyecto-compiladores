@@ -580,3 +580,11 @@ void cleanup_code() {
         }
     }
 }
+
+Instr* get_intermediate_code() {
+    return code;
+}
+
+int get_code_size() {
+    return code_size;
+}

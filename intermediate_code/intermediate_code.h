@@ -19,5 +19,7 @@ void emit(INSTR_TYPE t, INFO* var1, INFO* var2, INFO* reg);
 void gen_code(AST_NODE* node, INFO* result);
 void print_code_to_file(const char* filename);
 void reset_code();
+Instr* get_intermediate_code();
+int get_code_size();
 
 #endif
