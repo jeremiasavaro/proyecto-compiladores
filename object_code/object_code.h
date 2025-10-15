@@ -7,6 +7,7 @@
 #include <ctype.h>
 #include "intermediate_code.h"
 #include "symbol.h"
+#include "ast.h"
 
 void generate_object_code(FILE* out_file);
 

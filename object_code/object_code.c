@@ -1,17 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
-
 #include "object_code.h"
-#include "intermediate_code.h"
-#include "symbol.h"
-#include "ast.h" // <<<--- AÑADIDO: Necesario para acceder a la lista de parámetros
-
-// --- Declaraciones de funciones externas ---
-extern Instr* get_intermediate_code();
-extern int get_code_size();
-extern AST_ROOT* head_ast; // <<<--- AÑADIDO: Acceso global al AST
 
 #define MAX_VARS_PER_FUNCTION 200
 
@@ -25,9 +12,6 @@ static int var_count = 0;
 static int current_stack_offset = 0;
 const char* arg_regs[] = {"%rdi", "%rsi", "%rdx", "%rcx", "%r8", "%r9"};
 
-/*
- * Busca o crea una ubicación en la pila para una variable.
- */
 static int get_var_offset(const char* name) {
     for (int i = 0; i < var_count; ++i) {
         if (strcmp(var_map[i].name, name) == 0) {
@@ -41,9 +25,6 @@ static int get_var_offset(const char* name) {
     return current_stack_offset;
 }
 
-/*
- * Genera la cadena del operando en ensamblador.
- */
 static void get_operand_str(INFO* var, char* buf, size_t buf_size) {
     if (var == NULL || var->id.name == NULL) {
         buf[0] = '\0';
@@ -60,10 +41,6 @@ static void get_operand_str(INFO* var, char* buf, size_t buf_size) {
     }
 }
 
-
-/*
- * Genera el código objeto (ensamblador x86-64).
- */
 void generate_object_code(FILE* out_file) {
     Instr* code = get_intermediate_code();
     int code_size = get_code_size();
@@ -83,7 +60,6 @@ void generate_object_code(FILE* out_file) {
             case I_ENTER: {
                 const char* func_name = instr->var1->id.name;
 
-                // 1. Encontrar el nodo AST de la función para obtener sus parámetros
                 AST_NODE* func_node = NULL;
                 for (AST_ROOT* cur = head_ast; cur != NULL; cur = cur->next) {
                     if (cur->sentence->info->type == AST_METHOD_DECL &&
@@ -93,7 +69,6 @@ void generate_object_code(FILE* out_file) {
                     }
                 }
 
-                // 2. Primer paso: Calcular el tamaño de la pila
                 var_count = 0;
                 current_stack_offset = 0;
                 int end_func_idx = i;
@@ -114,11 +89,9 @@ void generate_object_code(FILE* out_file) {
                     total_stack_size += 16 - (total_stack_size % 16);
                 }
 
-                // 3. Resetear para la generación de código
                 var_count = 0;
                 current_stack_offset = 0;
 
-                // 4. Generar el prólogo
                 fprintf(out_file, "\n.globl %s\n", func_name);
                 fprintf(out_file, "%s:\n", func_name);
                 fprintf(out_file, "  pushq %%rbp\n");
@@ -127,13 +100,12 @@ void generate_object_code(FILE* out_file) {
                     fprintf(out_file, "  subq $%d, %%rsp\n", total_stack_size);
                 }
 
-                // 5. CORRECCIÓN: Guardar los parámetros de los registros a la pila
                 if (func_node) {
                     ARGS_LIST* arg_list = func_node->info->method_decl.args;
                     int arg_idx = 0;
                     while (arg_list && arg_idx < 6) {
                         const char* arg_name = arg_list->arg->name;
-                        int offset = get_var_offset(arg_name); // Asignar espacio en la pila
+                        int offset = get_var_offset(arg_name);
                         fprintf(out_file, "  movq %s, %d(%%rbp)\n", arg_regs[arg_idx], offset);
                         arg_list = arg_list->next;
                         arg_idx++;
@@ -256,12 +228,10 @@ void generate_object_code(FILE* out_file) {
                     get_operand_str(instr->var1, op1, sizeof(op1));
                     fprintf(out_file, "  movq %s, %s\n", op1, arg_regs[param_count]);
                 } else {
-                    // Manejo de parámetros en pila no implementado
                 }
                 param_count++;
                 break;
             case I_CALL:
-                // CORRECCIÓN: Usar el nombre de la función directamente como una etiqueta.
                 fprintf(out_file, "  call %s\n", instr->var1->id.name);
                 if (instr->reg) {
                     get_operand_str(instr->reg, dest, sizeof(dest));
@@ -270,7 +240,7 @@ void generate_object_code(FILE* out_file) {
                 param_count = 0;
                 break;
 
-            case I_LOAD: // Intencionalmente vacío
+            case I_LOAD:
                 break;
             default:
                 fprintf(out_file, "  # Instrucción desconocida\n");
