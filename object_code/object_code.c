@@ -6,13 +6,6 @@
 extern Instr code[];
 extern int code_size;
 
-
-/* Mapa simple de temporales a offsets en el stack */
-typedef struct {
-    char* temp_name;
-    int stack_offset;
-} TempMap;
-
 static TempMap temp_map[100];
 static int temp_count = 0;
 static int current_stack_offset = -8;  // Empieza después de %rbp
