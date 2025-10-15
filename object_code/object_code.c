@@ -2,29 +2,37 @@
 
 #define MAX_VARS_PER_FUNCTION 200
 
-typedef struct {
-    char* name;
-    int offset;
-} VarLocation;
-
 static VarLocation var_map[MAX_VARS_PER_FUNCTION];
 static int var_count = 0;
 static int current_stack_offset = 0;
+
+// Argument registers for x86-64 calling convention
 const char* arg_regs[] = {"%rdi", "%rsi", "%rdx", "%rcx", "%r8", "%r9"};
 
+/* Get the stack offset for a variable
+*  If the variable is not yet mapped, assign a new offset
+*  Stack grows downwards, so offsets are negative
+*/
 static int get_var_offset(const char* name) {
     for (int i = 0; i < var_count; ++i) {
         if (strcmp(var_map[i].name, name) == 0) {
             return var_map[i].offset;
         }
     }
-    current_stack_offset -= 8;
+    current_stack_offset -= 8;    // Allocate 8 bytes for the new variable
     var_map[var_count].name = strdup(name);
     var_map[var_count].offset = current_stack_offset;
     var_count++;
     return current_stack_offset;
 }
 
+/* Get the operand string for a given variable
+*  Handles variables, constants, and labels
+*  Formats the operand appropriately for assembly output
+*  Variables are accessed via their stack offset
+*  Constants are prefixed with '$'
+*  Labels are used directly
+*/
 static void get_operand_str(INFO* var, char* buf, size_t buf_size) {
     if (var == NULL || var->id.name == NULL) {
         buf[0] = '\0';
@@ -32,6 +40,7 @@ static void get_operand_str(INFO* var, char* buf, size_t buf_size) {
     }
     char* name = var->id.name;
 
+    // Check if it's a label, constant, or variable
     if (name[0] == 'L') {
         snprintf(buf, buf_size, "%s", name);
     } else if (isdigit(name[0]) || (name[0] == '-' && isdigit(name[1]))) {
@@ -41,6 +50,12 @@ static void get_operand_str(INFO* var, char* buf, size_t buf_size) {
     }
 }
 
+/*
+* Main function to generate x86-64 assembly code from intermediate code
+* Outputs the assembly code to the provided file pointer
+* Handles function prologues/epilogues, arithmetic operations, control flow, and function calls
+* Uses a simple mapping of temporaries to stack offsets
+*/
 void generate_object_code(FILE* out_file) {
     Instr* code = get_intermediate_code();
     int code_size = get_code_size();
@@ -50,7 +65,7 @@ void generate_object_code(FILE* out_file) {
 
     for (int i = 0; i < code_size; ++i) {
         Instr* instr = &code[i];
-        char op1[64], op2[64], dest[64];
+        char op1[64], op2[64], dest[64];    // Buffers for operand strings
 
         switch (instr->instruct->instruct.type_instruct) {
             case I_EXTERN:
@@ -80,11 +95,13 @@ void generate_object_code(FILE* out_file) {
                     }
                 }
                 for (int k = i; k <= end_func_idx; ++k) {
+                    // Get stack offsets for all variables used in the function
                     if (code[k].var1 && code[k].var1->id.name && !isdigit(code[k].var1->id.name[0]) && code[k].var1->id.name[0] != 'L') get_var_offset(code[k].var1->id.name);
                     if (code[k].var2 && code[k].var2->id.name && !isdigit(code[k].var2->id.name[0]) && code[k].var2->id.name[0] != 'L') get_var_offset(code[k].var2->id.name);
                     if (code[k].reg  && code[k].reg->id.name  && !isdigit(code[k].reg->id.name[0])  && code[k].reg->id.name[0] != 'L') get_var_offset(code[k].reg->id.name);
                 }
                 int total_stack_size = -current_stack_offset;
+                // Align stack to 16 bytes
                 if (total_stack_size % 16 != 0) {
                     total_stack_size += 16 - (total_stack_size % 16);
                 }
@@ -128,12 +145,14 @@ void generate_object_code(FILE* out_file) {
             case I_RET: {
                 char current_func_name[64] = "unknown";
                 for(int j=i; j>=0; j--) {
+                    // Find the nearest preceding I_ENTER to get the function name
                     if (code[j].instruct->instruct.type_instruct == I_ENTER) {
                          strncpy(current_func_name, code[j].var1->id.name, sizeof(current_func_name)-1);
                          current_func_name[sizeof(current_func_name)-1] = '\0';
                          break;
                     }
                 }
+                // Move return value to %rax and jump to function epilogue
                 if(instr->var1) {
                     get_operand_str(instr->var1, op1, sizeof(op1));
                     fprintf(out_file, "  movq %s, %%rax\n", op1);
@@ -152,6 +171,7 @@ void generate_object_code(FILE* out_file) {
                 fprintf(out_file, "  movq %s, %%rax\n", op1);
                 fprintf(out_file, "  movq %%rax, %s\n", dest);
                 break;
+            // Arithmetic and logical operations are the same except for NEG
             case I_ADD: case I_SUB: case I_MUL: case I_AND: case I_OR:
                 get_operand_str(instr->var1, op1, sizeof(op1));
                 get_operand_str(instr->var2, op2, sizeof(op2));
@@ -224,10 +244,10 @@ void generate_object_code(FILE* out_file) {
                 fprintf(out_file, "  jz %s\n", dest);
                 break;
             case I_PARAM:
+                // TODO: Handle more than 6 parameters (stack)
                 if (param_count < 6) {
                     get_operand_str(instr->var1, op1, sizeof(op1));
                     fprintf(out_file, "  movq %s, %s\n", op1, arg_regs[param_count]);
-                } else {
                 }
                 param_count++;
                 break;
@@ -243,7 +263,7 @@ void generate_object_code(FILE* out_file) {
             case I_LOAD:
                 break;
             default:
-                fprintf(out_file, "  # Instrucción desconocida\n");
+                fprintf(out_file, "  # Unknown instruction\n");
                 break;
         }
     }
