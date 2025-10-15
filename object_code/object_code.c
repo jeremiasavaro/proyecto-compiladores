@@ -2,69 +2,68 @@
 #include <string.h>
 #include <stdlib.h>
 
-/* Acceso al buffer de código intermedio (definido en intermediate_code.c) */
+// Acces to the buffer of intermediate code
 extern Instr code[];
 extern int code_size;
 
 static TempMap temp_map[100];
 static int temp_count = 0;
-static int current_stack_offset = -8;  // Empieza después de %rbp
+static int current_stack_offset = -8;  // Start before of %rbp
 
 
-/*
- * Obtiene o crea el offset en el stack para un temporal
- */
+// Obtains the stack offset for a given temporary variable.
+
 static int get_temp_offset(const char* temp_name) {
-    // Buscar si ya existe
+    // Search if it already exists
     for (int i = 0; i < temp_count; i++) {
         if (strcmp(temp_map[i].temp_name, temp_name) == 0) {
             return temp_map[i].stack_offset;
         }
     }
 
-    // Crear nuevo mapeo
+    // Create new mapping
     temp_map[temp_count].temp_name = strdup(temp_name);
     temp_map[temp_count].stack_offset = current_stack_offset;
     temp_count++;
-    current_stack_offset -= 8;  // Cada temporal ocupa 8 bytes (64 bits)
+    current_stack_offset -= 8;  // Each temporary occupies 8 bytes (64 bits)
 
     return current_stack_offset + 8;
 }
 
 /*
- * Retorna la ubicación en assembly de una variable o temporal
- * Ejemplos:
- *   "5"     -> "$5"          (valor inmediato)
- *   "T0"    -> "-8(%rbp)"    (temporal en stack)
- *   "var"   -> "var(%rip)"   (variable global)
+ * Returns the assembly location of a variable or temporary.
+ * Examples:
+ *   "5"     -> "$5"          (immediate value)
+ *   "T0"    -> "-8(%rbp)"    (stack temporary)
+ *   "var"   -> "var(%rip)"   (global variable)
  */
 static char* get_location(INFO* info) {
     static char buffer[64];
 
     if (!info) return NULL;
 
-    // Si es un número (valor inmediato)
+    // If it's an immediate value (number)
     if (info->id.name[0] >= '0' && info->id.name[0] <= '9') {
         snprintf(buffer, sizeof(buffer), "$%s", info->id.name);
         return buffer;
     }
 
-    // Si es un temporal (empieza con 'T')
+    // If it's a temporary (starts with 'T')
     if (info->id.name[0] == 'T') {
         int offset = get_temp_offset(info->id.name);
         snprintf(buffer, sizeof(buffer), "%d(%%rbp)", offset);
         return buffer;
     }
 
-    // Si es una variable (asumir que está en memoria)
+    // If it's a variable (assume it's in memory)
     snprintf(buffer, sizeof(buffer), "%s(%%rip)", info->id.name);
     return buffer;
 }
 
 /*
- * Traduce la instrucción I_LOADVAL a assembly x86-64
- * I_LOADVAL: reg = var1 (carga un valor inmediato en un temporal)
- * Ejemplo: T0 = 5  ->  mov $5, -8(%rbp)  # asumiendo T0 está en -8(%rbp)
+ * Translates a LOADVAL instruction to assembly.
+  * I_LOADVAL: reg = var1 (loads an immediate value into a temporary)
+  * Example: T0 = 5  ->  mov $5, -8(%rbp)  # assuming T0 is at -8(%rbp)
  */
 void translate_loadval(FILE* f, INFO* var1, INFO* reg) {
     if (!var1 || !reg) return;
@@ -83,18 +82,18 @@ void translate_add(FILE* f, INFO* var1, INFO* var2, INFO* reg) {
     char* src2 = get_location(var2);
     char* dst = get_location(reg);
 
-    // Cargar primer operando en %rax
+    // Load first operand into %rax
     fprintf(f, "    movq %s, %%rax\n", src1);
 
-    // Sumar segundo operando a %rax
+    // Add second operand to %rax
     fprintf(f, "    addq %s, %%rax\n", src2);
 
-    // Guardar resultado en destino
+    // Store result in destination
     fprintf(f, "    movq %%rax, %s\n\n", dst);
 }
 
 /*
- * Función principal que recorre el código intermedio y lo traduce a assembly
+ * Main function that generates x86-64 assembly code from intermediate code.
  */
 void generate_assembly(const char* output_filename) {
     FILE* f = fopen(output_filename, "w");
@@ -107,7 +106,7 @@ void generate_assembly(const char* output_filename) {
     temp_count = 0;
     current_stack_offset = -8;
 
-    // Escribir el preámbulo del archivo assembly
+    // Write the assembly prologue
     fprintf(f, "# Assembly code x86-64 generated\n");
     fprintf(f, "# Generated automatically by the compiler\n\n");
     fprintf(f, ".section .text\n");
@@ -192,7 +191,7 @@ void generate_assembly(const char* output_filename) {
         }
     }
 
-    // Epílogo de la función main
+    // Epílogue of the main function
     fprintf(f, "\n    # Epilogue\n");
     fprintf(f, "    movq $0, %%rax\n");
     fprintf(f, "    leave\n");
