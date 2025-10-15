@@ -5,6 +5,12 @@
 #include "intermediate_code.h"
 #include "symbol.h"
 
+/* Mapa simple de temporales a offsets en el stack */
+typedef struct {
+    char* temp_name;
+    int stack_offset;
+} TempMap;
+
 /* Función principal que genera código assembly x86-64 desde código intermedio */
 void generate_assembly(const char* output_filename);
 
