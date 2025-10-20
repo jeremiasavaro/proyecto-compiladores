@@ -9,6 +9,7 @@
 #include "semantic_analyzer.h"
 #include "intermediate_code.h"
 #include "symbol.h"
+#include "object_code.h"
 
 extern int yylex();
 extern int yylineno;
@@ -45,7 +46,7 @@ int last_block_pushed = 0;
 %right NEG
 
 %type <node> program decls decl var_decl method_decl block statement expr literal method_call else
-%type <nodelist> method_args arg_list expr_list call_args statements var_decls 
+%type <nodelist> method_args arg_list expr_list call_args statements var_decls
 %type <ival> type
 
 %%
@@ -56,7 +57,7 @@ program:
 
 decls:
       decls decl {  if ($2) add_sentence($2); }
-    | /* empty */ { $$ = NULL; }  
+    | /* empty */ { $$ = NULL; }
     ;
 
 decl:

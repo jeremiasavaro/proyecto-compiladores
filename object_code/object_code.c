@@ -87,6 +87,7 @@ void generate_object_code(FILE* out_file) {
                 var_count = 0;
                 current_stack_offset = 0;
                 int end_func_idx = i;
+                // Search for the I_LEAVE instr for this function
                 for (int j = i + 1; j < code_size; ++j) {
                     if (code[j].instruct->instruct.type_instruct == I_LEAVE &&
                         strcmp(code[j].var1->id.name, func_name) == 0) {
