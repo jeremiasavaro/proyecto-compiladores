@@ -9,11 +9,11 @@
 #include "symbol.h"
 #include "ast.h"
 
+// Structure for saving variable name and offset
 typedef struct {
     char* name;
     int offset;
 } VarLocation;
-
 
 void generate_object_code(FILE* out_file);
 

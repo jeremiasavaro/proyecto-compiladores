@@ -25,8 +25,6 @@ static char* new_label() {
 
 /* Function for save instructions in the buffer
  */
-/* Function for save instructions in the buffer
- */
 void emit(INSTR_TYPE t, INFO* var1, INFO* var2, INFO* reg) {
     // reserve space for a new instruction
     code[code_size].instruct = (INFO*)malloc(sizeof(INFO));

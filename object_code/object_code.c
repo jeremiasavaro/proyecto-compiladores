@@ -10,29 +10,29 @@ static int current_stack_offset = 0;
 const char* arg_regs[] = {"%rdi", "%rsi", "%rdx", "%rcx", "%r8", "%r9"};
 
 /* Get the stack offset for a variable
-*  If the variable is not yet mapped, assign a new offset
-*  Stack grows downwards, so offsets are negative
-*/
+ * If the variable is not yet mapped, assign a new offset
+ * Stack grows downwards, so offsets are negative
+ */
 static int get_var_offset(const char* name) {
     for (int i = 0; i < var_count; ++i) {
         if (strcmp(var_map[i].name, name) == 0) {
             return var_map[i].offset;
         }
     }
-    current_stack_offset -= 8;    // Allocate 8 bytes for the new variable
+    current_stack_offset -= 8; // Allocate 8 bytes for the new variable
     var_map[var_count].name = strdup(name);
-    var_map[var_count].offset = current_stack_offset;
+    var_map[var_count].offset = current_stack_offset; // Set offset for variable
     var_count++;
     return current_stack_offset;
 }
 
 /* Get the operand string for a given variable
-*  Handles variables, constants, and labels
-*  Formats the operand appropriately for assembly output
-*  Variables are accessed via their stack offset
-*  Constants are prefixed with '$'
-*  Labels are used directly
-*/
+ * Handles variables, constants, and labels
+ * Formats the operand appropriately for assembly output
+ * Variables are accessed via their stack offset
+ * Constants are prefixed with '$'
+ * Labels are used directly
+ */
 static void get_operand_str(INFO* var, char* buf, size_t buf_size) {
     if (var == NULL || var->id.name == NULL) {
         buf[0] = '\0';
@@ -50,12 +50,11 @@ static void get_operand_str(INFO* var, char* buf, size_t buf_size) {
     }
 }
 
-/*
-* Main function to generate x86-64 assembly code from intermediate code
-* Outputs the assembly code to the provided file pointer
-* Handles function prologues/epilogues, arithmetic operations, control flow, and function calls
-* Uses a simple mapping of temporaries to stack offsets
-*/
+/* Main function to generate x86-64 assembly code from intermediate code
+ * Outputs the assembly code to the provided file pointer
+ * Handles function prologues/epilogues, arithmetic operations, control flow, and function calls
+ * Uses a simple mapping of temporaries to stack offsets
+ */
 void generate_object_code(FILE* out_file) {
     Instr* code = get_intermediate_code();
     int code_size = get_code_size();
@@ -64,8 +63,8 @@ void generate_object_code(FILE* out_file) {
     fprintf(out_file, ".text\n");
 
     for (int i = 0; i < code_size; ++i) {
-        Instr* instr = &code[i];
-        char op1[64], op2[64], dest[64];    // Buffers for operand strings
+        Instr* instr = &code[i]; // Get instruction from intermediate code structure
+        char op1[64], op2[64], dest[64]; // Buffers for operand strings
 
         switch (instr->instruct->instruct.type_instruct) {
             case I_EXTERN:
@@ -76,6 +75,7 @@ void generate_object_code(FILE* out_file) {
                 const char* func_name = instr->var1->id.name;
 
                 AST_NODE* func_node = NULL;
+                // Search for the function declaration node in the AST
                 for (AST_ROOT* cur = head_ast; cur != NULL; cur = cur->next) {
                     if (cur->sentence->info->type == AST_METHOD_DECL &&
                         strcmp(cur->sentence->info->method_decl.name, func_name) == 0) {
@@ -110,6 +110,7 @@ void generate_object_code(FILE* out_file) {
                 var_count = 0;
                 current_stack_offset = 0;
 
+                // Function call prologue
                 fprintf(out_file, "\n.globl %s\n", func_name);
                 fprintf(out_file, "%s:\n", func_name);
                 fprintf(out_file, "  pushq %%rbp\n");
@@ -118,6 +119,7 @@ void generate_object_code(FILE* out_file) {
                     fprintf(out_file, "  subq $%d, %%rsp\n", total_stack_size);
                 }
 
+                // Move arguments to the stack if they exist
                 if (func_node) {
                     ARGS_LIST* arg_list = func_node->info->method_decl.args;
                     int arg_idx = 0;
@@ -131,25 +133,29 @@ void generate_object_code(FILE* out_file) {
                 }
                 break;
             }
+
             case I_LEAVE: {
+                // Function call epilogue
                 fprintf(out_file, ".L_leave_%s:\n", instr->var1->id.name);
                 fprintf(out_file, "  movq %%rbp, %%rsp\n");
                 fprintf(out_file, "  popq %%rbp\n");
                 fprintf(out_file, "  ret\n");
                 for (int v = 0; v < var_count; ++v) {
+                    // Free memory of variables used in this function
                     free(var_map[v].name);
                     var_map[v].name = NULL;
                 }
                 var_count = 0;
                 break;
             }
+
             case I_RET: {
                 char current_func_name[64] = "unknown";
-                for(int j=i; j>=0; j--) {
+                for(int j = i; j >= 0; j--) {
                     // Find the nearest preceding I_ENTER to get the function name
                     if (code[j].instruct->instruct.type_instruct == I_ENTER) {
                          strncpy(current_func_name, code[j].var1->id.name, sizeof(current_func_name)-1);
-                         current_func_name[sizeof(current_func_name)-1] = '\0';
+                         current_func_name[sizeof(current_func_name)-1] = '\0'; // Line end to avoid buffer overflow
                          break;
                     }
                 }
@@ -161,17 +167,23 @@ void generate_object_code(FILE* out_file) {
                 fprintf(out_file, "  jmp .L_leave_%s\n", current_func_name);
                 break;
             }
+
             case I_LOADVAL:
+                // Always used for loading literal values into the stack (doesn't work if you want to make memory -> memory moves)
                 get_operand_str(instr->var1, op1, sizeof(op1));
                 get_operand_str(instr->reg, dest, sizeof(dest));
                 fprintf(out_file, "  movq %s, %s\n", op1, dest);
                 break;
+
             case I_STORE:
+                // Used for storing values into memory (assignments)
+                // rax used for intermediate saving place because we can't make memory -> memory moves
                 get_operand_str(instr->var1, op1, sizeof(op1));
                 get_operand_str(instr->reg, dest, sizeof(dest));
                 fprintf(out_file, "  movq %s, %%rax\n", op1);
                 fprintf(out_file, "  movq %%rax, %s\n", dest);
                 break;
+
             // Arithmetic and logical operations are the same except for NEG
             case I_ADD: case I_SUB: case I_MUL: case I_AND: case I_OR:
                 get_operand_str(instr->var1, op1, sizeof(op1));
@@ -182,35 +194,41 @@ void generate_object_code(FILE* out_file) {
                                      (instr->instruct->instruct.type_instruct == I_SUB) ? "subq" :
                                      (instr->instruct->instruct.type_instruct == I_MUL) ? "imulq" :
                                      (instr->instruct->instruct.type_instruct == I_AND) ? "andq" : "orq";
+                // rax used for intermediate values
                 fprintf(out_file, "  %s %s, %%rax\n", op_str, op2);
                 fprintf(out_file, "  movq %%rax, %s\n", dest);
                 break;
+
             case I_DIV: case I_MOD:
                 get_operand_str(instr->var1, op1, sizeof(op1));
                 get_operand_str(instr->var2, op2, sizeof(op2));
                 get_operand_str(instr->reg, dest, sizeof(dest));
                 fprintf(out_file, "  movq %s, %%rax\n", op1);
-                fprintf(out_file, "  cqto\n");
+                fprintf(out_file, "  cqto\n"); // Sign-extends value in rax to the rdx:rax register pair (necessary to use idivq)
                 fprintf(out_file, "  idivq %s\n", op2);
                 char* result_reg = (instr->instruct->instruct.type_instruct == I_DIV) ? "%rax" : "%rdx";
+                // idivq saves the result of the division in rax, and the module in rdx
                 fprintf(out_file, "  movq %s, %s\n", result_reg, dest);
                 break;
+
             case I_MIN:
                 get_operand_str(instr->var1, op1, sizeof(op1));
                 get_operand_str(instr->reg, dest, sizeof(dest));
                 fprintf(out_file, "  movq %s, %%rax\n", op1);
-                fprintf(out_file, "  negq %%rax\n");
+                fprintf(out_file, "  negq %%rax\n"); // "negates" the value in rax, use the two's complement operation
                 fprintf(out_file, "  movq %%rax, %s\n", dest);
                 break;
+
             case I_NEG:
                 get_operand_str(instr->var1, op1, sizeof(op1));
                 get_operand_str(instr->reg, dest, sizeof(dest));
                 fprintf(out_file, "  movq %s, %%rax\n", op1);
-                fprintf(out_file, "  testq %%rax, %%rax\n");
-                fprintf(out_file, "  sete %%al\n");
-                fprintf(out_file, "  movzbq %%al, %%rax\n");
+                fprintf(out_file, "  testq %%rax, %%rax\n"); // If the value in rax was 0, this sets the ZF (cpu flag) in 1
+                fprintf(out_file, "  sete %%al\n"); // If ZF is in 1, puts 1 in the al register (8 bits), otherwise it puts 0 in al
+                fprintf(out_file, "  movzbq %%al, %%rax\n"); // Moves the value in al to rax filling all missing bits with 0's
                 fprintf(out_file, "  movq %%rax, %s\n", dest);
                 break;
+
             case I_LES: case I_GRT: case I_EQ: case I_NEQ: case I_LEQ: case I_GEQ: {
                 get_operand_str(instr->var1, op1, sizeof(op1));
                 get_operand_str(instr->var2, op2, sizeof(op2));
@@ -223,27 +241,31 @@ void generate_object_code(FILE* out_file) {
                     default: set_op = ""; break;
                 }
                 fprintf(out_file, "  movq %s, %%rax\n", op1);
-                fprintf(out_file, "  cmpq %s, %%rax\n", op2);
-                fprintf(out_file, "  %s %%al\n", set_op);
+                fprintf(out_file, "  cmpq %s, %%rax\n", op2); // Compares operands, sets CPU flags (Zero Flag, Sign Flag, etc.)
+                fprintf(out_file, "  %s %%al\n", set_op); // Checks CPU flags and sets result in al based on the prevoius comparation
                 fprintf(out_file, "  movzbq %%al, %%rax\n");
                 fprintf(out_file, "  movq %%rax, %s\n", dest);
                 break;
             }
+
             case I_LABEL:
                 get_operand_str(instr->var1, op1, sizeof(op1));
                 fprintf(out_file, "%s:\n", op1);
                 break;
+
             case I_JMP:
                 get_operand_str(instr->var1, op1, sizeof(op1));
                 fprintf(out_file, "  jmp %s\n", op1);
                 break;
+
             case I_JMPF:
                 get_operand_str(instr->var1, op1, sizeof(op1));
                 get_operand_str(instr->reg, dest, sizeof(dest));
                 fprintf(out_file, "  movq %s, %%rax\n", op1);
-                fprintf(out_file, "  testq %%rax, %%rax\n");
-                fprintf(out_file, "  jz %s\n", dest);
+                fprintf(out_file, "  testq %%rax, %%rax\n"); // If value in rax is 0, this sets Zero Flag in 1
+                fprintf(out_file, "  jz %s\n", dest); // Jump if Zero Flag is 1
                 break;
+
             case I_PARAM:
                 // TODO: Handle more than 6 parameters (stack)
                 if (param_count < 6) {
@@ -252,9 +274,11 @@ void generate_object_code(FILE* out_file) {
                 }
                 param_count++;
                 break;
+
             case I_CALL:
                 fprintf(out_file, "  call %s\n", instr->var1->id.name);
                 if (instr->reg) {
+                    // Saves returned value
                     get_operand_str(instr->reg, dest, sizeof(dest));
                     fprintf(out_file, "  movq %%rax, %s\n", dest);
                 }
@@ -263,6 +287,7 @@ void generate_object_code(FILE* out_file) {
 
             case I_LOAD:
                 break;
+
             default:
                 fprintf(out_file, "  # Unknown instruction\n");
                 break;
