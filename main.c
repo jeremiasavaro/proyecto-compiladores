@@ -15,14 +15,82 @@ extern int yyparse();
 void yyerror(const char *s);
 extern FILE *yyin;
 
+typedef enum STAGE {
+	SCAN,
+	PARSE,
+	CODINTER,
+	ASSEMBLY,
+	EXECUTABLE
+} STAGE;
+
 int main(int argc, char *argv[]) {
-	if (argc > 1) {
-		FILE *file = fopen(argv[1], "r");
-		if (!file) {
-			error_open_file(argv[1]);
-		}
-		yyin = file;
+	// Flags
+	int optimizations = 0; // TODO: Handle different optimizations
+	int debug = 0;
+	STAGE stage = EXECUTABLE; // Run all stages by default
+	char* outname = "nombreArchivo.out"; // Default name
+	char* sourcename = NULL;
+
+	if (argc == 1) {
+		fprintf(stderr, "Error: Must provide source file.\n");
+		return 1;
 	}
+
+	// TODO: implement a -h flag to print help information about the compilation proccess
+
+	for (int i = 1; i < argc; i++) {
+		if (strcmp(argv[i], "-opt") == 0) {
+			optimizations = 1;
+		} else if (strcmp(argv[i], "-debug") == 0) {
+			debug = 1;
+		} else if (strcmp(argv[i], "-o") == 0) {
+			if (i + 1 < argc) { // If -o is specified, a filename after that is required
+				outname = argv[i + 1];
+				i++;
+			} else {
+				fprintf(stderr, "Error: -o requires a filename.\n");
+				return 1;
+			}
+		} else if (strcmp(argv[i], "-target") == 0) {
+			if (i + 1 < argc) { // If -target is specified, a target stage after that is required
+				if (strcmp(argv[i + 1], "scan") == 0) {
+					stage = SCAN;
+				} else if (strcmp(argv[i + 1], "parse") == 0) {
+					stage = PARSE;
+				} else if (strcmp(argv[i + 1], "codinter") == 0) {
+					stage = CODINTER;
+				} else if (strcmp(argv[i + 1], "assembly") == 0) {
+					stage = ASSEMBLY;
+				} else {
+					fprintf(stderr, "Error: unknown stage specifier after -target.\n");
+					return 1;
+				}
+				i++;
+			} else {
+				fprintf(stderr, "Error: -target requires a target stage.\n");
+				return 1;
+			}
+		} else {
+			if (sourcename == NULL) {
+				sourcename = argv[i];
+			} else {
+				fprintf(stderr, "Warning: Multiple source files specified. Using first one: %s\n", sourcename);
+			}
+		}
+	}
+
+	if (sourcename == NULL) {
+		fprintf(stderr, "Error: No source file provided.\n");
+		return 1;
+	}
+
+	FILE *file = fopen(sourcename, "r");
+	if (!file) {
+		error_open_file(argv[1]);
+	}
+	yyin = file;
+
+	// TODO: use flags to decide what to do next
 
 	printf("=== SYNTAX ANALYSIS ===\n");
 	yyparse();
