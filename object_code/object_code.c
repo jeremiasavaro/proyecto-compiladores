@@ -207,7 +207,7 @@ void generate_object_code(FILE* out_file) {
                 fprintf(out_file, "  cqto\n"); // Sign-extends value in rax to the rdx:rax register pair (necessary to use idivq)
                 fprintf(out_file, "  idivq %s\n", op2);
                 char* result_reg = (instr->instruct->instruct.type_instruct == I_DIV) ? "%rax" : "%rdx";
-                // idivq saves the result of the division in rax, and the module in rdx
+                // idivq saves the result of the division in rax, and the remainder in rdx
                 fprintf(out_file, "  movq %s, %s\n", result_reg, dest);
                 break;
 
