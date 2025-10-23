@@ -1,4 +1,5 @@
 #include "object_code.h"
+#include "utils.h"
 
 #define MAX_VARS_PER_FUNCTION 200
 
@@ -20,7 +21,7 @@ static int get_var_offset(const char* name) {
         }
     }
     current_stack_offset -= 8; // Allocate 8 bytes for the new variable
-    var_map[var_count].name = strdup(name);
+    var_map[var_count].name = my_strdup(name);
     var_map[var_count].offset = current_stack_offset; // Set offset for variable
     var_count++;
     return current_stack_offset;
