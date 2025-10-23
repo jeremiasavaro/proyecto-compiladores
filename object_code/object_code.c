@@ -59,6 +59,7 @@ void generate_object_code(FILE* out_file) {
     Instr* code = get_intermediate_code();
     int code_size = get_code_size();
     int param_count = 0;
+    int stack_params = 0; // Count parameters that need to go on stack
 
     fprintf(out_file, ".text\n");
 
@@ -123,10 +124,20 @@ void generate_object_code(FILE* out_file) {
                 if (func_node) {
                     ARGS_LIST* arg_list = func_node->info->method_decl.args;
                     int arg_idx = 0;
-                    while (arg_list && arg_idx < 6) {
+                    while (arg_list) {
                         const char* arg_name = arg_list->arg->name;
                         int offset = get_var_offset(arg_name);
-                        fprintf(out_file, "  movq %s, %d(%%rbp)\n", arg_regs[arg_idx], offset);
+                        if (arg_idx < 6) {
+                            // First 6 arguments come from registers
+                            fprintf(out_file, "  movq %s, %d(%%rbp)\n", arg_regs[arg_idx], offset);
+                        } else {
+                            // Arguments 7+ are already on the stack (pushed by caller)
+                            // They are at positive offsets from %rbp:
+                            // rbp+16 is the 7th arg, rbp+24 is the 8th arg, etc.
+                            int stack_arg_offset = 16 + (arg_idx - 6) * 8;
+                            fprintf(out_file, "  movq %d(%%rbp), %%rax\n", stack_arg_offset);
+                            fprintf(out_file, "  movq %%rax, %d(%%rbp)\n", offset);
+                        }
                         arg_list = arg_list->next;
                         arg_idx++;
                     }
@@ -267,10 +278,15 @@ void generate_object_code(FILE* out_file) {
                 break;
 
             case I_PARAM:
-                // TODO: Handle more than 6 parameters (stack)
+                // First 6 parameters go in registers, rest go on stack
+                get_operand_str(instr->var1, op1, sizeof(op1));
                 if (param_count < 6) {
-                    get_operand_str(instr->var1, op1, sizeof(op1));
                     fprintf(out_file, "  movq %s, %s\n", op1, arg_regs[param_count]);
+                } else {
+                    // Parameters beyond the 6th need to be pushed onto stack
+                    // We'll collect them and push in reverse order before the call
+                    fprintf(out_file, "  pushq %s\n", op1);
+                    stack_params++;
                 }
                 param_count++;
                 break;
@@ -282,7 +298,12 @@ void generate_object_code(FILE* out_file) {
                     get_operand_str(instr->reg, dest, sizeof(dest));
                     fprintf(out_file, "  movq %%rax, %s\n", dest);
                 }
+                // Clean up stack parameters (arguments 7+)
+                if (stack_params > 0) {
+                    fprintf(out_file, "  addq $%d, %%rsp\n", stack_params * 8);
+                }
                 param_count = 0;
+                stack_params = 0;
                 break;
 
             case I_LOAD:
