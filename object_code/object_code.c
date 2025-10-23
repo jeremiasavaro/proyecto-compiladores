@@ -62,6 +62,9 @@ void generate_object_code(FILE* out_file) {
     int param_count = 0;
     int stack_params = 0; // Count parameters that need to go on stack
 
+    fprintf(out_file, ".extern printf\n");
+    fprintf(out_file, ".section .rodata\n");
+    fprintf(out_file, "fmt: .string \"%%ld\\n\"\n");
     fprintf(out_file, ".text\n");
 
     for (int i = 0; i < code_size; ++i) {
@@ -147,8 +150,14 @@ void generate_object_code(FILE* out_file) {
             }
 
             case I_LEAVE: {
-                // Function call epilogue
                 fprintf(out_file, ".L_leave_%s:\n", instr->var1->id.name);
+                // Function call epilogue
+                if (strcmp(instr->var1->id.name, "main") == 0) {
+                    fprintf(out_file, "  movq %%rax, %%rsi\n");  
+                    fprintf(out_file, "  leaq fmt(%%rip), %%rdi\n");    
+                    fprintf(out_file, "  movq $0, %%rax\n");             
+                    fprintf(out_file, "  call printf\n");
+                }
                 fprintf(out_file, "  movq %%rbp, %%rsp\n");
                 fprintf(out_file, "  popq %%rbp\n");
                 fprintf(out_file, "  ret\n");
@@ -166,9 +175,9 @@ void generate_object_code(FILE* out_file) {
                 for(int j = i; j >= 0; j--) {
                     // Find the nearest preceding I_ENTER to get the function name
                     if (code[j].instruct->instruct.type_instruct == I_ENTER) {
-                         strncpy(current_func_name, code[j].var1->id.name, sizeof(current_func_name)-1);
-                         current_func_name[sizeof(current_func_name)-1] = '\0'; // Line end to avoid buffer overflow
-                         break;
+                        strncpy(current_func_name, code[j].var1->id.name, sizeof(current_func_name)-1);
+                        current_func_name[sizeof(current_func_name)-1] = '\0'; // Line end to avoid buffer overflow
+                        break;
                     }
                 }
                 // Move return value to %rax and jump to function epilogue
