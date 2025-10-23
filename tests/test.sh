@@ -2,8 +2,8 @@
 
 # Verifica que el ejecutable parser exista
 echo "Verifying parser in current directory"
-if [ ! -x ./parser ]; then
-    echo "Error: no se encuentra ./parser o no es ejecutable."
+if [ ! -x ./main ]; then
+    echo "Error: no se encuentra ./main o no es ejecutable."
     exit 1
 fi
 
@@ -15,7 +15,7 @@ mkdir -p tests/output_intermediate_code
 for file in tests/correct_tests/* tests/error_tests/*; do
     if [ -f "$file" ] && [ "$file" != "tests/test.sh" ]; then
         ((i++))   # incrementa i en bash
-        echo ">>> Ejecutando ./parser $file"
+        echo ">>> Ejecutando ./main $file"
         rm -f intermediate_code/intermediate_code.out
         if ./main "$file" > >(tee /tmp/parser_stdout.log) 2> >(tee /tmp/parser_stderr.log >&2); then
             # Solo si el parser terminó correctamente genero el intermedio
