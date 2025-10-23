@@ -65,7 +65,10 @@ dkms.conf
 parser
 parser.output
 
-tests/output
+tests/output_executables/
+tests/output_intermediate_code/
+tests/output_object_code/
+tests/output_final
 
 # Intermediate code files
 intermediate_code/intermediate_code.out
