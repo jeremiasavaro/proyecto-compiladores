@@ -1,0 +1,17 @@
+ENTER main
+LOADVAL 0, T0
+STORE T0, counter
+L0:
+LOAD counter
+LOADVAL 5, T1
+LES counter, T1, T2
+JMPF T2, L1
+LOAD counter
+LOADVAL 1, T3
+ADD counter, T3, T4
+STORE T4, counter
+JMP L0
+L1:
+LOADVAL 10, T5
+STORE T5, counter
+LEAVE main

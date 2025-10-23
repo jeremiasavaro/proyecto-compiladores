@@ -1,0 +1,6 @@
+ENTER main
+LOADVAL 10, T0
+STORE T0, x
+LOADVAL 1, T1
+STORE T1, flag
+LEAVE main

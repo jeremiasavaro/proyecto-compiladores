@@ -1,0 +1,5 @@
+Test_methods.cdts = 35
+Test_operations.cdts = 1
+Test_types.cdts = 1
+Test_while.cdts = 10
+Test_while_multiple.cdts = 21

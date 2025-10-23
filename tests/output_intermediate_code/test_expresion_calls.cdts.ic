@@ -1,0 +1,45 @@
+EXTERN print_int
+ENTER inc
+LOAD x
+LOADVAL 1, T0
+ADD x, T0, T1
+RET T1
+LEAVE inc
+ENTER twice
+LOAD x
+LOAD x
+ADD x, x, T2
+LOAD f
+MUL T2, f, T3
+RET T3
+LEAVE twice
+ENTER caller
+LOADVAL 2, T4
+STORE T4, a
+LOAD a
+PARAM a
+CALL inc, T5
+PARAM T5
+LOADVAL 3, T6
+PARAM T6
+CALL inc, T7
+PARAM T7
+CALL twice, T8
+STORE T8, a
+LOAD a
+RET a
+LEAVE caller
+ENTER main
+CALL caller, T9
+PARAM T9
+CALL print_int, T10
+LOADVAL 0, T11
+PARAM T11
+CALL inc, T12
+PARAM T12
+CALL inc, T13
+PARAM T13
+CALL inc, T14
+PARAM T14
+CALL print_int, T15
+LEAVE main

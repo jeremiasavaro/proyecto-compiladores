@@ -1,0 +1,79 @@
+EXTERN get_int
+EXTERN print_int
+EXTERN print_bool
+ENTER factorial
+LOAD n
+LOADVAL 0, T0
+EQ n, T0, T1
+JMPF T1, L0
+LOADVAL 1, T2
+RET T2
+JMP L1
+L0:
+LOAD n
+LOAD n
+LOADVAL 1, T3
+SUB n, T3, T4
+PARAM T4
+CALL factorial, T5
+MUL n, T5, T6
+RET T6
+L1:
+LEAVE factorial
+ENTER is_even
+LOAD n
+LOADVAL 0, T7
+EQ n, T7, T8
+JMPF T8, L2
+LOADVAL 1, T9
+RET T9
+JMP L3
+L2:
+LOAD n
+LOADVAL 1, T10
+SUB n, T10, T11
+PARAM T11
+CALL is_odd, T12
+RET T12
+L3:
+LEAVE is_even
+ENTER is_odd
+LOAD n
+LOADVAL 0, T13
+EQ n, T13, T14
+JMPF T14, L4
+LOADVAL 0, T15
+RET T15
+JMP L5
+L4:
+LOAD n
+LOADVAL 1, T16
+SUB n, T16, T17
+PARAM T17
+CALL is_even, T18
+RET T18
+L5:
+LEAVE is_odd
+ENTER main
+CALL get_int, T19
+STORE T19, x
+LOAD x
+PARAM x
+CALL is_even, T20
+JMPF T20, L6
+LOAD x
+PARAM x
+CALL factorial, T21
+PARAM T21
+CALL print_int, T22
+JMP L7
+L6:
+LOAD x
+LOADVAL 1, T23
+SUB x, T23, T24
+PARAM T24
+CALL factorial, T25
+PARAM T25
+CALL print_int, T26
+L7:
+LEAVE main

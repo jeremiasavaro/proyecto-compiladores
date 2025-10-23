@@ -1,0 +1,30 @@
+ENTER inc
+LOAD x
+LOADVAL 1, T0
+ADD x, T0, T1
+RET T1
+LEAVE inc
+EXTERN get_int
+EXTERN print_int
+ENTER main
+LOADVAL 10, T2
+STORE T2, y
+CALL get_int, T3
+STORE T3, y
+LOAD y
+LOADVAL 1, T4
+EQ y, T4, T5
+JMPF T5, L0
+LOAD y
+PARAM y
+CALL print_int, T6
+JMP L1
+L0:
+LOAD y
+PARAM y
+CALL inc, T7
+PARAM T7
+CALL print_int, T8
+RET T8
+L1:
+LEAVE main
