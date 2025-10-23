@@ -103,5 +103,11 @@ int main(int argc, char *argv[]) {
 		gen_code(cur->sentence, NULL);
 	}
 	print_code_to_file("intermediate_code/intermediate_code.out");
+	FILE* out = fopen("res.out", "w");
+	if (!out) {
+		error_open_file("res.out");
+	}
+	generate_object_code(out);
+	fclose(out);
 	return 0;
 }
