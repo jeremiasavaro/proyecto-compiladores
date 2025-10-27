@@ -275,3 +275,8 @@ void error_main_missing() {
     fprintf(stderr, "ERROR: main method not is declared\n");
     exit(EXIT_FAILURE);
 }
+
+void error_get_bool() {
+    fprintf(stderr, "ERROR: invalid boolean input, must be TRUE or FALSE\n");
+    exit(EXIT_FAILURE);
+}
