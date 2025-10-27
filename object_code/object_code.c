@@ -73,7 +73,7 @@ void generate_object_code(FILE* out_file) {
 
         switch (instr->instruct->instruct.type_instruct) {
             case I_EXTERN:
-                fprintf(out_file, ".globl %s\n", instr->var1->id.name);
+                fprintf(out_file, ".extern %s\n", instr->var1->id.name);
                 break;
 
             case I_ENTER: {
