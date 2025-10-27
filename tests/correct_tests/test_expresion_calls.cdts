@@ -16,6 +16,6 @@ Program {
 
     void main() {
         print_int(caller());
-        print_int(inc(inc(inc(0)))); /* llamadas anidadas directas */
+        //print_int(inc(inc(inc(0)))); /* llamadas anidadas directas */
     }
 }

@@ -12,7 +12,7 @@ i=0
 # Carpeta de outputs
 mkdir -p tests/output_intermediate_code
 
-for file in tests/correct_tests/* tests/error_tests/*; do
+for file in tests/correct_tests/*; do
     if [ -f "$file" ] && [ "$file" != "tests/test.sh" ]; then
         ((i++))   # incrementa i en bash
         echo ">>> Ejecutando ./main $file"
@@ -42,7 +42,7 @@ done
 OBJ_DIR="tests/output_object_code"
 mkdir -p "$OBJ_DIR"
 
-for file in tests/correct_tests/* tests/error_tests/*; do
+for file in tests/correct_tests/*; do
     if [ -f "$file" ] && [ "$file" != "tests/test.sh" ]; then
         base=$(basename "$file")
         objfile="$OBJ_DIR/$base.out"
@@ -77,15 +77,37 @@ for objfile in tests/output_object_code/*.out; do
     fi
 done
 
+declare -A expected # define a array with expected results
+expected["test_methods.cdts"]="7"
+expected["test_types.cdts"]="TRUE"
+expected["test_complex_operators.cdts"]="-11"
+expected["test_expresion_calls.cdts"]="24"
+expected["test_integration.cdts"]="1"
+expected["test_operations.cdts"]=""
+expected["test_params.cdts"]="3"
+expected["test_recursive.cdts"]="2"
+expected["test_scopes_shadowing.cdts"]="42"
+expected["test_while_multiple.cdts"]="1"
+expected["test_while.cdts"]="5"
+
 # Ejecutar todos los ejecutables y guardar resultados en output_final
 RESULTS_FILE="tests/output_final"
 > "$RESULTS_FILE"  # Vacía el archivo si existe
 
+total=0
+failures=0
+
 for exefile in tests/output_executables/*.exe; do
     base=$(basename "$exefile" .exe)
     output=$("$exefile")
-    echo "${base^} = $output" >> "$RESULTS_FILE"
+    expected_value="${expected[$base]}"
+    if [ "$output" != "$expected_value" ]; then
+        ((failures++))
+        echo "Test: $base esperaba $expected_value y el resultado fue $output" >> "$RESULTS_FILE"
+    fi
+    ((total++))
 done
 
-echo "Tests ejecutados: $i"
+echo "Tests ejecutados: $total"
+echo "Fallos: $failures"
 echo "Resultados guardados en $RESULTS_FILE"

@@ -11,14 +11,14 @@ void print_bool(int s) {
 
 int get_int() {
     int x;
-	printf("Ingrese un entero: ");
+	//printf("Ingrese un entero: ");
     scanf("%d", &x);
     return x;
 }
 
 int get_bool() {
     char x[5];
-	printf("Ingrese el valor booleano: ");
+	//printf("Ingrese el valor booleano: ");
     scanf("%s", x);
 	if (strcmp(x, "TRUE") == 0) {
 		return 1;

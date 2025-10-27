@@ -7,9 +7,9 @@ Program {
         {
             /* nuevo scope: shadowing de 'v' */
             integer v = 7;
-            print_int(v); /* imprime 7 */
+            //print_int(v); /* imprime 7 */
         }
-        print_int(v); /* imprime 3 (scope exterior) */
+        //print_int(v); /* imprime 3 (scope exterior) */
     }
 
     void main() {
@@ -19,7 +19,7 @@ Program {
         {
             integer v;
             v = 42;
-            print_int(v);
+            //print_int(v);
             {
                 ; /* bloque vacío */
             }

@@ -16,16 +16,19 @@ Program {
             return false;
         }
     }
-    void main() {
+    void print_int(integer x) extern;
+    integer main() {
         integer x;
         integer z;
         bool check;
-        integer y = 5;
+        integer y = 1;
         integer r = mega_add(y, y, y, y, y, y, y);
         y = inc(y);
         x = y + 10;
         z = add(x, y);
         check = isPositive(z);
+        print_int(r);
+        return r;
     }
 
 }
