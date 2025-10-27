@@ -6,7 +6,6 @@
 static VarLocation var_map[MAX_VARS_PER_FUNCTION];
 static int var_count = 0;
 static int current_stack_offset = 0;
-static return_type = 0;
 
 // Argument registers for x86-64 calling convention
 const char* arg_regs[] = {"%rdi", "%rsi", "%rdx", "%rcx", "%r8", "%r9"};
@@ -76,10 +75,6 @@ void generate_object_code(FILE* out_file) {
 
             case I_ENTER: {
                 const char* func_name = instr->var1->id.name;
-                if (strcmp(func_name, "main") == 0) {
-                    return_type = instr->var1->method_decl.return_type;
-                }
-
                 AST_NODE* func_node = NULL;
                 // Search for the function declaration node in the AST
                 for (AST_ROOT* cur = head_ast; cur != NULL; cur = cur->next) {
