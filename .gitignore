@@ -72,3 +72,5 @@ tests/output_final
 
 # Intermediate code files
 intermediate_code/intermediate_code.out
+
+*.DS_Store
