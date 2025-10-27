@@ -74,3 +74,4 @@ tests/output_final
 intermediate_code/intermediate_code.out
 
 *.DS_Store
+main
