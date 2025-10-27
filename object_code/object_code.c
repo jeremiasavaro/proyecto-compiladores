@@ -109,7 +109,7 @@ void generate_object_code(FILE* out_file) {
                 int total_stack_size = -current_stack_offset;
                 // Align stack to 16 bytes
                 if (total_stack_size % 16 != 0) {
-                    total_stack_size += 16 - (total_stack_size % 16);
+                    total_stack_size += 16 - total_stack_size % 16;
                 }
 
                 var_count = 0;
@@ -211,10 +211,10 @@ void generate_object_code(FILE* out_file) {
                 get_operand_str(instr->var2, op2, sizeof(op2));
                 get_operand_str(instr->reg, dest, sizeof(dest));
                 fprintf(out_file, "  movq %s, %%rax\n", op1);
-                const char* op_str = (instr->instruct->instruct.type_instruct == I_ADD) ? "addq" :
-                                     (instr->instruct->instruct.type_instruct == I_SUB) ? "subq" :
-                                     (instr->instruct->instruct.type_instruct == I_MUL) ? "imulq" :
-                                     (instr->instruct->instruct.type_instruct == I_AND) ? "andq" : "orq";
+                const char* op_str = instr->instruct->instruct.type_instruct == I_ADD ? "addq" :
+                                     instr->instruct->instruct.type_instruct == I_SUB ? "subq" :
+                                     instr->instruct->instruct.type_instruct == I_MUL ? "imulq" :
+                                     instr->instruct->instruct.type_instruct == I_AND ? "andq" : "orq";
                 // rax used for intermediate values
                 fprintf(out_file, "  %s %s, %%rax\n", op_str, op2);
                 fprintf(out_file, "  movq %%rax, %s\n", dest);
@@ -227,7 +227,7 @@ void generate_object_code(FILE* out_file) {
                 fprintf(out_file, "  movq %s, %%rax\n", op1);
                 fprintf(out_file, "  cqto\n"); // Sign-extends value in rax to the rdx:rax register pair (necessary to use idivq)
                 fprintf(out_file, "  idivq %s\n", op2);
-                char* result_reg = (instr->instruct->instruct.type_instruct == I_DIV) ? "%rax" : "%rdx";
+                char* result_reg = instr->instruct->instruct.type_instruct == I_DIV ? "%rax" : "%rdx";
                 // idivq saves the result of the division in rax, and the remainder in rdx
                 fprintf(out_file, "  movq %s, %s\n", result_reg, dest);
                 break;
