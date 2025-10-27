@@ -6,6 +6,7 @@
 static VarLocation var_map[MAX_VARS_PER_FUNCTION];
 static int var_count = 0;
 static int current_stack_offset = 0;
+static return_type = 0;
 
 // Argument registers for x86-64 calling convention
 const char* arg_regs[] = {"%rdi", "%rsi", "%rdx", "%rcx", "%r8", "%r9"};
@@ -62,9 +63,6 @@ void generate_object_code(FILE* out_file) {
     int param_count = 0;
     int stack_params = 0; // Count parameters that need to go on stack
 
-    fprintf(out_file, ".extern printf\n");
-    fprintf(out_file, ".section .rodata\n");
-    fprintf(out_file, "fmt: .string \"%%ld\\n\"\n");
     fprintf(out_file, ".text\n");
 
     for (int i = 0; i < code_size; ++i) {
@@ -78,6 +76,9 @@ void generate_object_code(FILE* out_file) {
 
             case I_ENTER: {
                 const char* func_name = instr->var1->id.name;
+                if (strcmp(func_name, "main") == 0) {
+                    return_type = instr->var1->method_decl.return_type;
+                }
 
                 AST_NODE* func_node = NULL;
                 // Search for the function declaration node in the AST
@@ -151,13 +152,6 @@ void generate_object_code(FILE* out_file) {
 
             case I_LEAVE: {
                 fprintf(out_file, ".L_leave_%s:\n", instr->var1->id.name);
-                // Function call epilogue
-                if (strcmp(instr->var1->id.name, "main") == 0) {
-                    fprintf(out_file, "  movq %%rax, %%rsi\n");  
-                    fprintf(out_file, "  leaq fmt(%%rip), %%rdi\n");    
-                    fprintf(out_file, "  movq $0, %%rax\n");             
-                    fprintf(out_file, "  call printf\n");
-                }
                 fprintf(out_file, "  movq %%rbp, %%rsp\n");
                 fprintf(out_file, "  popq %%rbp\n");
                 fprintf(out_file, "  ret\n");
