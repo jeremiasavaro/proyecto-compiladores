@@ -68,7 +68,7 @@ for objfile in tests/output_object_code/*.out; do
     exefile="$EXE_DIR/$base.exe"
 
     gcc -x assembler -c "$objfile" -o "$EXE_DIR/$base.o"
-    gcc -no-pie "$EXE_DIR/$base.o" -o "$exefile"
+    gcc -no-pie "$EXE_DIR/$base.o" libraries/cdtsio.o -o "$exefile"
 
     if [ -f "$exefile" ]; then
         echo "[OK] Ejecutable generado: $exefile"
