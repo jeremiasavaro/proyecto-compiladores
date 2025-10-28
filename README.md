@@ -22,6 +22,7 @@ called TDS25.
 - Lexical and syntactic analyzer: syntactic-analyzer
 - Semantic analyzer: semantic-analyzer
 - Intermediate code generator: intermediate-code-generate
+- Object code generator: object-code-generator
 
 ## Dependencies
 - flex
