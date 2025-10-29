@@ -341,14 +341,21 @@ static void gen_code_method_decl(AST_NODE* node, INFO* result) {
  */
 static void gen_code_method_call(AST_NODE* node, INFO* result) {
     AST_NODE_LIST* arg = node->info->method_call.args;
+    INFO args_info_list[node->info->method_call.num_args];
+    int i = 0;
     while (arg) {
         INFO arg_info;
         arg_info.type = TABLE_ID;
         gen_code(arg->first, &arg_info);
-        emit(I_PARAM, &arg_info, NULL, NULL);
+        args_info_list[i] = arg_info;
         arg = arg->next;
+        i++;
     }
-
+    i = 0;
+    while (i < node->info->method_call.num_args) {
+        emit(I_PARAM, &args_info_list[i], NULL, NULL);
+        i++;
+    }
     INFO name_info, ret_info;
     name_info.type = TABLE_ID;
     ret_info.type = TABLE_ID;
