@@ -53,5 +53,9 @@ void error_return_type(int line, int type, int true_type);
 void error_return_type_void(int line, int true_type);
 void error_main_missing();
 void error_get_bool();
+void warning_ignored_while(int line);
+void warning_ignored_if(int line);
+void warning_ignored_else(int line);
+void warning_infinite_loop(int line);
 
 #endif

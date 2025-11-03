@@ -273,11 +273,24 @@ static void eval_while(AST_NODE *tree){
     line = tree->line;
     RET_TYPE retCond;
     RET_TYPE retBlock;
-    eval(tree->info->while_stmt.condition, &retCond);
+    AST_NODE* condition = tree->info->while_stmt.condition;
+    eval(condition, &retCond);
     if(retCond != BOOL_TYPE) {
         error_conditional(line);
     }
     eval(tree->info->while_stmt.block, &retBlock);
+    if (condition->info->type == AST_LEAF) {
+        line = tree->info->while_stmt.block->info->block.stmts->first->line - 1;
+        if (condition->info->leaf.value->bool_value == 0) {
+            tree->info->while_stmt.block = NULL;
+            tree->info->while_stmt.condition = NULL;
+            tree->info->type = AST_BLOCK;
+            tree->info->block.stmts = NULL;
+            warning_ignored_while(line);
+        } else {
+            warning_infinite_loop(line);
+        }
+    }
 }
 
 /*
@@ -358,6 +371,35 @@ static void eval_if(AST_NODE *tree, RET_TYPE *ret) {
     eval(condition, &retCondition);
     if(retCondition != BOOL_TYPE) {
         error_conditional(line);
+    }
+    if (condition->info->type == AST_LEAF) {
+        if (condition->info->leaf.value->bool_value == 1) {
+            eval(then_block, &retThen);
+            tree->info->if_stmt.else_block = NULL;
+            tree->info->if_stmt.then_block = NULL;
+            tree->info->if_stmt.condition = NULL;
+            tree->info->type = AST_BLOCK;
+            tree->info->block.stmts = then_block->info->block.stmts;
+            *ret = retThen;
+            returned_global = 1;
+            if (then_block) {
+                warning_ignored_else(tree->info->block.stmts->first->line - 1);
+            }
+            return;
+        } else {
+            if (else_block) {
+                eval(else_block, &retElse);
+                tree->info->if_stmt.then_block = NULL;
+                tree->info->if_stmt.else_block = NULL;
+                tree->info->if_stmt.condition = NULL;
+                tree->info->type = AST_BLOCK;
+                tree->info->block.stmts = else_block->info->block.stmts;
+                *ret = retElse;
+                returned_global = 1;
+                warning_ignored_if(tree->info->block.stmts->first->line - 1);
+                return;
+            }
+        }
     }
     eval(then_block, &retThen);
     if (else_block) {

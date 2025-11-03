@@ -280,3 +280,19 @@ void error_get_bool() {
     fprintf(stderr, "ERROR: invalid boolean input, must be TRUE or FALSE\n");
     exit(EXIT_FAILURE);
 }
+
+void warning_ignored_while(int line) {
+    printf("WARN: he while statement on line %d may be ignored\n", line);
+}
+
+void warning_ignored_if(int line) {
+    printf("WARN: The if statement on line %d may be ignored\n", line);
+}
+
+void warning_ignored_else(int line) {
+    printf("WARN: The else statement on line %d may be ignored\n", line);
+}
+
+void warning_infinite_loop(int line) {
+    printf("WARN: The while loop on line %d may result in an infinite loop\n", line);
+}
