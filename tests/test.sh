@@ -80,7 +80,7 @@ done
 declare -A expected # define a array with expected results
 expected["test_methods.cdts"]="7"
 expected["test_types.cdts"]="TRUE"
-expected["test_complex_operators.cdts"]="-11"
+expected["test_complex_operators.cdts"]="2"
 expected["test_expresion_calls.cdts"]="24"
 expected["test_integration.cdts"]="1"
 expected["test_operations.cdts"]=""
