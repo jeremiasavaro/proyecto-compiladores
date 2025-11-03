@@ -221,6 +221,23 @@ void generate_object_code(FILE* out_file) {
                 fprintf(out_file, "  movq %s, %s\n", result_reg, dest);
                 break;
 
+            case I_SHIFT_RIGHT:
+                get_operand_str(instr->var1, op1, sizeof(op1));
+                get_operand_str(instr->var2, op2, sizeof(op2));
+                get_operand_str(instr->reg, dest, sizeof(dest));
+                long divisor = 1L << strtol(instr->var2->id.name, NULL, 10); // Calculate divisor
+                long bias = divisor - 1;
+                fprintf(out_file, "  movq %s, %%rax\n", op1);
+
+                // Adjustment so that the optimized division (shift) truncates to zero
+                fprintf(out_file, "  cqo\n");
+                fprintf(out_file, "  movq $%ld, %%rcx\n", bias); // Load bias
+                fprintf(out_file, "  and %%rcx, %%rdx\n"); // Apply bias only if neccesary
+                fprintf(out_file, "  add %%rdx, %%rax\n"); // Add bias (or 0)
+                fprintf(out_file, "  sar %s, %%rax\n", op2); // Apply shift
+                fprintf(out_file, "  movq %%rax, %s\n", dest);
+                break;
+
             case I_MIN:
                 get_operand_str(instr->var1, op1, sizeof(op1));
                 get_operand_str(instr->reg, dest, sizeof(dest));
