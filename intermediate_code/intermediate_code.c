@@ -144,6 +144,23 @@ static void gen_code_common(AST_NODE* node, INFO* result) {
 
         case OP_DIVISION:
             gen_code(node->info->common.left, left);
+            AST_NODE* right_child = node->info->common.right;
+            if (right_child && right_child->info->type == AST_LEAF) {
+                int right_value = right_child->info->leaf.value->int_value;
+                // Check if right_value is a power of 2 using bits operations
+                if (right_value > 0 && (right_value & (right_value - 1)) == 0) {
+                    right = (INFO*) malloc(sizeof(INFO));
+                    char buf[32];
+                    sprintf(buf, "%d", __builtin_ctz(right_value));
+                    right->id.name = my_strdup(buf);
+                    right->id.type = TYPE_INT;
+                    temp->id.name = new_temp();
+                    temp->id.type = TYPE_INT;
+                    emit(I_SHIFT_RIGHT, left, right, temp);
+                    if (result) *result = *temp;
+                    break;
+                }
+            }
             gen_code(node->info->common.right, right);
             temp->id.name = new_temp();
             temp->id.type = TYPE_INT;
@@ -431,6 +448,10 @@ void print_code_to_file(const char* filename) {
             case I_DIV:
                 if (v1 && v1->id.name && v2 && v2->id.name && reg && reg->id.name)
                     fprintf(f, "DIV %s, %s, %s\n", v1->id.name, v2->id.name, reg->id.name);
+                break;
+            case I_SHIFT_RIGHT:
+                if (v1 && v1->id.name && v2 && v2->id.name && reg && reg->id.name)
+                    fprintf(f, "SHIFT_RIGHT %s, %s, %s\n", v1->id.name, v2->id.name, reg->id.name);
                 break;
             case I_MOD:
                 if (v1 && v1->id.name && v2 && v2->id.name && reg && reg->id.name)

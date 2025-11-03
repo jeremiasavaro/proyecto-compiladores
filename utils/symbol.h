@@ -66,6 +66,7 @@ typedef enum {
     I_ENTER,     // Method prologue (var1 = method name)
     I_LEAVE,      // Method epilogue (var1 = method name)
     I_EXTERN,     // Extern method prologue
+	I_SHIFT_RIGHT // Shift right operation for optimizations
 } INSTR_TYPE;
 
 typedef enum {
