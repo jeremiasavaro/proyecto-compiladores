@@ -4,8 +4,6 @@ int line = 0;
 int returned_global = 0; // Global flag set when a return statement has been encountered and propagated.
 RET_TYPE method_return_type; // Current method's expected return TYPE (used when checking return statements).
 int main_defined = 0; // Flag to check if main method is defined.
-int if_ret = 0;
-int else_ret = 0;
 
 /*
  * Function that calls the correct evaluator depending on the AST node type.
@@ -46,11 +44,13 @@ static void eval_common(AST_NODE *tree, RET_TYPE *ret) {
                 error_return_type(tree->line, left_type, method_return_type);
             }
             memcpy(ret, &left_type, sizeof(RET_TYPE));
+            returned_global = 1;
         } else {
             if (method_return_type != VOID_TYPE) {
                 error_return_type_void(tree->line, method_return_type);
             }
             *ret = VOID_TYPE;
+            returned_global = 1;
         }
         return;
     }
@@ -58,10 +58,24 @@ static void eval_common(AST_NODE *tree, RET_TYPE *ret) {
     if (tree->info->common.arity == BINARY) {
         eval(tree->info->common.left, &left_type);
         eval(tree->info->common.right, &right_type);
+        int literal = 0;
+        if (tree->info->common.left->info->type == AST_LEAF && tree->info->common.right->info->type == AST_LEAF) {
+            if (tree->info->common.left->info->leaf.type != TYPE_ID &&
+                tree->info->common.right->info->leaf.type != TYPE_ID) {
+                literal = 1;
+            }
+        }
         switch (tree->info->common.op) {
             case OP_ADDITION:
                 if (left_type != INT_TYPE || right_type != INT_TYPE) {
                     error_additional(line);
+                }
+                if (literal) {
+                    int result = tree->info->common.left->info->leaf.value->int_value + tree->info->common.right->info->leaf.value->int_value;
+                    tree->info->type = AST_LEAF;
+                    tree->info->leaf.value = malloc(sizeof(LEAF_UNION));
+                    tree->info->leaf.type = TYPE_INT;
+                    tree->info->leaf.value->int_value = result;
                 }
                 *ret = INT_TYPE;
                 return;
@@ -69,11 +83,25 @@ static void eval_common(AST_NODE *tree, RET_TYPE *ret) {
                 if (left_type != INT_TYPE || right_type != INT_TYPE) {
                     error_substraction(line);
                 }
+                if (literal) {
+                    int result = tree->info->common.left->info->leaf.value->int_value - tree->info->common.right->info->leaf.value->int_value;
+                    tree->info->type = AST_LEAF;
+                    tree->info->leaf.value = malloc(sizeof(LEAF_UNION));
+                    tree->info->leaf.type = TYPE_INT;
+                    tree->info->leaf.value->int_value = result;
+                }
                 *ret = INT_TYPE;
                 return;
             case OP_MULTIPLICATION:
                 if (left_type != INT_TYPE || right_type != INT_TYPE) {
                     error_multiplication(line);
+                }
+                if (literal) {
+                    int result = tree->info->common.left->info->leaf.value->int_value * tree->info->common.right->info->leaf.value->int_value;
+                    tree->info->type = AST_LEAF;
+                    tree->info->leaf.value = malloc(sizeof(LEAF_UNION));
+                    tree->info->leaf.type = TYPE_INT;
+                    tree->info->leaf.value->int_value = result;
                 }
                 *ret = INT_TYPE;
                 return;
@@ -82,11 +110,32 @@ static void eval_common(AST_NODE *tree, RET_TYPE *ret) {
                 if (left_type != INT_TYPE || right_type != INT_TYPE) {
                     error_division(line);
                 }
+
+                if (literal) {
+                    int result;
+                    if (tree->info->common.op == OP_DIVISION) {
+                        result = tree->info->common.left->info->leaf.value->int_value / tree->info->common.right->info->leaf.value->int_value;
+                    } else {
+                        result = tree->info->common.left->info->leaf.value->int_value % tree->info->common.right->info->leaf.value->int_value;
+                    }
+                    tree->info->type = AST_LEAF;
+                    tree->info->leaf.value = malloc(sizeof(LEAF_UNION));
+                    tree->info->leaf.type = TYPE_INT;
+                    tree->info->leaf.value->int_value = result;
+                }
+
                 *ret = INT_TYPE;
                 return;
             case OP_LES:
                 if (left_type != INT_TYPE || right_type != INT_TYPE) {
                     error_less(line);
+                }
+                if (literal) {
+                    int result = tree->info->common.left->info->leaf.value->bool_value < tree->info->common.right->info->leaf.value->bool_value;
+                    tree->info->type = AST_LEAF;
+                    tree->info->leaf.value = malloc(sizeof(LEAF_UNION));
+                    tree->info->leaf.type = TYPE_BOOL;
+                    tree->info->leaf.value->bool_value = result;
                 }
                 *ret = BOOL_TYPE;
                 return;
@@ -94,11 +143,25 @@ static void eval_common(AST_NODE *tree, RET_TYPE *ret) {
                 if (left_type != INT_TYPE || right_type != INT_TYPE) {
                     error_greater(line);
                 }
+                if (literal) {
+                    int result = tree->info->common.left->info->leaf.value->bool_value > tree->info->common.right->info->leaf.value->bool_value;
+                    tree->info->type = AST_LEAF;
+                    tree->info->leaf.value = malloc(sizeof(LEAF_UNION));
+                    tree->info->leaf.type = TYPE_BOOL;
+                    tree->info->leaf.value->bool_value = result;
+                }
                 *ret = BOOL_TYPE;
                 return;
             case OP_EQ:
                 if (left_type != right_type) {
                     error_equal(line);
+                }
+                if (literal) {
+                    int result = tree->info->common.left->info->leaf.value->bool_value == tree->info->common.right->info->leaf.value->bool_value;
+                    tree->info->type = AST_LEAF;
+                    tree->info->leaf.value = malloc(sizeof(LEAF_UNION));
+                    tree->info->leaf.type = TYPE_BOOL;
+                    tree->info->leaf.value->bool_value = result;
                 }
                 *ret = BOOL_TYPE;
                 return;
@@ -106,11 +169,25 @@ static void eval_common(AST_NODE *tree, RET_TYPE *ret) {
                 if (left_type != INT_TYPE || right_type != INT_TYPE) {
                     error_not_equal(line);
                 }
+                if (literal) {
+                    int result = tree->info->common.left->info->leaf.value->bool_value != tree->info->common.right->info->leaf.value->bool_value;
+                    tree->info->type = AST_LEAF;
+                    tree->info->leaf.value = malloc(sizeof(LEAF_UNION));
+                    tree->info->leaf.type = TYPE_BOOL;
+                    tree->info->leaf.value->bool_value = result;
+                }
                 *ret = BOOL_TYPE;
                 return;
             case OP_LEQ:
                 if (left_type != INT_TYPE || right_type != INT_TYPE) {
                     error_less_equal(line);
+                }
+                if (literal) {
+                    int result = tree->info->common.left->info->leaf.value->bool_value <= tree->info->common.right->info->leaf.value->bool_value;
+                    tree->info->type = AST_LEAF;
+                    tree->info->leaf.value = malloc(sizeof(LEAF_UNION));
+                    tree->info->leaf.type = TYPE_BOOL;
+                    tree->info->leaf.value->bool_value = result;
                 }
                 *ret = BOOL_TYPE;
                 return;
@@ -118,17 +195,38 @@ static void eval_common(AST_NODE *tree, RET_TYPE *ret) {
                 if (left_type != INT_TYPE || right_type != INT_TYPE) {
                     error_greater_equal(line);
                 }
+                if (literal) {
+                    int result = tree->info->common.left->info->leaf.value->bool_value >= tree->info->common.right->info->leaf.value->bool_value;
+                    tree->info->type = AST_LEAF;
+                    tree->info->leaf.value = malloc(sizeof(LEAF_UNION));
+                    tree->info->leaf.type = TYPE_BOOL;
+                    tree->info->leaf.value->bool_value = result;
+                }
                 *ret = BOOL_TYPE;
                 return;
             case OP_AND:
                 if (left_type != BOOL_TYPE || right_type != BOOL_TYPE) {
                     error_and(line);
                 }
+                if (literal) {
+                    int result = tree->info->common.left->info->leaf.value->bool_value && tree->info->common.right->info->leaf.value->bool_value;
+                    tree->info->type = AST_LEAF;
+                    tree->info->leaf.value = malloc(sizeof(LEAF_UNION));
+                    tree->info->leaf.type = TYPE_BOOL;
+                    tree->info->leaf.value->bool_value = result;
+                }
                 *ret = BOOL_TYPE;
                 return;
             case OP_OR:
                 if (left_type != BOOL_TYPE || right_type != BOOL_TYPE) {
                     error_or(line);
+                }
+                if (literal) {
+                    int result = tree->info->common.left->info->leaf.value->bool_value || tree->info->common.right->info->leaf.value->bool_value;
+                    tree->info->type = AST_LEAF;
+                    tree->info->leaf.value = malloc(sizeof(LEAF_UNION));
+                    tree->info->leaf.type = TYPE_BOOL;
+                    tree->info->leaf.value->bool_value = result;
                 }
                 *ret = BOOL_TYPE;
                 return;
@@ -256,8 +354,6 @@ static void eval_if(AST_NODE *tree, RET_TYPE *ret) {
     AST_NODE* condition = tree->info->if_stmt.condition;
     AST_NODE* then_block = tree->info->if_stmt.then_block;
     AST_NODE* else_block = tree->info->if_stmt.else_block;
-    int ret_if_local = 0;
-    int ret_else_local = 0;
     // Ensure condition is boolean.
     eval(condition, &retCondition);
     if(retCondition != BOOL_TYPE) {
@@ -269,23 +365,17 @@ static void eval_if(AST_NODE *tree, RET_TYPE *ret) {
     }
     // Checks if return statements were encountered inside then and (optional) else block.
     if (retThen != NULL_TYPE) {
-        ret_if_local = 1;
         if (retElse != NULL_TYPE) { // If both blocks return something.
             returned_global = 1;
-            ret_else_local = 1;
         }
         *ret = retThen;
     } else {
         if (retElse != NULL_TYPE) {
-            ret_else_local = 1;
             *ret = retElse;
         } else { // If no block returns anything.
             *ret = NULL_TYPE;
         }
     }
-    if_ret = ret_if_local && ret_else_local;
-    else_ret = ret_else_local;
-    returned_global = if_ret && else_ret;
 }
 
 /*
@@ -310,6 +400,7 @@ static void eval_method_call(AST_NODE *tree, RET_TYPE *ret) {
     if (method->info->method_decl.num_args != tree->info->method_call.num_args) {
         error_args_number(line, method->info->method_decl.name, method->info->method_decl.num_args);
     }
+
     while (method_args && call_args) {
         eval(call_args->first, ret);
         TYPE auxType;
@@ -372,10 +463,8 @@ static void eval_method_decl(AST_NODE *tree, RET_TYPE *ret) {
     if (!tree->info->method_decl.is_extern) {
         eval(tree->info->method_decl.block, ret);
     }
-    if (!returned_global) {
-        if (*ret == NULL_TYPE && method_return_type != VOID_TYPE) { // If no return was found and method should return something.
-            error_missing_return(tree->info->method_decl.name, method_return_type);
-        }
+    if (*ret == NULL_TYPE && method_return_type != VOID_TYPE) { // If no return was found and method should return something.
+        error_missing_return(tree->info->method_decl.name, method_return_type);
     }
 }
 
@@ -407,6 +496,11 @@ void eval(AST_NODE *tree, RET_TYPE *ret){
             return;
         case AST_BLOCK:
             eval_block(tree, ret);
+            if (tree->father->info->type != AST_BLOCK && returned_global) {
+                if (tree->father->info->type != AST_IF){
+                    returned_global = 0;
+                }
+            }
             return;
         case AST_LEAF:
             eval_leaf(tree, ret);

@@ -6,7 +6,6 @@ int code_size = 0;  // Number of instructions saved
 
 static int temp_counter = 0;
 static int label_counter = 0;
-int returned = 0;
 
 /* Function to generate new temporary variables
  */
@@ -192,7 +191,6 @@ static void gen_code_common(AST_NODE* node, INFO* result) {
             } else {
                 emit(I_RET, NULL, NULL, NULL);
             }
-            returned = 1;
             break;
 
         case OP_LES:
@@ -390,17 +388,21 @@ static void gen_code_method_call(AST_NODE* node, INFO* result) {
  */
 static void gen_code_block(AST_NODE* node, INFO* result) {
     AST_NODE_LIST* cur = node->info->block.stmts;
-    INFO last_info;
+    INFO last_info; // store info of the last statement
     last_info.type = TABLE_ID;
-    int has_last = 0;
-
+    int has_last = 0; // flag to check if minimum one statement was processed
+    //int returned = 0; // flag to check if a return statement was encountered
     while (cur) {
         INFO stmt_info;
-        stmt_info.type = TABLE_ID;
+        stmt_info.type = TABLE_ID; // initialize stmt_info
         gen_code(cur->first, &stmt_info);
+        if (cur->first->info->type == AST_COMMON && cur->first->info->common.op == OP_RETURN) {
+            cur = NULL;
+        } else {
+            cur = cur->next;
+        }
         last_info = stmt_info;
         has_last = 1;
-        cur = cur->next;
     }
 
     if (result && has_last) {
@@ -547,7 +549,6 @@ void print_code_to_file(const char* filename) {
 /* Function that generates the pseudo-assembly
  */
 void gen_code(AST_NODE* node, INFO* result) {
-    if (returned) return;
     if (!node) return;
     switch (node->info->type) {
         case AST_COMMON:
@@ -561,7 +562,6 @@ void gen_code(AST_NODE* node, INFO* result) {
             break;
         case AST_METHOD_DECL:
             gen_code_method_decl(node, result);
-            returned = 0;
             break;
         case AST_METHOD_CALL:
             gen_code_method_call(node, result);
