@@ -179,65 +179,65 @@ void add_sentence(AST_NODE* tree) {
 
 /* Function that frees memory recursively.
  */
-// void free_mem(AST_NODE* node) {
-//     if (!node) return;
-//     switch (node->type) {
-//         case AST_IF:
-//             free_mem(node->if_stmt.condition);
-//             free_mem(node->if_stmt.then_block);
-//             free_mem(node->if_stmt.else_block);
-//             break;
-//         case AST_WHILE:
-//             free_mem(node->while_stmt.condition);
-//             free_mem(node->while_stmt.block);
-//             break;
-//         case AST_BLOCK: {
-//             AST_NODE_LIST* list_stmts = node->block.stmts;
-//             while (list_stmts) {
-//                 if (list_stmts->first) free_mem(list_stmts->first);
-//                 AST_NODE_LIST* next = list_stmts->next;
-//                 free(list_stmts);
-//                 list_stmts = next;
-//             }
-//             break;
-//         }
-//         case AST_METHOD_DECL: {
-//             free(node->method_decl.name);
-//             AST_NODE_LIST* args_list = node->method_decl.args;
-//             while (args_list) {
-//                 if (args_list->first) free_mem(args_list->first);
-//                 AST_NODE_LIST* next = args_list->next;
-//                 free(args_list);
-//                 args_list = next;
-//             }
-//             free_mem(node->method_decl.block);
-//             break;
-//         }
-//         case AST_METHOD_CALL:
-//             free(node->method_call.name);
-//             AST_NODE_LIST* args_list = node->method_call.args;
-//             while (args_list) {
-//                 if (args_list->first) free_mem(args_list->first);
-//                 AST_NODE_LIST* next = args_list->next;
-//                 free(args_list);
-//                 args_list = next;
-//             }
-//             break;
-//         case AST_COMMON:
-//             free_mem(node->common.left);
-//             free_mem(node->common.right);
-//             break;
-//
-//         case AST_LEAF:
-//             if (node->leaf.leaf_type == TYPE_INT || node->leaf.leaf_type == TYPE_BOOL) {
-//                 free(node->leaf.value);
-//             }
-//             break;
-//         default:
-//             break;
-//     }
-//     free(node);
-// }
+void free_mem(AST_NODE* node) {
+    if (!node) return;
+    switch (node->info->type) {
+        case AST_IF:
+            free_mem(node->info->if_stmt.condition);
+            free_mem(node->info->if_stmt.then_block);
+            free_mem(node->info->if_stmt.else_block);
+            break;
+        case AST_WHILE:
+            free_mem(node->info->while_stmt.condition);
+            free_mem(node->info->while_stmt.block);
+            break;
+        case AST_BLOCK: {
+            AST_NODE_LIST* list_stmts = node->info->block.stmts;
+            while (list_stmts) {
+                if (list_stmts->first) free_mem(list_stmts->first);
+                AST_NODE_LIST* next = list_stmts->next;
+                free(list_stmts);
+                list_stmts = next;
+            }
+            break;
+        }
+        case AST_METHOD_DECL: {
+            free(node->info->method_decl.name);
+            ARGS_LIST* args_list = node->info->method_decl.args;
+            while (args_list) {
+                if (args_list->arg) free(args_list->arg);
+                ARGS_LIST* next = args_list->next;
+                free(args_list);
+                args_list = next;
+            }
+            free_mem(node->info->method_decl.block);
+            break;
+        }
+        case AST_METHOD_CALL:
+            free(node->info->method_call.name);
+            AST_NODE_LIST* args_list = node->info->method_call.args;
+            while (args_list) {
+                if (args_list->first) free_mem(args_list->first);
+                AST_NODE_LIST* next = args_list->next;
+                free(args_list);
+                args_list = next;
+            }
+            break;
+        case AST_COMMON:
+            free_mem(node->info->common.left);
+            free_mem(node->info->common.right);
+            break;
+
+        case AST_LEAF:
+            if (node->info->leaf.type == TYPE_INT || node->info->leaf.type == TYPE_BOOL) {
+                free(node->info->leaf.value);
+            }
+            break;
+        default:
+            break;
+    }
+    free(node);
+}
 
 /* Function utilized for build lists of expressions (statements, args, etc)
  */

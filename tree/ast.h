@@ -75,5 +75,8 @@ void create_root(AST_NODE* tree);
 /* Function that adds a sentence to the ast.
  */
 void add_sentence(AST_NODE* tree);
+/* Function that frees memory recursively.
+ */
+void free_mem(AST_NODE* node);
 
 #endif
