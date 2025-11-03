@@ -4,6 +4,8 @@ int line = 0;
 int returned_global = 0; // Global flag set when a return statement has been encountered and propagated.
 RET_TYPE method_return_type; // Current method's expected return TYPE (used when checking return statements).
 int main_defined = 0; // Flag to check if main method is defined.
+int if_ret = 0;
+int else_ret = 0;
 
 /*
  * Function that calls the correct evaluator depending on the AST node type.
@@ -44,13 +46,11 @@ static void eval_common(AST_NODE *tree, RET_TYPE *ret) {
                 error_return_type(tree->line, left_type, method_return_type);
             }
             memcpy(ret, &left_type, sizeof(RET_TYPE));
-            returned_global = 1;
         } else {
             if (method_return_type != VOID_TYPE) {
                 error_return_type_void(tree->line, method_return_type);
             }
             *ret = VOID_TYPE;
-            returned_global = 1;
         }
         return;
     }
@@ -97,7 +97,7 @@ static void eval_common(AST_NODE *tree, RET_TYPE *ret) {
                 *ret = BOOL_TYPE;
                 return;
             case OP_EQ:
-                if (left_type != INT_TYPE || right_type != INT_TYPE) {
+                if (left_type != right_type) {
                     error_equal(line);
                 }
                 *ret = BOOL_TYPE;
@@ -256,6 +256,8 @@ static void eval_if(AST_NODE *tree, RET_TYPE *ret) {
     AST_NODE* condition = tree->info->if_stmt.condition;
     AST_NODE* then_block = tree->info->if_stmt.then_block;
     AST_NODE* else_block = tree->info->if_stmt.else_block;
+    int ret_if_local = 0;
+    int ret_else_local = 0;
     // Ensure condition is boolean.
     eval(condition, &retCondition);
     if(retCondition != BOOL_TYPE) {
@@ -267,17 +269,23 @@ static void eval_if(AST_NODE *tree, RET_TYPE *ret) {
     }
     // Checks if return statements were encountered inside then and (optional) else block.
     if (retThen != NULL_TYPE) {
+        ret_if_local = 1;
         if (retElse != NULL_TYPE) { // If both blocks return something.
             returned_global = 1;
+            ret_else_local = 1;
         }
         *ret = retThen;
     } else {
         if (retElse != NULL_TYPE) {
+            ret_else_local = 1;
             *ret = retElse;
         } else { // If no block returns anything.
             *ret = NULL_TYPE;
         }
     }
+    if_ret = ret_if_local && ret_else_local;
+    else_ret = ret_else_local;
+    returned_global = if_ret && else_ret;
 }
 
 /*
@@ -302,7 +310,6 @@ static void eval_method_call(AST_NODE *tree, RET_TYPE *ret) {
     if (method->info->method_decl.num_args != tree->info->method_call.num_args) {
         error_args_number(line, method->info->method_decl.name, method->info->method_decl.num_args);
     }
-
     while (method_args && call_args) {
         eval(call_args->first, ret);
         TYPE auxType;
@@ -365,8 +372,10 @@ static void eval_method_decl(AST_NODE *tree, RET_TYPE *ret) {
     if (!tree->info->method_decl.is_extern) {
         eval(tree->info->method_decl.block, ret);
     }
-    if (*ret == NULL_TYPE && method_return_type != VOID_TYPE) { // If no return was found and method should return something.
-        error_missing_return(tree->info->method_decl.name, method_return_type);
+    if (!returned_global) {
+        if (*ret == NULL_TYPE && method_return_type != VOID_TYPE) { // If no return was found and method should return something.
+            error_missing_return(tree->info->method_decl.name, method_return_type);
+        }
     }
 }
 
@@ -398,11 +407,6 @@ void eval(AST_NODE *tree, RET_TYPE *ret){
             return;
         case AST_BLOCK:
             eval_block(tree, ret);
-            if (tree->father->info->type != AST_BLOCK && returned_global) {
-                if (tree->father->info->type != AST_IF){
-                    returned_global = 0;
-                }
-            }
             return;
         case AST_LEAF:
             eval_leaf(tree, ret);

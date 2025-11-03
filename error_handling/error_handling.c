@@ -177,7 +177,7 @@ void error_greater(int line){
 }
 
 void error_equal(int line){
-    fprintf(stderr, "ERROR(line %d): operator == is only for integers \n", line);
+    fprintf(stderr, "ERROR(line %d): the arguments should be same type \n", line);
     exit(EXIT_FAILURE);
 }
 
