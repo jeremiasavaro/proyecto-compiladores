@@ -68,7 +68,7 @@ for objfile in tests/output_object_code/*.out; do
     exefile="$EXE_DIR/$base.exe"
 
     gcc -x assembler -c "$objfile" -o "$EXE_DIR/$base.o"
-    gcc -no-pie "$EXE_DIR/$base.o" libraries/cdtsio.o -o "$exefile"
+    gcc -no-pie "$EXE_DIR/$base.o" libraries/ctdsio.o -o "$exefile"
 
     if [ -f "$exefile" ]; then
         echo "[OK] Ejecutable generado: $exefile"
@@ -78,17 +78,17 @@ for objfile in tests/output_object_code/*.out; do
 done
 
 declare -A expected # define a array with expected results
-expected["test_methods.cdts"]="7"
-expected["test_types.cdts"]="TRUE"
-expected["test_complex_operators.cdts"]="2"
-expected["test_expresion_calls.cdts"]="24"
-expected["test_integration.cdts"]="1"
-expected["test_operations.cdts"]=""
-expected["test_params.cdts"]="3"
-expected["test_recursive.cdts"]="2"
-expected["test_scopes_shadowing.cdts"]="42"
-expected["test_while_multiple.cdts"]="1"
-expected["test_while.cdts"]="5"
+expected["test_methods.ctds"]="7"
+expected["test_types.ctds"]="TRUE"
+expected["test_complex_operators.ctds"]="2"
+expected["test_expresion_calls.ctds"]="24"
+expected["test_integration.ctds"]="1"
+expected["test_operations.ctds"]=""
+expected["test_params.ctds"]="3"
+expected["test_recursive.ctds"]="2"
+expected["test_scopes_shadowing.ctds"]="42"
+expected["test_while_multiple.ctds"]="1"
+expected["test_while.ctds"]="5"
 
 # Ejecutar todos los ejecutables y guardar resultados en output_final
 RESULTS_FILE="tests/output_final"
