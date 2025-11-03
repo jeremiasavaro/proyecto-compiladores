@@ -22,12 +22,10 @@ int get_bool() {
     scanf("%s", x);
 	if (strcmp(x, "TRUE") == 0) {
 		return 1;
-	} else {
-		if (strcmp(x, "FALSE") == 0) {
-			return 0;
-		} else {
-			//error_get_bool();
-			return -1; // This line will never be reached, but is added to avoid compiler warnings
-		}
 	}
+    if (strcmp(x, "FALSE") == 0) {
+	    return 0;
+    }
+    //error_get_bool();
+    return -1; // This line will never be reached, but is added to avoid compiler warnings
 }
