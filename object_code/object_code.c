@@ -7,8 +7,19 @@ static VarLocation var_map[MAX_VARS_PER_FUNCTION];
 static int var_count = 0;
 static int current_stack_offset = 0;
 
+typedef struct PARAMETERS PARAMETERS;
+PARAMETERS* find_parameter(char* name, PARAMETERS* initial);
+void free_parameters(PARAMETERS* initial);
+PARAMETERS* append_new_param(PARAMETERS* initial, PARAMETERS* new);
+
 // Argument registers for x86-64 calling convention
 const char* arg_regs[] = {"%rdi", "%rsi", "%rdx", "%rcx", "%r8", "%r9"};
+
+typedef struct PARAMETERS {
+    char* name;
+    const char* reg; // Register at which this variable is stored
+    PARAMETERS* next;
+} PARAMETERS;
 
 /* Get the stack offset for a variable
  * If the variable is not yet mapped, assign a new offset
@@ -61,6 +72,7 @@ void generate_object_code(FILE* out_file) {
     int code_size = get_code_size();
     int param_count = 0;
     int stack_params = 0; // Count parameters that need to go on stack
+    PARAMETERS* initial_param = NULL; // Initial parameter of parameters list used for optimizations
 
     fprintf(out_file, ".text\n");
 
@@ -294,17 +306,33 @@ void generate_object_code(FILE* out_file) {
                 break;
 
             case I_PARAM:
+                PARAMETERS* new_param = calloc(1, sizeof(PARAMETERS));
+                initial_param = append_new_param(initial_param, new_param);
                 // First 6 parameters go in registers, rest go on stack
                 get_operand_str(instr->var1, op1, sizeof(op1));
                 if (param_count < 6) {
-                    fprintf(out_file, "  movq %s, %s\n", op1, arg_regs[param_count]);
+                    PARAMETERS* prev_param = find_parameter(instr->var1->id.name, initial_param);
+                    new_param->name = my_strdup(instr->var1->id.name);
+                    if (prev_param) {
+                        new_param->reg = prev_param->reg;
+                    } else {
+                        new_param->reg = arg_regs[param_count];
+                        fprintf(out_file, "  movq %s, %s\n", op1, arg_regs[param_count]);
+                        param_count++;
+                    }
                 } else {
                     // Parameters beyond the 6th need to be pushed onto stack
                     // We'll collect them and push in reverse order before the call
-                    fprintf(out_file, "  pushq %s\n", op1);
-                    stack_params++;
+                    PARAMETERS* prev_param = find_parameter(instr->var1->id.name, initial_param);
+                    new_param->name = my_strdup(instr->var1->id.name);
+                    if (!prev_param) {
+                        fprintf(out_file, "  pushq %s\n", op1);
+                        stack_params++;
+                        param_count++;
+                        break;
+                    }
+                    new_param->reg = prev_param->reg;
                 }
-                param_count++;
                 break;
 
             case I_CALL:
@@ -320,6 +348,7 @@ void generate_object_code(FILE* out_file) {
                 }
                 param_count = 0;
                 stack_params = 0;
+                free_parameters(initial_param);
                 break;
 
             case I_LOAD:
@@ -330,4 +359,37 @@ void generate_object_code(FILE* out_file) {
                 break;
         }
     }
+}
+
+PARAMETERS* find_parameter(char* name, PARAMETERS* initial) {
+    PARAMETERS* aux = initial;
+    while (aux) {
+        if (aux->name && strcmp(aux->name, name) == 0) {
+            return aux;
+        }
+        aux = aux->next;
+    }
+
+    return NULL;
+}
+
+void free_parameters(PARAMETERS* initial) {
+    if (!initial) {
+        return;
+    }
+    free_parameters(initial->next);
+    free(initial->name);
+    free(initial);
+}
+
+PARAMETERS* append_new_param(PARAMETERS* initial, PARAMETERS* new) {
+    if (!initial) {
+        return new;
+    }
+    PARAMETERS* aux = initial;
+    while (aux->next) {
+        aux = aux->next;
+    }
+    aux->next = new;
+    return initial;
 }
