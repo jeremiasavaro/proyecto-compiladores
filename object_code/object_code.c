@@ -8,13 +8,23 @@ static int var_count = 0;
 static int current_stack_offset = 0;
 
 typedef struct PARAMETERS PARAMETERS;
+
+/* Function that returns a pointer to the parameter sought
+ * If not found return NULL
+ */
 PARAMETERS* find_parameter(char* name, PARAMETERS* initial);
+/* Method that frees memory used by PARAMETERS list
+ */
 void free_parameters(PARAMETERS* initial);
+/* Function that appends new parameter at the end of the list
+ * and returns a pointer to the first parameter of the list
+ */
 PARAMETERS* append_new_param(PARAMETERS* initial, PARAMETERS* new);
 
 // Argument registers for x86-64 calling convention
 const char* arg_regs[] = {"%rdi", "%rsi", "%rdx", "%rcx", "%r8", "%r9"};
 
+// Structure that holds function calls parameters and their register
 typedef struct PARAMETERS {
     char* name;
     const char* reg; // Register at which this variable is stored
@@ -313,24 +323,29 @@ void generate_object_code(FILE* out_file) {
                 if (param_count < 6) {
                     PARAMETERS* prev_param = find_parameter(instr->var1->id.name, initial_param);
                     new_param->name = my_strdup(instr->var1->id.name);
+
+                    // If the parameter has already been passed
                     if (prev_param) {
                         new_param->reg = prev_param->reg;
                     } else {
-                        new_param->reg = arg_regs[param_count];
+                        new_param->reg = arg_regs[param_count]; // Assign new register to parameter
                         fprintf(out_file, "  movq %s, %s\n", op1, arg_regs[param_count]);
-                        param_count++;
+                        param_count++; // Only increment param_count when using a new register
                     }
                 } else {
                     // Parameters beyond the 6th need to be pushed onto stack
                     // We'll collect them and push in reverse order before the call
                     PARAMETERS* prev_param = find_parameter(instr->var1->id.name, initial_param);
                     new_param->name = my_strdup(instr->var1->id.name);
+
+                    // If the parameter hasn't been passed yet and all registers are busy push it into the stack
                     if (!prev_param) {
                         fprintf(out_file, "  pushq %s\n", op1);
                         stack_params++;
                         param_count++;
                         break;
                     }
+                    // If parameter has already been passed don't push anything
                     new_param->reg = prev_param->reg;
                 }
                 break;
