@@ -4,6 +4,7 @@
 Instr code[1000];   // 1000 instructions for example
 int code_size = 0;  // Number of instructions saved
 
+static cant_ap_temp* cant_ap_h;
 static int temp_counter = 0;
 static int label_counter = 0;
 
@@ -23,6 +24,25 @@ static char* new_label() {
     return my_strdup(buf);
 }
 
+/* Function to update the count of appearances of a temporary variable
+ */
+void increase_temp_ap(char* temp) {
+    cant_ap_temp* current = cant_ap_h;
+    while (current) {
+        if (strcmp(current->temp, temp) == 0) {
+            current->cant_ap += 1;
+            return;
+        }
+        current = current->next;
+    }
+    // If not found, create a new entry
+    cant_ap_temp* new_entry = (cant_ap_temp*)malloc(sizeof(cant_ap_temp));
+    new_entry->cant_ap = 1;
+    new_entry->temp = my_strdup(temp);
+    new_entry->next = cant_ap_h;
+    cant_ap_h = new_entry;
+}
+
 /* Function for save instructions in the buffer
  */
 void emit(INSTR_TYPE t, INFO* var1, INFO* var2, INFO* reg) {
@@ -32,6 +52,9 @@ void emit(INSTR_TYPE t, INFO* var1, INFO* var2, INFO* reg) {
     code[code_size].instruct->instruct.type_instruct = t;
 
     if (var1) {
+        if (var1->id.name[0] == 'T'){
+            increase_temp_ap(var1->id.name);
+        }
         code[code_size].var1 = (INFO*)malloc(sizeof(INFO));
         *(code[code_size].var1) = *var1;
     } else {
@@ -39,6 +62,9 @@ void emit(INSTR_TYPE t, INFO* var1, INFO* var2, INFO* reg) {
     }
 
     if (var2) {
+        if (var2->id.name[0] == 'T'){
+            increase_temp_ap(var2->id.name);
+        }
         code[code_size].var2 = (INFO*)malloc(sizeof(INFO));
         *(code[code_size].var2) = *var2;
     } else {
@@ -46,6 +72,9 @@ void emit(INSTR_TYPE t, INFO* var1, INFO* var2, INFO* reg) {
     }
 
     if (reg) {
+        if (reg->id.name[0] == 'T'){
+            increase_temp_ap(reg->id.name);
+        }
         code[code_size].reg = (INFO*)malloc(sizeof(INFO));
         *(code[code_size].reg) = *reg;
     } else {
@@ -154,7 +183,7 @@ static void gen_code_common(AST_NODE* node, INFO* result) {
                     right->id.name = my_strdup(buf);
                     right->id.type = TYPE_INT;
                     temp->id.name = new_temp();
-                    temp->id.type = TYPE_INT;
+                            temp->id.type = TYPE_INT;
                     emit(I_SHIFT_RIGHT, left, right, temp);
                     if (result) *result = *temp;
                     break;
@@ -410,11 +439,11 @@ static void gen_code_block(AST_NODE* node, INFO* result) {
     }
 }
 
-void print_code_to_file(const char* filename) {
+cant_ap_temp* print_code_to_file(const char* filename) {
     FILE* f = fopen(filename, "w");
     if (!f) {
         perror("Can't open the file provided");
-        return;
+        return NULL;
     }
 
     for (int i = 0; i < code_size; i++) {
@@ -544,6 +573,7 @@ void print_code_to_file(const char* filename) {
         }
     }
     fclose(f);
+    return cant_ap_h;
 }
 
 /* Function that generates the pseudo-assembly
