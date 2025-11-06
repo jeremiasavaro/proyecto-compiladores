@@ -23,6 +23,8 @@ typedef enum STAGE {
 	EXECUTABLE
 } STAGE;
 
+static cant_ap_temp* cant_ap_h;
+
 int main(int argc, char *argv[]) {
 	// Flags
 	int optimizations = 0; // TODO: Handle different optimizations
@@ -102,12 +104,16 @@ int main(int argc, char *argv[]) {
 	for (AST_ROOT* cur = head_ast; cur != NULL; cur = cur->next) {
 		gen_code(cur->sentence, NULL);
 	}
-	print_code_to_file("intermediate_code/intermediate_code.out");
+	cant_ap_h = print_code_to_file("intermediate_code/intermediate_code.out");
+	for (cant_ap_temp* cur = cant_ap_h; cur != NULL; cur = cur->next){
+		printf("Temp %s used %d times\n", cur->temp, cur->cant_ap);
+	}
+
 	FILE* out = fopen("res.out", "w");
 	if (!out) {
 		error_open_file("res.out");
 	}
-	generate_object_code(out);
+	generate_object_code(out, cant_ap_h);
 	fclose(out);
 	return 0;
 }
