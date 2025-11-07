@@ -13,7 +13,7 @@
 
 extern int yylineno;
 extern int yyparse();
-void yyerror(const char *s);
+//void yyerror(const char *s);
 extern FILE *yyin;
 
 typedef enum STAGE {
@@ -31,23 +31,61 @@ int main(int argc, char *argv[]) {
 	int optimizations = 0; // TODO: Handle different optimizations
 	int debug = 0;
 	STAGE stage = EXECUTABLE; // Run all stages by default
-	char* outname = "nombreArchivo.out"; // Default name
+	char* outname = "res"; // Default name
 	char* sourcename = NULL;
 
 	if (argc == 1) {
 		fprintf(stderr, "Error: Must provide source file.\n");
 		return 1;
 	}
+	if (argc == 2 && (strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0)) {
+		printf("\n");
+		printf("╭──────────────────────────────────────────────╮\n");
+		printf("│      Compilador CTDS — Opciones de uso   \n");
+		printf("╰──────────────────────────────────────────────╯\n\n");
 
-	// TODO: implement a -h flag to print help information about the compilation proccess
+		printf("Uso:\n");
+		printf("  %s <archivo.ctds> [opciones]\n\n", argv[0]);
+
+		printf("Opciones:\n");
+		printf("  %-22s %s\n", "-h, --help", "Muestra esta ayuda y termina");
+		printf("  %-22s %s\n", "-o <archivo>", "Especifica el nombre del archivo de salida (por defecto: res)");
+		printf("  %-22s %s\n", "-target <etapa>", "Ejecuta hasta la etapa indicada:");
+		printf("                                scan | parse | codinter | assembly\n");
+		printf("  %-22s %s\n", "-opt", "Activa optimizaciones del compilador");
+		printf("  %-22s %s\n", "-debug", "Muestra el AST y la tabla de símbolos (para depuración)\n");
+
+		printf("Ejemplo de uso:\n");
+		printf("  %s -target codinter \n", argv[0]);
+		printf("  Genera HASTA el codigo intermedio \n\n");
+
+		printf("Etapas disponibles:\n");
+		printf("  scan        Analiza léxicamente el código fuente\n");
+		printf("  parse       Construye el AST (árbol de sintaxis)\n");
+		printf("  codinter    Genera código intermedio\n");
+		printf("  assembly    Genera código ensamblador u objeto\n");
+		printf("  executable  Ejecuta el binario final (por defecto, sin flag)\n\n");
+
+		return 0;
+	}
 
 	for (int i = 1; i < argc; i++) {
 		if (strcmp(argv[i], "-opt") == 0) {
 			optimizations = 1;
+			if (strcmp(argv[i+1], "-debug") == 0) {
+				debug = 1;
+				i++;
+			}
+			i++;
 		} else if (strcmp(argv[i], "-debug") == 0) {
 			debug = 1;
+			stage = PARSE;
 		} else if (strcmp(argv[i], "-o") == 0) {
 			if (i + 1 < argc) { // If -o is specified, a filename after that is required
+				if (argv[i + 1][0] == '-') {
+					fprintf(stderr, "Error: -o requires a valid filename.\n");
+					return 1;
+				}
 				outname = argv[i + 1];
 				i++;
 			} else {
@@ -95,14 +133,11 @@ int main(int argc, char *argv[]) {
 	yyin = file;
 
 	if (stage == 0) {
-		printf("=== SYNTAX ANALYSIS ===\n");
 		while (yylex() != 0) {
-		}
-		printf("No syntactic errors.\n");
+    }
 	}
 
-	if (stage > 0) {
-		printf("=== SYNTAX AND SEMANTIC ANALYSIS ===\n");
+	if (stage > 0 || debug) {
 		yyparse();
 		semantic_analyzer(head_ast);
 	}
@@ -112,18 +147,28 @@ int main(int argc, char *argv[]) {
 		for (AST_ROOT* cur = head_ast; cur != NULL; cur = cur->next) {
 			gen_code(cur->sentence, NULL);
 		}
+		char inter_path[128];
+		char aux_file[256];
+		snprintf(inter_path, sizeof(inter_path), "intermediate_code/%s", outname);
+		snprintf(aux_file, sizeof(aux_file), "%s.codinter", inter_path);
 		cant_ap_h = print_code_to_file("intermediate_code/intermediate_code.out");
 	}
-	if (stage > 2) {
-		FILE* out = fopen(outname, "w");
+	if (stage > 2 || debug) { 
+		char inter_path[256];
+		char aux_file[256];
+		snprintf(inter_path, sizeof(inter_path), "object_code/%s", outname);
+		snprintf(aux_file, sizeof(aux_file), "%s.o", inter_path);
+		FILE* out = fopen(aux_file, "w");
 		if (!out) {
-			error_open_file(outname);
+			error_open_file(aux_file);
 		}
 		generate_object_code(out, cant_ap_h);
 		fclose(out);
 	}
 	if (stage > 3) {
-		system("./run_executable.sh");
+		char command[256];
+		snprintf(command, sizeof(command), "./run_executable.sh %s", outname);
+		system(command);
 	}
 	if (debug) {
 		if (head_ast != NULL && global_level != NULL) {
