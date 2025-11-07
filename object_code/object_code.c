@@ -7,6 +7,9 @@ static VarLocation var_map[MAX_VARS_PER_FUNCTION];
 static int var_count = 0;
 static int current_stack_offset = 0;
 
+static cant_ap_temp* cant_ap_h;
+int reused_offset[MAX_VARS_PER_FUNCTION];
+static int reused_offset_count = 0;
 // Argument registers for x86-64 calling convention
 const char* arg_regs[] = {"%rdi", "%rsi", "%rdx", "%rcx", "%r8", "%r9"};
 
@@ -17,14 +20,43 @@ const char* arg_regs[] = {"%rdi", "%rsi", "%rdx", "%rcx", "%r8", "%r9"};
 static int get_var_offset(const char* name) {
     for (int i = 0; i < var_count; ++i) {
         if (strcmp(var_map[i].name, name) == 0) {
+            if (name[0] == 'T'){
+                // If it's a temporary variable, we can optimize its storage
+                cant_ap_temp* current = cant_ap_h;
+                while (current) {
+                    if (strcmp(current->temp, name) == 0) {
+                        current->cant_ap -= 1;
+                        // If this was the last appearance, we can free its space
+                        if (current->cant_ap == 0) {
+                            reused_offset[reused_offset_count] = var_map[i].offset;
+                            reused_offset_count++;
+                        }
+                        break;
+                    }
+                    current = current->next;
+                }
+            }
+
             return var_map[i].offset;
         }
     }
-    current_stack_offset -= 8; // Allocate 8 bytes for the new variable
+
+    // Try to reuse an available offset first
+    int new_offset;
+    if (reused_offset_count > 0) {
+        // Reuse the last available offset
+        reused_offset_count--;
+        new_offset = reused_offset[reused_offset_count];
+    } else {
+        // No offsets available for reuse, allocate new space
+        current_stack_offset -= 8; // Allocate 8 bytes for the new variable
+        new_offset = current_stack_offset;
+    }
+
     var_map[var_count].name = my_strdup(name);
-    var_map[var_count].offset = current_stack_offset; // Set offset for variable
+    var_map[var_count].offset = new_offset; // Set offset for variable
     var_count++;
-    return current_stack_offset;
+    return new_offset;
 }
 
 /* Get the operand string for a given variable
@@ -56,7 +88,8 @@ static void get_operand_str(INFO* var, char* buf, size_t buf_size) {
  * Handles function prologues/epilogues, arithmetic operations, control flow, and function calls
  * Uses a simple mapping of temporaries to stack offsets
  */
-void generate_object_code(FILE* out_file) {
+void generate_object_code(FILE* out_file, cant_ap_temp* cant_ap) {
+    cant_ap_h = cant_ap;
     Instr* code = get_intermediate_code();
     int code_size = get_code_size();
     int param_count = 0;
@@ -87,6 +120,7 @@ void generate_object_code(FILE* out_file) {
 
                 var_count = 0;
                 current_stack_offset = 0;
+                reused_offset_count = 0;
                 int end_func_idx = i;
                 // Search for the I_LEAVE instr for this function
                 for (int j = i + 1; j < code_size; ++j) {
@@ -110,6 +144,7 @@ void generate_object_code(FILE* out_file) {
 
                 var_count = 0;
                 current_stack_offset = 0;
+                reused_offset_count = 0;
 
                 // Function call prologue
                 fprintf(out_file, "\n.globl %s\n", func_name);

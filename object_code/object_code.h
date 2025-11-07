@@ -15,6 +15,6 @@ typedef struct {
     int offset;
 } VarLocation;
 
-void generate_object_code(FILE* out_file);
+void generate_object_code(FILE* out_file, cant_ap_temp* cant_ap_h);
 
 #endif

@@ -24,6 +24,8 @@ typedef enum STAGE {
 	EXECUTABLE
 } STAGE;
 
+static cant_ap_temp* cant_ap_h;
+
 int main(int argc, char *argv[]) {
 	// Flags
 	int optimizations = 0; // TODO: Handle different optimizations
@@ -132,7 +134,7 @@ int main(int argc, char *argv[]) {
 
 	if (stage == 0) {
 		while (yylex() != 0) {
-		}		
+    }
 	}
 
 	if (stage > 0 || debug) {
@@ -149,7 +151,7 @@ int main(int argc, char *argv[]) {
 		char aux_file[256];
 		snprintf(inter_path, sizeof(inter_path), "intermediate_code/%s", outname);
 		snprintf(aux_file, sizeof(aux_file), "%s.codinter", inter_path);
-		print_code_to_file(aux_file);
+		cant_ap_h = print_code_to_file("intermediate_code/intermediate_code.out");
 	}
 	if (stage > 2 || debug) { 
 		char inter_path[256];
@@ -160,7 +162,7 @@ int main(int argc, char *argv[]) {
 		if (!out) {
 			error_open_file(aux_file);
 		}
-		generate_object_code(out);
+		generate_object_code(out, cant_ap_h);
 		fclose(out);
 	}
 	if (stage > 3) {
