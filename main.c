@@ -70,6 +70,11 @@ int main(int argc, char *argv[]) {
 	for (int i = 1; i < argc; i++) {
 		if (strcmp(argv[i], "-opt") == 0) {
 			optimizations = 1;
+			if (strcmp(argv[i+1], "-debug") == 0) {
+				debug = 1;
+				i++;
+			}
+			i++;
 		} else if (strcmp(argv[i], "-debug") == 0) {
 			debug = 1;
 			stage = PARSE;
@@ -140,12 +145,20 @@ int main(int argc, char *argv[]) {
 		for (AST_ROOT* cur = head_ast; cur != NULL; cur = cur->next) {
 			gen_code(cur->sentence, NULL);
 		}
-		print_code_to_file("intermediate_code/intermediate_code.out");
+		char inter_path[128];
+		char aux_file[256];
+		snprintf(inter_path, sizeof(inter_path), "intermediate_code/%s", outname);
+		snprintf(aux_file, sizeof(aux_file), "%s.codinter", inter_path);
+		print_code_to_file(aux_file);
 	}
 	if (stage > 2 || debug) { 
-		FILE* out = fopen(outname, "w");
+		char inter_path[256];
+		char aux_file[256];
+		snprintf(inter_path, sizeof(inter_path), "object_code/%s", outname);
+		snprintf(aux_file, sizeof(aux_file), "%s.o", inter_path);
+		FILE* out = fopen(aux_file, "w");
 		if (!out) {
-			error_open_file(outname);
+			error_open_file(aux_file);
 		}
 		generate_object_code(out);
 		fclose(out);
