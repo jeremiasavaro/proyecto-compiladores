@@ -151,7 +151,7 @@ int main(int argc, char *argv[]) {
 		char aux_file[256];
 		snprintf(inter_path, sizeof(inter_path), "intermediate_code/%s", outname);
 		snprintf(aux_file, sizeof(aux_file), "%s.codinter", inter_path);
-		cant_ap_h = print_code_to_file("intermediate_code/intermediate_code.out");
+		cant_ap_h = print_code_to_file(aux_file);
 	}
 	if (stage > 2 || debug) { 
 		char inter_path[256];
