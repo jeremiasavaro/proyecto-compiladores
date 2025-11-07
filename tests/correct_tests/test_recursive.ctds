@@ -32,7 +32,8 @@ Program {
 
     void main() {
         integer x;
-        x = get_int();
+        //x = get_int();
+        x = 2;
         if (is_even(x)) then {
             print_int(factorial(x));
         } else {

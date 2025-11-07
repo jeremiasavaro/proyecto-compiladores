@@ -52,7 +52,7 @@ int last_block_pushed = 0;
 %%
 
 program:
-    PROGRAM '{' decls '}' { printf("No syntactic errors.\n"); }
+    PROGRAM '{' decls '}'
     ;
 
 decls:
