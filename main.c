@@ -26,6 +26,8 @@ typedef enum STAGE {
 
 static cant_ap_temp* cant_ap_h;
 
+void str_to_lower(char *s);
+
 int main(int argc, char *argv[]) {
 	// Flags
 	int optimizations = 0; // TODO: Handle different optimizations
@@ -72,14 +74,8 @@ int main(int argc, char *argv[]) {
 	for (int i = 1; i < argc; i++) {
 		if (strcmp(argv[i], "-opt") == 0) {
 			optimizations = 1;
-			if (strcmp(argv[i+1], "-debug") == 0) {
-				debug = 1;
-				i++;
-			}
-			i++;
 		} else if (strcmp(argv[i], "-debug") == 0) {
 			debug = 1;
-			stage = PARSE;
 		} else if (strcmp(argv[i], "-o") == 0) {
 			if (i + 1 < argc) { // If -o is specified, a filename after that is required
 				if (argv[i + 1][0] == '-') {
@@ -157,7 +153,7 @@ int main(int argc, char *argv[]) {
 		char inter_path[256];
 		char aux_file[256];
 		snprintf(inter_path, sizeof(inter_path), "object_code/%s", outname);
-		snprintf(aux_file, sizeof(aux_file), "%s.o", inter_path);
+		snprintf(aux_file, sizeof(aux_file), "%s.s", inter_path);
 		FILE* out = fopen(aux_file, "w");
 		if (!out) {
 			error_open_file(aux_file);
@@ -167,7 +163,7 @@ int main(int argc, char *argv[]) {
 	}
 	if (stage > 3) {
 		char command[256];
-		snprintf(command, sizeof(command), "./run_executable.sh %s", outname);
+		snprintf(command, sizeof(command), "./run_executable.sh object_code/%s", outname);
 		system(command);
 	}
 	if (debug) {
