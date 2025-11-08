@@ -57,6 +57,6 @@ Instr* get_intermediate_code();
 int get_code_size();
 /* Function that prints list of temporals used before optimization
  */
-void print_temp_list(CANT_AP_TEMP* head)
+void print_temp_list(CANT_AP_TEMP* head);
 
 #endif
