@@ -24,14 +24,14 @@ typedef enum STAGE {
 	EXECUTABLE
 } STAGE;
 
+int optimizations = 0;
+int debug = 0;
+
 static cant_ap_temp* cant_ap_h;
 
 void str_to_lower(char *s);
 
 int main(int argc, char *argv[]) {
-	// Flags
-	int optimizations = 0; // TODO: Handle different optimizations
-	int debug = 0;
 	STAGE stage = EXECUTABLE; // Run all stages by default
 	char* outname = "res"; // Default name
 	char* sourcename = NULL;
@@ -129,11 +129,18 @@ int main(int argc, char *argv[]) {
 	yyin = file;
 
 	if (stage == 0) {
+		if (debug) {
+			printf("----- SCANNING  -----\n");
+		}
 		while (yylex() != 0) {
-    }
+    	
+		}
 	}
 
 	if (stage > 0 || debug) {
+		if (debug) {
+			printf("----- SCANNING  -----\n");
+		}
 		yyparse();
 		semantic_analyzer(head_ast);
 	}
@@ -149,6 +156,14 @@ int main(int argc, char *argv[]) {
 		snprintf(aux_file, sizeof(aux_file), "%s.codinter", inter_path);
 		cant_ap_h = print_code_to_file(aux_file);
 	}
+
+	if (debug) {
+		if (head_ast != NULL && global_level != NULL) {
+			print_full_ast(head_ast);
+			print_symbol_table(global_level);
+		}
+	}
+
 	if (stage > 2 || debug) { 
 		char inter_path[256];
 		char aux_file[256];
@@ -161,16 +176,11 @@ int main(int argc, char *argv[]) {
 		generate_object_code(out, cant_ap_h);
 		fclose(out);
 	}
+	
 	if (stage > 3) {
 		char command[256];
 		snprintf(command, sizeof(command), "./run_executable.sh object_code/%s", outname);
 		system(command);
-	}
-	if (debug) {
-		if (head_ast != NULL && global_level != NULL) {
-			print_full_ast(head_ast);
-			print_symbol_table(global_level);
-		}
 	}
 	return 0;
 }
