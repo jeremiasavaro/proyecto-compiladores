@@ -25,7 +25,7 @@ letter    [a-zA-Z]
 %%
 
 
-{digit}+                 { yylval.ival = atoi(yytext); num_tokens++; return INTEGER_LITERAL; }
+{digit}+                 { if (debug) printf("VALUE: %s\n", yytext); yylval.ival = atoi(yytext); num_tokens++; return INTEGER_LITERAL; }
 
 "Program"                 { if (debug) printf("PROGRAM\n"); num_tokens++; return PROGRAM;}
 "if"                      { if (debug) printf("IF\n"); num_tokens++; return IF; }
@@ -37,8 +37,8 @@ letter    [a-zA-Z]
 "extern"                  { if (debug) printf("EXTERN\n"); num_tokens++; return EXTERN;}
 "bool"                    { if (debug) printf("BOOL\n"); num_tokens++; return BOOL;}
 "integer"                 { if (debug) printf("INTEGER\n"); num_tokens++; return INTEGER;}
-"false"                   { if (debug) printf("FALSE\n"); num_tokens++; return FALSE;}
-"true"                    { if (debug) printf("TRUE\n");num_tokens++; return TRUE;}
+"false"                   { if (debug) printf("VALUE: FALSE\n"); num_tokens++; return FALSE;}
+"true"                    { if (debug) printf("VALUE: TRUE\n");num_tokens++; return TRUE;}
 
 
 {letter}({letter}|{digit}|_)*  { yylval.sval = my_strdup(yytext); if (debug) printf("ID: %s\n", yytext); num_tokens++; return ID; }
