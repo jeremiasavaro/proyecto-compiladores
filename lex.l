@@ -46,23 +46,21 @@ letter    [a-zA-Z]
 "//".*                 { /* ignore one line comments */ }
 "/*"([^*]|\*+[^*/])*\*+"/"   { /* ignore multiline comments */ }
 
-"&&"                   { if (debug) printf("AND\n"); return AND; }
-"||"                   { if (debug) printf("OR\n");return OR; }
-"!"                    { if (debug) printf("NEG\n"); return NEG; }
-"=="                   { if (debug) printf("EQ\n"); return EQ; }
-"!="                   { if (debug) printf("NEQ\n");return NEQ; }
-"<="                   { if (debug) printf("LEQ\n"); return LEQ; }
-">="                   { if (debug) printf("GEQ\n");return GEQ; }
-"<"                    { if (debug) printf("LES\n"); return LES; }
-">"                    { if (debug) printf("GRT\n"); return GRT; }
-"+"                   { if (debug) printf("ADD\n"); return ADD; }
-"-"                   { if (debug) printf("SUB\n"); return SUB; }
-"*"                   { if (debug) printf("MUL\n"); return MUL; }
-"/"                   { if (debug) printf("DIV\n"); return DIV; }
-"%"                   { if (debug) printf("MOD\n"); return MOD; }
-"="                   { if (debug) printf("ASSIGN\n"); return ASSIGN; }
-[+\-*/%=]              { return *yytext; }
-
+"&&"                   { if (debug) printf("AND\n"); num_tokens++; return AND; }
+"||"                   { if (debug) printf("OR\n"); num_tokens++; return OR; }
+"!"                    { if (debug) printf("NEG\n"); num_tokens++; return NEG; }
+"=="                   { if (debug) printf("EQ\n"); num_tokens++; return EQ; }
+"!="                   { if (debug) printf("NEQ\n"); num_tokens++; return NEQ; }
+"<="                   { if (debug) printf("LEQ\n"); num_tokens++; return LEQ; }
+">="                   { if (debug) printf("GEQ\n"); num_tokens++; return GEQ; }
+"<"                    { if (debug) printf("LES\n"); num_tokens++; return LES; }
+">"                    { if (debug) printf("GRT\n"); num_tokens++; return GRT; }
+"+"                    { if (debug) printf("ADD\n"); num_tokens++; return '+'; }
+"-"                    { if (debug) printf("SUB\n"); num_tokens++; return '-'; }
+"*"                    { if (debug) printf("MUL\n"); num_tokens++; return '*'; }
+"/"                    { if (debug) printf("DIV\n"); num_tokens++; return '/'; }
+"%"                    { if (debug) printf("MOD\n"); num_tokens++; return '%'; }
+"="                    { if (debug) printf("ASSIGN\n"); num_tokens++; return '='; }
 
 [,]                    { return *yytext; }
 [;(){}]                { return *yytext; }
