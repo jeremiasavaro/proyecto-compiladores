@@ -72,8 +72,8 @@ libraries/%.o: libraries/%.c
 
 clean:
 	rm -f $(OBJS) $(TARGET) $(GEN_LEX_SRC) $(GEN_Y_TAB_C) $(GEN_Y_TAB_H)
-	rm -f error_handling/*.o tree/*.o print_utilities/*.o symbol_table/*.o utils/*.o semantic_analyzer/*.o intermediate_code/*.o intermediate_code/*.output object_code/*.o libraries/*.o
-	rm -f tests/output/* *.output *.out tests/output_final
+	rm -f error_handling/*.o tree/*.o print_utilities/*.o symbol_table/*.o utils/*.o semantic_analyzer/*.o intermediate_code/*.o intermediate_code/*.codinter object_code/*.o object_code/*.s libraries/*.o
+	rm -f tests/output/* *.output *.out tests/output_final *.exe
 	rm -rf tests/output tests/output_executables tests/output_intermediate_code tests/output_object_code
 
 asm: res.out
