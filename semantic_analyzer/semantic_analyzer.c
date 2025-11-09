@@ -5,6 +5,8 @@ int returned_global = 0; // Global flag set when a return statement has been enc
 RET_TYPE method_return_type; // Current method's expected return TYPE (used when checking return statements).
 int main_defined = 0; // Flag to check if main method is defined.
 
+extern int optimizations;
+
 /*
  * Function that calls the correct evaluator depending on the AST node type.
  * Also resets global variable returned_global when needed.
@@ -62,7 +64,9 @@ static void eval_common(AST_NODE *tree, RET_TYPE *ret) {
         if (tree->info->common.left->info->type == AST_LEAF && tree->info->common.right->info->type == AST_LEAF) {
             if (tree->info->common.left->info->leaf.type != TYPE_ID &&
                 tree->info->common.right->info->leaf.type != TYPE_ID) {
-                literal = 1;
+                if (optimizations) {
+                    literal = 1;
+                }
             }
         }
         switch (tree->info->common.op) {
@@ -279,7 +283,7 @@ static void eval_while(AST_NODE *tree){
         error_conditional(line);
     }
     eval(tree->info->while_stmt.block, &retBlock);
-    if (condition->info->type == AST_LEAF) {
+    if (condition->info->type == AST_LEAF && optimizations) {
         line = tree->info->while_stmt.block->info->block.stmts->first->line - 1;
         if (condition->info->leaf.value->bool_value == 0) {
             tree->info->while_stmt.block = NULL;
@@ -372,7 +376,7 @@ static void eval_if(AST_NODE *tree, RET_TYPE *ret) {
     if(retCondition != BOOL_TYPE) {
         error_conditional(line);
     }
-    if (condition->info->type == AST_LEAF) {
+    if (condition->info->type == AST_LEAF && optimizations) {
         if (condition->info->leaf.value->bool_value == 1) {
             eval(then_block, &retThen);
             tree->info->if_stmt.else_block = NULL;

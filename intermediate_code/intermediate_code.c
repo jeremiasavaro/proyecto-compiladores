@@ -8,6 +8,9 @@ static cant_ap_temp* cant_ap_h;
 static int temp_counter = 0;
 static int label_counter = 0;
 
+extern int optimizations;
+extern int debug;
+
 /* Function to generate new temporary variables
  */
 char* new_temp() {
@@ -173,7 +176,7 @@ static void gen_code_common(AST_NODE* node, INFO* result) {
         case OP_DIVISION:
             gen_code(node->info->common.left, left);
             AST_NODE* right_child = node->info->common.right;
-            if (right_child && right_child->info->type == AST_LEAF) {
+            if (right_child && right_child->info->type == AST_LEAF && optimizations) {
                 int right_value = right_child->info->leaf.value->int_value;
                 // Check if right_value is a power of 2 using bits operations
                 if (right_value > 0 && (right_value & (right_value - 1)) == 0) {
@@ -183,7 +186,7 @@ static void gen_code_common(AST_NODE* node, INFO* result) {
                     right->id.name = my_strdup(buf);
                     right->id.type = TYPE_INT;
                     temp->id.name = new_temp();
-                            temp->id.type = TYPE_INT;
+                    temp->id.type = TYPE_INT;
                     emit(I_SHIFT_RIGHT, left, right, temp);
                     if (result) *result = *temp;
                     break;
@@ -425,7 +428,7 @@ static void gen_code_block(AST_NODE* node, INFO* result) {
         INFO stmt_info;
         stmt_info.type = TABLE_ID; // initialize stmt_info
         gen_code(cur->first, &stmt_info);
-        if (cur->first->info->type == AST_COMMON && cur->first->info->common.op == OP_RETURN) {
+        if (cur->first->info->type == AST_COMMON && cur->first->info->common.op == OP_RETURN && optimizations) {
             cur = NULL;
         } else {
             cur = cur->next;
@@ -440,140 +443,143 @@ static void gen_code_block(AST_NODE* node, INFO* result) {
 }
 
 cant_ap_temp* print_code_to_file(const char* filename) {
-    FILE* f = fopen(filename, "w");
-    if (!f) {
-        perror("Can't open the file provided");
-        return NULL;
-    }
 
-    for (int i = 0; i < code_size; i++) {
-        INFO* v1 = code[i].var1;
-        INFO* v2 = code[i].var2;
-        INFO* reg = code[i].reg;
-
-        switch (code[i].instruct->instruct.type_instruct) {
-            case I_LOADVAL:
-                if (v1 && v1->id.name && reg && reg->id.name)
-                    fprintf(f, "LOADVAL %s, %s\n", v1->id.name, reg->id.name);
-                break;
-            case I_LOAD:
-                if (v1 && v1->id.name)
-                    fprintf(f, "LOAD %s\n", v1->id.name);
-                break;
-            case I_STORE:
-                if (v1 && v1->id.name && reg && reg->id.name)
-                    fprintf(f, "STORE %s, %s\n", v1->id.name, reg->id.name);
-                break;
-            case I_ADD:
-                if (v1 && v1->id.name && v2 && v2->id.name && reg && reg->id.name)
-                    fprintf(f, "ADD %s, %s, %s\n", v1->id.name, v2->id.name, reg->id.name);
-                break;
-            case I_SUB:
-                if (v1 && v1->id.name && v2 && v2->id.name && reg && reg->id.name)
-                    fprintf(f, "SUB %s, %s, %s\n", v1->id.name, v2->id.name, reg->id.name);
-                break;
-            case I_MUL:
-                if (v1 && v1->id.name && v2 && v2->id.name && reg && reg->id.name)
-                    fprintf(f, "MUL %s, %s, %s\n", v1->id.name, v2->id.name, reg->id.name);
-                break;
-            case I_DIV:
-                if (v1 && v1->id.name && v2 && v2->id.name && reg && reg->id.name)
-                    fprintf(f, "DIV %s, %s, %s\n", v1->id.name, v2->id.name, reg->id.name);
-                break;
-            case I_SHIFT_RIGHT:
-                if (v1 && v1->id.name && v2 && v2->id.name && reg && reg->id.name)
-                    fprintf(f, "SHIFT_RIGHT %s, %s, %s\n", v1->id.name, v2->id.name, reg->id.name);
-                break;
-            case I_MOD:
-                if (v1 && v1->id.name && v2 && v2->id.name && reg && reg->id.name)
-                    fprintf(f, "MOD %s, %s, %s\n", v1->id.name, v2->id.name, reg->id.name);
-                break;
-            case I_MIN:
-                if (v1 && v1->id.name && reg && reg->id.name)
-                    fprintf(f, "MIN %s, %s\n", v1->id.name, reg->id.name);
-                break;
-            case I_RET:
-                if (v1 && v1->id.name) {
-                    fprintf(f, "RET %s\n", v1->id.name);
-                } else {
-                    fprintf(f, "RET\n");
-                }
-                break;
-            case I_LES:
-                if (v1 && v1->id.name && v2 && v2->id.name && reg && reg->id.name)
-                    fprintf(f, "LES %s, %s, %s\n", v1->id.name, v2->id.name, reg->id.name);
-                break;
-            case I_GRT:
-                if (v1 && v1->id.name && v2 && v2->id.name && reg && reg->id.name)
-                    fprintf(f, "GRT %s, %s, %s\n", v1->id.name, v2->id.name, reg->id.name);
-                break;
-            case I_EQ:
-                if (v1 && v1->id.name && v2 && v2->id.name && reg && reg->id.name)
-                    fprintf(f, "EQ %s, %s, %s\n", v1->id.name, v2->id.name, reg->id.name);
-                break;
-            case I_NEQ:
-                if (v1 && v1->id.name && v2 && v2->id.name && reg && reg->id.name)
-                    fprintf(f, "NEQ %s, %s, %s\n", v1->id.name, v2->id.name, reg->id.name);
-                break;
-            case I_LEQ:
-                if (v1 && v1->id.name && v2 && v2->id.name && reg && reg->id.name)
-                    fprintf(f, "LEQ %s, %s, %s\n", v1->id.name, v2->id.name, reg->id.name);
-                break;
-            case I_GEQ:
-                if (v1 && v1->id.name && v2 && v2->id.name && reg && reg->id.name)
-                    fprintf(f, "GEQ %s, %s, %s\n", v1->id.name, v2->id.name, reg->id.name);
-                break;
-            case I_AND:
-                if (v1 && v1->id.name && v2 && v2->id.name && reg && reg->id.name)
-                    fprintf(f, "AND %s, %s, %s\n", v1->id.name, v2->id.name, reg->id.name);
-                break;
-            case I_OR:
-                if (v1 && v1->id.name && v2 && v2->id.name && reg && reg->id.name)
-                    fprintf(f, "OR %s, %s, %s\n", v1->id.name, v2->id.name, reg->id.name);
-                break;
-            case I_NEG:
-                if (v1 && v1->id.name && reg && reg->id.name)
-                    fprintf(f, "NEG %s, %s\n", v1->id.name, reg->id.name);
-                break;
-            case I_LABEL:
-                if (v1 && v1->id.name)
-                    fprintf(f, "%s:\n", v1->id.name);
-                break;
-            case I_JMP:
-                if (v1 && v1->id.name)
-                    fprintf(f, "JMP %s\n", v1->id.name);
-                break;
-            case I_JMPF:
-                if (v1 && v1->id.name && reg && reg->id.name)
-                    fprintf(f, "JMPF %s, %s\n", v1->id.name, reg->id.name);
-                break;
-            case I_PARAM:
-                if (v1 && v1->id.name)
-                    fprintf(f, "PARAM %s\n", v1->id.name);
-                break;
-            case I_CALL:
-                if (v1 && v1->id.name && reg && reg->id.name)
-                    fprintf(f, "CALL %s, %s\n", v1->id.name, reg->id.name);
-                break;
-            case I_ENTER:
-                if (v1 && v1->id.name)
-                    fprintf(f, "ENTER %s\n", v1->id.name);
-                break;
-            case I_LEAVE:
-                if (v1 && v1->id.name)
-                    fprintf(f, "LEAVE %s\n", v1->id.name);
-                break;
-            case I_EXTERN:
-                if (v1 && v1->id.name)
-                    fprintf(f, "EXTERN %s\n", v1->id.name);
-                break;
-            default:
-                fprintf(f, "UNKNOWN\n");
-                break;
+    if (debug) {
+        FILE* f = fopen(filename, "w");
+        if (!f) {
+            perror("Can't open the file provided");
+            return NULL;
         }
+
+        for (int i = 0; i < code_size; i++) {
+            INFO* v1 = code[i].var1;
+            INFO* v2 = code[i].var2;
+            INFO* reg = code[i].reg;
+
+            switch (code[i].instruct->instruct.type_instruct) {
+                case I_LOADVAL:
+                    if (v1 && v1->id.name && reg && reg->id.name)
+                        fprintf(f, "LOADVAL %s, %s\n", v1->id.name, reg->id.name);
+                    break;
+                case I_LOAD:
+                    if (v1 && v1->id.name)
+                        fprintf(f, "LOAD %s\n", v1->id.name);
+                    break;
+                case I_STORE:
+                    if (v1 && v1->id.name && reg && reg->id.name)
+                        fprintf(f, "STORE %s, %s\n", v1->id.name, reg->id.name);
+                    break;
+                case I_ADD:
+                    if (v1 && v1->id.name && v2 && v2->id.name && reg && reg->id.name)
+                        fprintf(f, "ADD %s, %s, %s\n", v1->id.name, v2->id.name, reg->id.name);
+                    break;
+                case I_SUB:
+                    if (v1 && v1->id.name && v2 && v2->id.name && reg && reg->id.name)
+                        fprintf(f, "SUB %s, %s, %s\n", v1->id.name, v2->id.name, reg->id.name);
+                    break;
+                case I_MUL:
+                    if (v1 && v1->id.name && v2 && v2->id.name && reg && reg->id.name)
+                        fprintf(f, "MUL %s, %s, %s\n", v1->id.name, v2->id.name, reg->id.name);
+                    break;
+                case I_DIV:
+                    if (v1 && v1->id.name && v2 && v2->id.name && reg && reg->id.name)
+                        fprintf(f, "DIV %s, %s, %s\n", v1->id.name, v2->id.name, reg->id.name);
+                    break;
+                case I_SHIFT_RIGHT:
+                    if (v1 && v1->id.name && v2 && v2->id.name && reg && reg->id.name)
+                        fprintf(f, "SHIFT_RIGHT %s, %s, %s\n", v1->id.name, v2->id.name, reg->id.name);
+                    break;
+                case I_MOD:
+                    if (v1 && v1->id.name && v2 && v2->id.name && reg && reg->id.name)
+                        fprintf(f, "MOD %s, %s, %s\n", v1->id.name, v2->id.name, reg->id.name);
+                    break;
+                case I_MIN:
+                    if (v1 && v1->id.name && reg && reg->id.name)
+                        fprintf(f, "MIN %s, %s\n", v1->id.name, reg->id.name);
+                    break;
+                case I_RET:
+                    if (v1 && v1->id.name) {
+                        fprintf(f, "RET %s\n", v1->id.name);
+                    } else {
+                        fprintf(f, "RET\n");
+                    }
+                    break;
+                case I_LES:
+                    if (v1 && v1->id.name && v2 && v2->id.name && reg && reg->id.name)
+                        fprintf(f, "LES %s, %s, %s\n", v1->id.name, v2->id.name, reg->id.name);
+                    break;
+                case I_GRT:
+                    if (v1 && v1->id.name && v2 && v2->id.name && reg && reg->id.name)
+                        fprintf(f, "GRT %s, %s, %s\n", v1->id.name, v2->id.name, reg->id.name);
+                    break;
+                case I_EQ:
+                    if (v1 && v1->id.name && v2 && v2->id.name && reg && reg->id.name)
+                        fprintf(f, "EQ %s, %s, %s\n", v1->id.name, v2->id.name, reg->id.name);
+                    break;
+                case I_NEQ:
+                    if (v1 && v1->id.name && v2 && v2->id.name && reg && reg->id.name)
+                        fprintf(f, "NEQ %s, %s, %s\n", v1->id.name, v2->id.name, reg->id.name);
+                    break;
+                case I_LEQ:
+                    if (v1 && v1->id.name && v2 && v2->id.name && reg && reg->id.name)
+                        fprintf(f, "LEQ %s, %s, %s\n", v1->id.name, v2->id.name, reg->id.name);
+                    break;
+                case I_GEQ:
+                    if (v1 && v1->id.name && v2 && v2->id.name && reg && reg->id.name)
+                        fprintf(f, "GEQ %s, %s, %s\n", v1->id.name, v2->id.name, reg->id.name);
+                    break;
+                case I_AND:
+                    if (v1 && v1->id.name && v2 && v2->id.name && reg && reg->id.name)
+                        fprintf(f, "AND %s, %s, %s\n", v1->id.name, v2->id.name, reg->id.name);
+                    break;
+                case I_OR:
+                    if (v1 && v1->id.name && v2 && v2->id.name && reg && reg->id.name)
+                        fprintf(f, "OR %s, %s, %s\n", v1->id.name, v2->id.name, reg->id.name);
+                    break;
+                case I_NEG:
+                    if (v1 && v1->id.name && reg && reg->id.name)
+                        fprintf(f, "NEG %s, %s\n", v1->id.name, reg->id.name);
+                    break;
+                case I_LABEL:
+                    if (v1 && v1->id.name)
+                        fprintf(f, "%s:\n", v1->id.name);
+                    break;
+                case I_JMP:
+                    if (v1 && v1->id.name)
+                        fprintf(f, "JMP %s\n", v1->id.name);
+                    break;
+                case I_JMPF:
+                    if (v1 && v1->id.name && reg && reg->id.name)
+                        fprintf(f, "JMPF %s, %s\n", v1->id.name, reg->id.name);
+                    break;
+                case I_PARAM:
+                    if (v1 && v1->id.name)
+                        fprintf(f, "PARAM %s\n", v1->id.name);
+                    break;
+                case I_CALL:
+                    if (v1 && v1->id.name && reg && reg->id.name)
+                        fprintf(f, "CALL %s, %s\n", v1->id.name, reg->id.name);
+                    break;
+                case I_ENTER:
+                    if (v1 && v1->id.name)
+                        fprintf(f, "ENTER %s\n", v1->id.name);
+                    break;
+                case I_LEAVE:
+                    if (v1 && v1->id.name)
+                        fprintf(f, "LEAVE %s\n", v1->id.name);
+                    break;
+                case I_EXTERN:
+                    if (v1 && v1->id.name)
+                        fprintf(f, "EXTERN %s\n", v1->id.name);
+                    break;
+                default:
+                    fprintf(f, "UNKNOWN\n");
+                    break;
+            }
+        }
+        fclose(f);
+        return cant_ap_h;
     }
-    fclose(f);
-    return cant_ap_h;
 }
 
 /* Function that generates the pseudo-assembly
