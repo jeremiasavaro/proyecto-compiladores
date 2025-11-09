@@ -13,6 +13,7 @@
 
 extern int yylineno;
 extern int yyparse();
+extern int yylex();
 //void yyerror(const char *s);
 extern FILE *yyin;
 
@@ -43,7 +44,7 @@ int main(int argc, char *argv[]) {
 	if (argc == 2 && (strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0)) {
 		printf("\n");
 		printf("╭──────────────────────────────────────────────╮\n");
-		printf("│      Compilador CTDS — Opciones de uso   \n");
+		printf("│      Compilador CTDS — Opciones de uso       │\n");
 		printf("╰──────────────────────────────────────────────╯\n\n");
 
 		printf("Uso:\n");
