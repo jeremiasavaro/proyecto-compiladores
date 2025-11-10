@@ -62,6 +62,13 @@ dkms.conf
 .vscode/
 .idea/
 
+.DS_Store
+
+# Latex
+*.aux
+*.log
+*.synctex.*
+
 parser
 parser.output
 
