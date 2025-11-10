@@ -34,13 +34,13 @@ int last_block_pushed = 0;
 %token PROGRAM IF ELSE THEN WHILE VOID RETURN EXTERN BOOL INTEGER FALSE TRUE
 %token <ival> INTEGER_LITERAL
 %token <sval> ID
-%token AND OR NEG EQ NEQ LEQ GEQ LES GRT ADD SUB MUL DIV MOD ASSIGN
+%token AND OR NEG EQ NEQ LEQ GEQ
 
 %left AND OR
 %left EQ NEQ
 %left LES GRT LEQ GEQ
-%left ADD SUB
-%left MUL DIV MOD
+%left '+' '-'
+%left '*' '/' '%'
 
 %right UMINUS
 %right NEG
@@ -66,7 +66,7 @@ decl:
     ;
 
 var_decl:
-      type ID ASSIGN expr ';'
+      type ID '=' expr ';'
         {
           ID_TABLE* dir;
           AST_NODE* id;
@@ -200,7 +200,7 @@ statements:
     ;
 
 statement:
-      ID ASSIGN expr ';'
+      ID '=' expr ';'
         {
           ID_TABLE* dir = find($1);
           if (!dir) {
@@ -233,11 +233,11 @@ expr:
       }
     | method_call { $$ = $1; }
     | literal { $$ = $1; }
-    | expr ADD expr { $$ = new_binary_node(OP_ADDITION, $1, $3); }
-    | expr SUB expr { $$ = new_binary_node(OP_SUBTRACTION, $1, $3); }
-    | expr MUL expr { $$ = new_binary_node(OP_MULTIPLICATION, $1, $3); }
-    | expr DIV expr { $$ = new_binary_node(OP_DIVISION, $1, $3); }
-    | expr MOD expr { $$ = new_binary_node(OP_MOD, $1, $3); }
+    | expr '+' expr { $$ = new_binary_node(OP_ADDITION, $1, $3); }
+    | expr '-' expr { $$ = new_binary_node(OP_SUBTRACTION, $1, $3); }
+    | expr '*' expr { $$ = new_binary_node(OP_MULTIPLICATION, $1, $3); }
+    | expr '/' expr { $$ = new_binary_node(OP_DIVISION, $1, $3); }
+    | expr '%' expr { $$ = new_binary_node(OP_MOD, $1, $3); }
     | expr LES expr { $$ = new_binary_node(OP_LES, $1, $3); }
     | expr GRT expr { $$ = new_binary_node(OP_GRT, $1, $3); }
     | expr EQ expr  { $$ = new_binary_node(OP_EQ, $1, $3); }
