@@ -193,7 +193,7 @@ int main(int argc, char *argv[]) {
 	
 	if (stage > 3) {
 		char command[256];
-		snprintf(command, sizeof(command), "./run_executable.sh object_code/%s", outname);
+		snprintf(command, sizeof(command), "./link.sh object_code/%s", outname);
 		system(command);
 	}
 	return 0;
