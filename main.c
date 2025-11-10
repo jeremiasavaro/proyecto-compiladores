@@ -37,7 +37,7 @@ int main(int argc, char *argv[]) {
 	char* sourcename = NULL;
 
 	if (argc == 1) {
-		fprintf(stderr, "Error: Must provide source file. See ctds -h for usage help.\n");
+		fprintf(stderr, "Error: Must provide source file. See \"ctds -h\" for usage help.\n");
 		return 1;
 	}
 	if (argc == 2 && (strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "-help") == 0)) {
@@ -52,8 +52,7 @@ int main(int argc, char *argv[]) {
 		printf("Options:\n");
 		printf("  %-22s %s\n", "-h, -help", "Shows this help message");
 		printf("  %-22s %s\n", "-o <file>", "Specifies the name of the output file (default: out)");
-		printf("  %-22s %s\n", "-t, -target <stage>", "Run until the indicated stage:");
-		printf("                                scan | parse | codinter | assembly\n");
+		printf("  %-22s %s\n", "-t, -target <stage>", "Run until the indicated stage: scan | parse | codinter | assembly | executable (default: executable)");
 		printf("  %-22s %s\n", "-opt", "Enable compiler optimizations");
 		printf("  %-22s %s\n", "-d, -debug", "Shows debugging information (AST structure, lexer tokens, intermediate code, etc.)\n");
 
