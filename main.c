@@ -165,7 +165,7 @@ int main(int argc, char *argv[]) {
 		char inter_path[256];
 		char aux_file[256];
 		snprintf(inter_path, sizeof(inter_path), "object_code/%s", outname);
-		snprintf(aux_file, sizeof(aux_file), "%s.o", inter_path);
+		snprintf(aux_file, sizeof(aux_file), "%s.s", inter_path);
 		FILE* out = fopen(aux_file, "w");
 		if (!out) {
 			error_open_file(aux_file);
