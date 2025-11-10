@@ -71,12 +71,16 @@ tests/output_object_code/
 tests/output_final
 
 # Intermediate code files
-intermediate_code/intermediate_code.out
 intermediate_code/*.codinter
 
-# Object code files
-object_code/*.o
+# Assembly files
 object_code/*.s
 
 *.DS_Store
 main
+
+# LATEX files
+*.aux
+*.log
+*synctex.gz
+*.toc

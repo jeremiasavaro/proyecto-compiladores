@@ -1,10 +1,10 @@
 #include "intermediate_code.h"
 
 // Buffer for save all the instructions (pseudo-assembly)
-Instr code[1000];   // 1000 instructions for example
+Instr code[MAX_CODE_SIZE];
 int code_size = 0;  // Number of instructions saved
 
-static cant_ap_temp* cant_ap_h;
+CANT_AP_TEMP* cant_ap_h;
 static int temp_counter = 0;
 static int label_counter = 0;
 
@@ -24,23 +24,52 @@ static char* new_label() {
     return my_strdup(buf);
 }
 
+/* Function that adds a new instance of the temporal temp in the list of temporal instances
+ */
+void append_new_instance(CANT_AP_TEMP* cur, char* temp) {
+    TEMP_LIST* aux = cur->list;
+    if (!aux) {
+        TEMP_LIST* new_entry = calloc(1, sizeof(TEMP_LIST));
+        new_entry->location = temp; // Don't duplicate strings, use it's direct location in order to change the temp directly if optimizations are needed
+        cur->list = new_entry;
+        return;
+    }
+    while (aux->next) {
+        aux = aux->next;
+    }
+    TEMP_LIST* new_entry = calloc(1, sizeof(TEMP_LIST));
+    new_entry->location = temp;
+    aux->next = new_entry;
+}
+
 /* Function to update the count of appearances of a temporary variable
  */
 void increase_temp_ap(char* temp) {
-    cant_ap_temp* current = cant_ap_h;
+    CANT_AP_TEMP* current = cant_ap_h;
     while (current) {
         if (strcmp(current->temp, temp) == 0) {
+            append_new_instance(current, temp);
             current->cant_ap += 1;
             return;
         }
         current = current->next;
     }
     // If not found, create a new entry
-    cant_ap_temp* new_entry = (cant_ap_temp*)malloc(sizeof(cant_ap_temp));
+    CANT_AP_TEMP* new_entry = malloc(sizeof(CANT_AP_TEMP));
     new_entry->cant_ap = 1;
     new_entry->temp = my_strdup(temp);
-    new_entry->next = cant_ap_h;
-    cant_ap_h = new_entry;
+    new_entry->next = NULL;
+    new_entry->locked = 0;
+    append_new_instance(new_entry, temp);
+    CANT_AP_TEMP* aux = cant_ap_h;
+    if (!aux) {
+        cant_ap_h = new_entry;
+        return;
+    }
+    while (aux->next) {
+        aux = aux->next;
+    }
+    aux->next = new_entry;
 }
 
 /* Function for save instructions in the buffer
@@ -439,7 +468,9 @@ static void gen_code_block(AST_NODE* node, INFO* result) {
     }
 }
 
-cant_ap_temp* print_code_to_file(const char* filename) {
+/* Function that dumps intermediate code into file -> filename
+ */
+CANT_AP_TEMP* print_code_to_file(const char* filename) {
     FILE* f = fopen(filename, "w");
     if (!f) {
         perror("Can't open the file provided");
@@ -607,6 +638,8 @@ void gen_code(AST_NODE* node, INFO* result) {
     }
 }
 
+/* Function that resets intermediate code structure
+ */
 void reset_code() {
     // Free allocated memory before resetting
     for (int i = 0; i < code_size; i++) {
@@ -620,6 +653,8 @@ void reset_code() {
     label_counter = 0;
 }
 
+/* Function that "cleans" intermediate code
+ */
 void cleanup_code() {
     for (int i = 0; i < code_size; i++) {
         if (code[i].var1) {
@@ -641,10 +676,28 @@ void cleanup_code() {
     }
 }
 
+/* Function that returns intermediate code generated
+ */
 Instr* get_intermediate_code() {
     return code;
 }
 
+/* Function that returns code size
+ */
 int get_code_size() {
     return code_size;
+}
+
+/* Function that prints list of temporals used before optimization
+ */
+void print_temp_list(CANT_AP_TEMP* head) {
+    for (CANT_AP_TEMP *aux = head; aux; aux = aux->next) {
+        if (aux->list) {
+            printf("Temporal: %s, usos: %d, instancias: \n", aux->temp, aux->cant_ap);
+            for (TEMP_LIST* aux2 = aux->list; aux2; aux2 = aux2->next) {
+                printf("%s ", aux2->location);
+            }
+            printf("\n");
+        }
+    }
 }

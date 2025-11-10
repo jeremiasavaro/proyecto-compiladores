@@ -7,6 +7,7 @@
 #include "symbol_table.h"
 #include "semantic_analyzer.h"
 #include "intermediate_code.h"
+#include "optimization.h"
 #include "symbol.h"
 #include "object_code.h"
 #include <ctype.h>
@@ -16,6 +17,7 @@ extern int yyparse();
 extern int yylex();
 //void yyerror(const char *s);
 extern FILE *yyin;
+extern int yylex();
 
 typedef enum STAGE {
 	SCAN,
@@ -25,14 +27,12 @@ typedef enum STAGE {
 	EXECUTABLE
 } STAGE;
 
-int optimizations = 0;
-int debug = 0;
-
-static cant_ap_temp* cant_ap_h;
-
 void str_to_lower(char *s);
 
 int main(int argc, char *argv[]) {
+	// Flags
+	int optimizations = 0;
+	int debug = 0;
 	STAGE stage = EXECUTABLE; // Run all stages by default
 	char* outname = "res"; // Default name
 	char* sourcename = NULL;
@@ -150,6 +150,12 @@ int main(int argc, char *argv[]) {
 		reset_code();
 		for (AST_ROOT* cur = head_ast; cur != NULL; cur = cur->next) {
 			gen_code(cur->sentence, NULL);
+		}
+		if (debug) {
+			print_temp_list(cant_ap_h);
+		}
+		if (optimizations) {
+			optimize_memory(cant_ap_h);
 		}
 		char inter_path[128];
 		char aux_file[256];
