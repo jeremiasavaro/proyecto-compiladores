@@ -38,10 +38,10 @@ int main(int argc, char *argv[]) {
 	char* sourcename = NULL;
 
 	if (argc == 1) {
-		fprintf(stderr, "Error: Must provide source file.\n");
+		fprintf(stderr, "Error: Must provide source file. See ctds -h for usage help.\n");
 		return 1;
 	}
-	if (argc == 2 && (strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0)) {
+	if (argc == 2 && (strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "-help") == 0)) {
 		printf("\n");
 		printf("╭──────────────────────────────────────────────╮\n");
 		printf("│         CTDS Compiler — Usage options        │\n");
@@ -80,13 +80,13 @@ int main(int argc, char *argv[]) {
 		} else if (strcmp(argv[i], "-o") == 0) {
 			if (i + 1 < argc) { // If -o is specified, a filename after that is required
 				if (argv[i + 1][0] == '-') {
-					fprintf(stderr, "Error: -o requires a valid filename.\n");
+					fprintf(stderr, "Error: -o requires a valid filename. See ctds -h for usage help.\n");
 					return 1;
 				}
 				outname = argv[i + 1];
 				i++;
 			} else {
-				fprintf(stderr, "Error: -o requires a filename.\n");
+				fprintf(stderr, "Error: -o requires a filename. See ctds -h for usage help.\n");
 				return 1;
 			}
 		} else if (strcmp(argv[i], "-target") == 0) {
@@ -101,15 +101,19 @@ int main(int argc, char *argv[]) {
 				} else if (strcmp(argv[i + 1], "assembly") == 0) {
 					stage = ASSEMBLY;
 				} else {
-					fprintf(stderr, "Error: unknown stage specifier after -target.\n");
+					fprintf(stderr, "Error: unknown stage specifier after -target. See ctds -h for usage help.\n");
 					return 1;
 				}
 				i++;
 			} else {
-				fprintf(stderr, "Error: -target requires a target stage.\n");
+				fprintf(stderr, "Error: -target requires a target stage. See ctds -h for usage help.\n");
 				return 1;
 			}
 		} else {
+			if (argv[i][0] == '-') {
+				fprintf(stderr, "Error: unknown or misused flag. See ctds -h for usage help.\n");
+				return 1;
+			}
 			if (sourcename == NULL) {
 				sourcename = argv[i];
 			} else {
