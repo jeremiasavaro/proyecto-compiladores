@@ -14,6 +14,7 @@
 
 extern int yylineno;
 extern int yyparse();
+extern int yylex();
 //void yyerror(const char *s);
 extern FILE *yyin;
 extern int yylex();
@@ -43,7 +44,7 @@ int main(int argc, char *argv[]) {
 	if (argc == 2 && (strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0)) {
 		printf("\n");
 		printf("╭──────────────────────────────────────────────╮\n");
-		printf("│      Compilador CTDS — Opciones de uso   \n");
+		printf("│      Compilador CTDS — Opciones de uso       │\n");
 		printf("╰──────────────────────────────────────────────╯\n\n");
 
 		printf("Uso:\n");
@@ -74,14 +75,8 @@ int main(int argc, char *argv[]) {
 	for (int i = 1; i < argc; i++) {
 		if (strcmp(argv[i], "-opt") == 0) {
 			optimizations = 1;
-			if (strcmp(argv[i+1], "-debug") == 0) {
-				debug = 1;
-				i++;
-			}
-			i++;
 		} else if (strcmp(argv[i], "-debug") == 0) {
 			debug = 1;
-			stage = PARSE;
 		} else if (strcmp(argv[i], "-o") == 0) {
 			if (i + 1 < argc) { // If -o is specified, a filename after that is required
 				if (argv[i + 1][0] == '-') {
@@ -135,11 +130,18 @@ int main(int argc, char *argv[]) {
 	yyin = file;
 
 	if (stage == 0) {
+		if (debug) {
+			printf("----- SCANNING  -----\n");
+		}
 		while (yylex() != 0) {
-    }
+    	
+		}
 	}
 
 	if (stage > 0 || debug) {
+		if (debug) {
+			printf("----- SCANNING  -----\n");
+		}
 		yyparse();
 		semantic_analyzer(head_ast);
 	}
@@ -161,6 +163,14 @@ int main(int argc, char *argv[]) {
 		snprintf(aux_file, sizeof(aux_file), "%s.codinter", inter_path);
 		cant_ap_h = print_code_to_file(aux_file);
 	}
+
+	if (debug) {
+		if (head_ast != NULL && global_level != NULL) {
+			print_full_ast(head_ast);
+			print_symbol_table(global_level);
+		}
+	}
+
 	if (stage > 2 || debug) { 
 		char inter_path[256];
 		char aux_file[256];
@@ -173,16 +183,11 @@ int main(int argc, char *argv[]) {
 		generate_object_code(out, cant_ap_h);
 		fclose(out);
 	}
+	
 	if (stage > 3) {
 		char command[256];
-		snprintf(command, sizeof(command), "./run_executable.sh %s", outname);
+		snprintf(command, sizeof(command), "./run_executable.sh object_code/%s", outname);
 		system(command);
-	}
-	if (debug) {
-		if (head_ast != NULL && global_level != NULL) {
-			print_full_ast(head_ast);
-			print_symbol_table(global_level);
-		}
 	}
 	return 0;
 }

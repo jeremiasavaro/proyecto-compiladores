@@ -198,7 +198,7 @@ void print_ast_list(AST_NODE_LIST *list, int indent) {
 }
 
 void print_full_ast(AST_ROOT *root) {
-    printf("=== Program AST ===\n");
+    printf("\n=== Program AST ===\n");
     if (!root) {
         printf("(empty program)\n========================\n");
         return;
