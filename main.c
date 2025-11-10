@@ -151,11 +151,13 @@ int main(int argc, char *argv[]) {
 		for (AST_ROOT* cur = head_ast; cur != NULL; cur = cur->next) {
 			gen_code(cur->sentence, NULL);
 		}
+		if (debug) {
+			print_temp_list(cant_ap_h); // Print temp lists before optimizations
+		}
 		if (optimizations) {
 			optimize_memory(cant_ap_h);
 		}
 		if (debug) {
-			print_temp_list(cant_ap_h);
 			char inter_path[128];
 			char aux_file[256];
 			snprintf(inter_path, sizeof(inter_path), "intermediate_code/%s", outname);
