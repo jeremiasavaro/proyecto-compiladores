@@ -45,7 +45,7 @@ void emit(INSTR_TYPE t, INFO* var1, INFO* var2, INFO* reg);
 void gen_code(AST_NODE* node, INFO* result);
 /* Function that dumps intermediate code into file -> filename
  */
-CANT_AP_TEMP* print_code_to_file(const char* filename);
+void print_code_to_file(const char* filename);
 /* Function that resets intermediate code structure
  */
 void reset_code();

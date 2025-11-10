@@ -140,7 +140,7 @@ int main(int argc, char *argv[]) {
 
 	if (stage > 0 || debug) {
 		if (debug) {
-			printf("----- SCANNING  -----\n");
+			printf("----- PARSING  -----\n");
 		}
 		yyparse();
 		semantic_analyzer(head_ast);
@@ -151,17 +151,17 @@ int main(int argc, char *argv[]) {
 		for (AST_ROOT* cur = head_ast; cur != NULL; cur = cur->next) {
 			gen_code(cur->sentence, NULL);
 		}
-		if (debug) {
-			print_temp_list(cant_ap_h);
-		}
 		if (optimizations) {
 			optimize_memory(cant_ap_h);
 		}
-		char inter_path[128];
-		char aux_file[256];
-		snprintf(inter_path, sizeof(inter_path), "intermediate_code/%s", outname);
-		snprintf(aux_file, sizeof(aux_file), "%s.codinter", inter_path);
-		cant_ap_h = print_code_to_file(aux_file);
+		if (debug) {
+			print_temp_list(cant_ap_h);
+			char inter_path[128];
+			char aux_file[256];
+			snprintf(inter_path, sizeof(inter_path), "intermediate_code/%s", outname);
+			snprintf(aux_file, sizeof(aux_file), "%s.codinter", inter_path);
+			print_code_to_file(aux_file);
+		}
 	}
 
 	if (debug) {
