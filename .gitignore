@@ -77,7 +77,7 @@ intermediate_code/*.codinter
 object_code/*.s
 
 *.DS_Store
-main
+ctds
 
 # LATEX files
 *.aux
