@@ -14,7 +14,6 @@
 
 extern int yylineno;
 extern int yyparse();
-extern int yylex();
 //void yyerror(const char *s);
 extern FILE *yyin;
 extern int yylex();
@@ -27,12 +26,13 @@ typedef enum STAGE {
 	EXECUTABLE
 } STAGE;
 
+int optimizations = 0;
+int debug = 0;
+
 void str_to_lower(char *s);
 
 int main(int argc, char *argv[]) {
 	// Flags
-	int optimizations = 0;
-	int debug = 0;
 	STAGE stage = EXECUTABLE; // Run all stages by default
 	char* outname = "res"; // Default name
 	char* sourcename = NULL;
