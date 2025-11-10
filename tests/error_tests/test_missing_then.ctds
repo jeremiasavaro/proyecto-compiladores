@@ -1,0 +1,12 @@
+Program {
+    void print_int(integer i) extern;
+    void main() {
+        integer y;
+        y = 2;
+        if (y == 2) { /* falta `THEN` */
+            print_int(y);
+        } else {
+            return;
+        }
+    }
+}

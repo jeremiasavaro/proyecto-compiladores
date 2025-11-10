@@ -1,0 +1,8 @@
+Program {
+    void bad_void() {
+        return 42; /* error: función void no debe retornar un valor */
+    }
+    void main() {
+        bad_void();
+    }
+}

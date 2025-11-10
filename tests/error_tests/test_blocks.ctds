@@ -1,0 +1,22 @@
+Program {
+    integer x = 0;
+    void main() {
+        {
+            integer y = 1;
+            {
+                integer z = 2;
+                {
+                    bool z = true;
+                    z = false;
+                    {
+                        y = x;
+                        {
+                            x = 5;
+                            return x;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

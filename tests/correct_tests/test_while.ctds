@@ -1,9 +1,11 @@
 Program {
     integer counter;
+    void print_int(integer i) extern;
     void main() {
         counter = 0;
         while (counter < 5) {
             counter = counter + 1;
         }
+        print_int(counter);
     }
 }

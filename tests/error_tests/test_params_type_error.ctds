@@ -1,0 +1,9 @@
+Program {
+    integer square(integer x) {
+        return x * x;
+    }
+    void main() {
+        integer r;
+        r = square(true); /* error de tipos en llamada: true (bool) no es integer */
+    }
+}

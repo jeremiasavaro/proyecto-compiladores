@@ -1,8 +1,10 @@
 Program {
     integer x;
     bool flag;
+    void print_bool(bool i) extern;
     void main() {
         x = 10;
         flag = true;
+        print_bool(flag);
     }
 }

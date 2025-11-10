@@ -1,14 +1,15 @@
 \documentclass[12pt,a4paper]{article}
 
 \usepackage[utf8]{inputenc}
+\usepackage{graphicx}
 \usepackage[T1]{fontenc}
 \usepackage[spanish]{babel}
 \usepackage[hidelinks]{hyperref}
-\usepackage{listings}  % Para mostrar código
+\usepackage{listings}
 \usepackage{xcolor}
+\usepackage{titlesec}
 \usepackage[a4paper, margin=2cm]{geometry}
 
-% Configuración de listings para C y Flex
 \lstset{
     language=C,
     basicstyle=\ttfamily\small,
@@ -24,46 +25,202 @@
     tabsize=4
 }
 
-\title{Documentación del Proyecto - Primera etapa}
-\author{Jeremias Avaro, Mateo Cornejo, Máximo Marquez Regis}
-\date{}
-
 \begin{document}
 
-\maketitle
+\begin{titlepage}
+    \centering
+    \vspace*{1cm}
+
+    \includegraphics[width=0.20\textwidth]{escudounrc.jpg} \\[1cm]
+
+    \textsc{\Large Universidad Nacional de Río Cuarto}\\[0.2cm]
+    \textsc{\large Facultad de Ciencias Exactas, Físico - Químicas y Naturales}\\[0.2cm]
+    \textsc{\normalsize Departamento de Computación}\\[4cm]
+
+    {\huge \bfseries TDS25 - Documentación del Proyecto}\\[8cm]
+    \textbf{Autores:} Jeremias Avaro, Mateo Cornejo, Maximo Marquez Regis \\[0.3cm]
+    \textbf{Materia:} Taller de Diseño de Software \\[0.3cm]
+    \textbf{Docente:} Francisco Bavera \\[0.3cm]
+    \textbf{Año:} 2025
+    \date{}
+
+    \vfill
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+\section{Introducción}
+Este documento recopila las distintas etapas de desarrollo del compilador
+realizado como proyecto académico. Se detallan las tareas llevadas a cabo
+por cada integrante, las decisiones de diseño adoptadas (y aclaraciones), decisiones clave y y los problemas detectados.
+
+El objetivo es documentar de forma progresiva la evolución del compilador,
+dejando registro tanto de los aspectos técnicos como de la organización
+del trabajo en equipo.
+
+
+\section{Primera etapa}
 
 \subsection*{División de la primera etapa}
 \begin{itemize}
-    \item \textbf{Jeremias Avaro:} Inicialización del proyecto y primeros avances del lexer y la gramática.
-    \item \textbf{Mateo Cornejo:} Refinamiento de lexer y gramática. Creación de tests.
-    \item \textbf{Máximo Marquez Regis:} Completó la gramática casi en su totalidad. Integración del parser y lexer.
-    \item Todos: Discusión de decisiones de diseño, revisión de código y documentación.
+    \item \textbf{Jeremias Avaro:} inicialización del proyecto y primeros avances del lexer y la gramática.
+    \item \textbf{Mateo Cornejo:} refinamiento de lexer y gramática. Creación de tests.
+    \item \textbf{Máximo Marquez Regis:} completó la gramática casi en su totalidad. Integración del parser y lexer.
 \end{itemize}
 
 \subsection*{Decisiones de diseño y aclaraciones}
 \begin{itemize}
-    \item Los comentarios se ignoran en el lexer para simplificar la gramática del parser. Como no devuelven tokens (return), el parser nunca se entera de que había comentarios. Así es posible ponerlos en cualquier parte sin romper la gramática.
-    \item Se optó por separar el manejo de errores en un módulo propio (\texttt{error\_handling.c/h}) para centralizar la gestión de mensajes y facilitar futuras extensiones.
+    \item Los comentarios se ignoran en el lexer para simplificar la gramática del parser.
+    \item Se optó por separar el manejo de errores en un módulo propio (\texttt{error\_handling.c/h}) para centralizar la gestión de mensajes.
     \item Se decidió que el lexer cuente tokens y líneas para facilitar el reporte de errores y estadísticas.
 \end{itemize}
 
 \subsection*{Diseño y decisiones clave}
 \begin{itemize}
-    \item La gramática permite declaraciones de variables, métodos y bloques de código.
+    \item La gramática permite declaraciones de variables, funciones y bloques de código.
     \item Se definió un \textbf{union} para manejar tokens con valores enteros o cadenas.
     \item Las expresiones incluyen operadores aritméticos, relacionales y lógicos con precedencias adecuadas.
-    \item Alternativas: se evaluó manejar comentarios en el parser, pero se optó por ignorarlos en el lexer para simplificar el diseño.
-    \item Se implementó un sistema de reporte de errores léxicos y sintácticos que indica el número de línea y el tipo de error.
-    \item El parser está preparado para ser extendido con análisis semántico y generación de código en futuras etapas.
+    \item Se implementó un sistema de reporte de errores léxicos y sintácticos.
+    \item El parser está preparado para ser extendido con análisis semántico y generación de código.
     \item Se utilizó un Makefile para automatizar la compilación y facilitar la integración de nuevos módulos.
     \item Se crearon tests básicos para validar el funcionamiento del lexer y parser.
 \end{itemize}
 
 \subsection*{Problemas conocidos}
 \begin{itemize}
-    \item Algunos casos límite (por ejemplo, anidamiento profundo de bloques o expresiones muy largas) no han sido exhaustivamente probados.
-    \item El manejo de comentarios multilinea podría fallar en comentarios no cerrados.
+    \item Algunos casos límite no han sido exhaustivamente probados.
+    \item El manejo de comentarios multiline5a podría fallar en comentarios no cerrados.
 \end{itemize}
+
+\newpage
+
+\section{Segunda etapa}
+
+\subsection*{División de la segunda etapa}
+\begin{itemize}
+    \item \textbf{Mateo Cornejo:} implementación del AST incluyendo la definición de estructuras y funciones asociadas. Desarrollo de funciones para la visualización del AST. Refactorización del manejo de errores hacia el módulo \texttt{error\_handling}. Participación en la implementación y correcciones del analizador semántico.
+    \item \textbf{Jeremias Avaro:} inicialización de la tabla de símbolos, planteando la estructura base y el mecanismo de scopes. Desarrollo conjunto del analizador semántico. 
+    \item \textbf{Máximo Marquez Regis:} implementación general de la tabla de símbolos, refinamiento del manejo de scopes y funciones. Correcciones posteriores en el analizador semántico, documentación de código, creación de tests extras.
+\end{itemize}
+
+\subsection*{Decisiones de diseño y aclaraciones}
+\begin{itemize}
+    \item Se definió la función \texttt{my\_strdup} para duplicar strings, evitando el uso de \texttt{strdup}.
+    \item Si una función es de tipo \texttt{void}, es válido que exista un \texttt{return;} o no haya sentencia \texttt{return} en el bloque de la función.
+    \item En la estructura \texttt{AST\_NODE}, se empleó una \texttt{union} para almacenar información específica según el tipo de nodo.
+    \item Se diseñó la estructura \texttt{AST\_NODE\_LIST} para manejar listas de sentencias, declaraciones y argumentos.
+    \item Se creó la carpeta \texttt{utils} para funciones de utilidad como \texttt{my\_strdup}.
+    \item Sólo se puede acceder al scope global de la tabla de símbolos, ya que cada id (variable o función) en el AST se almacena un puntero al bloque de la tabla de símbolos perteneciente a dicho id.
+	\item En el AST, cada función tiene un puntero a su bloque en la tabla de símbolos, que a su vez tiene un puntero al scope de la función.
+	\item Se asume que en un archivo existe una y sólo una declaracion de una función \texttt{main}, puede ser que esté definido en el mismo archivo o externamente.    
+\end{itemize}
+
+\subsection*{Diseño y decisiones clave}
+\begin{itemize}
+    \item Se creó el enumerado \texttt{AST\_TYPE} para representar los distintos tipos de nodos.
+    \item Se utilizó una \texttt{union} en \texttt{AST\_NODE} para reducir redundancia en la representación de nodos.
+    \item Se implementó \texttt{free\_mem} para liberar memoria del AST de manera recursiva (por ahora no se utiliza).
+    \item Se integraron los constructores de nodos en las acciones semánticas del parser.
+    \item Se cambió la gramática a recursión por la izquierda para construir listas de statements y declaraciones, lo que permite almacenarlos e imprimirlos directamente en el orden fuente.
+    \item Se integró la impresión del AST y del scope global tabla de símbolos al final del análisis sintáctico.
+    \item Se incorporó el manejo de \textbf{scopes} para soportar bloques anidados.
+    \item Se implementó una pila de scopes (\texttt{TABLE\_STACK}), donde cada scope mantiene:
+    \begin{itemize}
+        \item \texttt{head\_block} y \texttt{end\_block}: punteros al inicio y fin de la lista de símbolos declarados en ese ámbito.
+        \item \texttt{up}: puntero al ámbito exterior inmediato, implementando encadenamiento léxico.
+    \end{itemize}
+    \item La búsqueda de símbolos recorre desde el scope actual hacia los superiores, logrando visibilidad léxica. Esto permite que variables internas oculten (shadow) a las externas.
+    \item La redeclaración se prohíbe únicamente dentro del mismo scope. En ámbitos anidados se permite el shadowing de símbolos.
+    \item Para soportar recursión y co-recursión, las funciones se predeclaran antes de analizar sus cuerpos. De esta manera, las llamadas recursivas encuentran el símbolo correspondiente.
+    \item Las funciones residen en el ámbito global (ya que no se permite declaraciones de funciones anidadas). Cada bloque de función mantiene una lista de argumentos formales y un puntero al scope asociado.
+    \item El bloque de cada función en la tabla de símbolos almacena una lista con los parámetros formales de dicha función, al momento de realizar el chequeo semántico se utiliza para comparar con las expresiones dadas como parámetro en la llamada a la función.
+    \item Se desarrolló un analizador semántico con una función general \texttt{eval}, la cual deriva en evaluadores específicos según el tipo de nodo (\texttt{eval\_if}, \texttt{eval\_block}, etc.).
+    \item El proceso de evaluación recorre el AST hasta alcanzar las hojas, obteniendo tipos que luego se utilizan en el chequeo semántico.
+    \item En cada evaluación se conserva la línea de origen (\texttt{line = tree->line}) para reportar errores con información precisa.
+    \item En los bloques se registra si se ejecutó un \texttt{return}, lo que permite ignorar sentencias posteriores en ese mismo ámbito.
+    \item Los nodos de tipo \texttt{DECL} se eliminaron en la etapa de interpretación, ya que su función es únicamente de representación en el AST. Las declaraciones se controlan directamente en la tabla de símbolos.
+\end{itemize}
+
+\subsection*{Problemas conocidos}
+\begin{itemize}
+    \item Falta testear exhaustivamente la correcta construcción y recorrido del AST con múltiples tipos de nodos.
+    \item El manejo de \textbf{scopes} aún no se probó en profundidad, en particular:
+    \begin{itemize}
+        \item Casos de sombreado (shadowing) en distintos niveles anidados.
+        \item Validación de la prohibición de redeclaración dentro del mismo scope.
+        \item Comportamiento de la predeclaración de funciones recursivas.
+    \end{itemize}
+    \item El analizador semántico requiere pruebas adicionales para:
+    \begin{itemize}
+        \item Evaluación de bloques con múltiples sentencias y retornos anidados.
+        \item Consistencia en el reporte de errores con número de línea.
+        \item Correcto manejo de tipos en expresiones más complejas.
+    \end{itemize}
+\end{itemize}
+
+\section{Tercer etapa}
+
+\subsection*{División de la tercer etapa}
+\begin{itemize}
+	\item \textbf{Mateo Cornejo:} Implementación de la base del generador de código intermedio y correción de errores.
+	\item \textbf{Jeremias Avaro:} Implementación general del generador de código intermedio.
+	\item \textbf{Máximo Marquez Regis:} Refactorización de las estructuas del compilador.
+\end{itemize}
+
+\subsection*{Decisiones de diseño y aclaraciones}
+\begin{itemize}
+	\item Se optó por cambiar las estructuras del compilador y unificarlas en una para facilitar la generación de código intermedio.
+	\item En la generación de código intermedio se utiliza la estructura \texttt{Info} para mantener información sobre variables y operadores.
+	\item Se volvió a agregar la operación \texttt{DECL} al AST para facilitar la generación de código intermedio y chequear que el tipo de los ID se corresponda con su declaración.
+    \item Para la generación de código intermedio se recorre el AST de igual manera que el Semantic Analyzer. Cada nodo del árbol sintáctico abstracto es procesado por funciones especializadas según su tipo (expresiones, asignaciones, declaraciones, bloques, etc.).
+    \item Se hace uso de un temporal en todas las instrucciones del código de tres direcciones. En cada operación, se genera un nombre de temporal único (por ejemplo, T1, T2, ...) mediante la función new\_temp(). El resultado relevante de la operación se almacena en ese temporal, permitiendo encadenar instrucciones y facilitar la traducción a código máquina o ensamblador posteriormente.
+    \item El buffer de instrucciones (code[ ]) almacena cada instrucción generada, incluyendo los operandos y el temporal asociado.
+    \item Se tomo como decisión que las operaciones (instrucciones) tambien sean almacenadas en la estructura \texttt{Info}, para facilitar la generación de código intermedio.
+\end{itemize}
+
+\subsection*{Diseño y decisiones clave}
+\begin{itemize}
+    \item Se definió una estructura unificada de datos para el compilador, permitiendo compartir información entre las distintas etapas.
+    \item El diseño del AST se mantuvo modular: cada tipo de nodo (expresiones, asignaciones, declaraciones, etc.) tiene una función de procesamiento específica, lo que facilita la extensión futura del lenguaje.
+    \item Se implementó un generador de temporales (\texttt{new\_temp()}) y un contador global para asegurar que cada temporal sea único, garantizando trazabilidad y evitando colisiones durante la generación de código.
+    \item El buffer de código (\texttt{code[]}) se diseñó como una lista secuencial de instrucciones que pueden recorrerse o traducirse sin necesidad de reconstruir el árbol sintáctico.
+    \item Se decidió volver a incorporar la operación de declaracion para los nodos de tipo common, ya que no se chequeaba si el tipo de la inicialización era el correcto.
+\end{itemize}
+
+\subsection*{Problemas conocidos}
+\begin{itemize}
+	\item Al tener una sola estructura para el \texttt{AST} y para la tabla de símbolos, se hace más engorroso acceder a los distintos campos de la estructura.
+\end{itemize}
+
+\section{Cuarta etapa}
+
+\subsection*{División de la cuarta etapa}
+\begin{itemize}
+	\item \textbf{Mateo Cornejo:} Implementación general del generador de código objeto e implementación de tests.
+	\item \textbf{Jeremias Avaro:} Implementación general del generador de código objeto.
+	\item \textbf{Máximo Marquez Regis:}  Implementación general del generador de código objeto.
+\end{itemize}
+
+\subsection*{Decisiones de diseño y aclaraciones}
+\begin{itemize}
+	\item Se construyó un generador de código objeto para x86, siguiendo convenciones de Linux ABI.
+	\item En la llamada a funciones, se copian todos los parámetros a la memoria para evitar ``pisamiento'' si hay llamadas a otras funciones.
+\end{itemize}
+
+\subsection*{Diseño y decisiones clave}
+\begin{itemize}
+	\item Se utiliza la estructura del código intermedio como base para generar el código objeto.
+	\item Se creó una estructura \texttt{VarLocation} para almacenar nombres de variables o temporales y su respectivo offset en memoria.
+	\item Al seguir la convención de Linux ABI, para las llamadas a funciones los primeros 6 parámetros se guardan en los registros \texttt{\%rdi, \%rsi, \%rdx, \%rcx", \%r8, \%r9}. Si se necesitan más de 6 parámetros, se apilan en el stack.
+\end{itemize}
+
+\subsection*{Problemas conocidos}
+\begin{itemize}
+	\item Poca eficiencia en el código generado, problema a ser solucionado en la próxima etapa.
+	\item Cuando se invoca a una función con llamadas a otras funciones como parámetros, usualmente se pierden o pisan los valores de algunos parámetros.
+\end{itemize}
+
 
 
 

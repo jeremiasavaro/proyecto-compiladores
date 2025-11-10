@@ -1,0 +1,11 @@
+Program {
+    void print_int(integer i) extern;
+    void main() {
+        integer y;
+        y = 1;
+        y = u + 2; /* u no está declarado -> error de variable no declarada /
+        if (1 || 2) then { / OR aplicado a enteros -> error de tipos (espera bool) */
+            print_int(y);
+        }
+    }
+}

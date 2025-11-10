@@ -2,16 +2,17 @@ Program {
     integer inc(integer x) {
         return x + 1;
     }
-    /* This is a
-       multiline
-       comment
+    /* This is a comment 
+        This is a comment 
+        This is a comment 
     */
     integer get_int() extern;
     void print_int(integer i) extern;
     void main() {
         integer y;
         y = 10;
-        y = get_int();
+        //y = get_int();
+        y = 1;
         if (y == 1) then {
             print_int(y);
             // This is another comment

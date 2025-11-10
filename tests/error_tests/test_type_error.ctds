@@ -1,0 +1,8 @@
+Program {
+    void print_int(integer i) extern;
+    void main() {
+        integer a;
+        a = true; /* error de tipos: true es bool, 'a' es integer */
+        print_int(a);
+    }
+}

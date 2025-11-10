@@ -1,0 +1,34 @@
+Program {
+    // Este metodo es para testear metodos con mas de 6 parametros y ver como funciona el stack
+    integer mega_add(integer a, integer b, integer c, integer d, integer e, integer f, integer g) {
+        return a + b + c + d + e + f + g;
+    }
+    integer add(integer a, integer b) {
+        return a + b;
+    }
+    integer inc(integer a) {
+        return a + 1;
+    }
+    bool isPositive(integer num) {
+        if (num > 0) then {
+            return true;
+        } else {
+            return false;
+        }
+    }
+    void print_int(integer x) extern;
+    integer main() {
+        integer x;
+        integer z;
+        bool check;
+        integer y = 1;
+        integer r = mega_add(y, y, y, y, y, y, y);
+        y = inc(y);
+        x = y + 10;
+        z = add(x, y);
+        check = isPositive(z);
+        print_int(r);
+        return r;
+    }
+
+}

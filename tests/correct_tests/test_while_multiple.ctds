@@ -1,0 +1,32 @@
+Program {
+    void print_int(integer i) extern;
+    integer fib(integer n) {
+        if (n == 0) then {
+            return 0;
+        } else {
+            if (n == 1) then {
+                return 1;
+            } else {
+                integer i;
+                integer a;
+                integer b;
+                a = 0;
+                b = 1;
+                i = 2;
+                while (i <= n) {
+                    integer tmp;
+                    tmp = a + b;
+                    a = b;
+                    b = tmp;
+                    i = i + 1;
+                }
+                return b;
+            }
+        }
+    }
+    void main() {
+        integer k;
+        k = 2;
+        print_int(fib(k));
+    }
+}

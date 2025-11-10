@@ -71,3 +71,23 @@ dkms.conf
 
 parser
 parser.output
+
+tests/output_executables/
+tests/output_intermediate_code/
+tests/output_object_code/
+tests/output_final
+
+# Intermediate code files
+intermediate_code/*.codinter
+
+# Assembly files
+object_code/*.s
+
+*.DS_Store
+ctds
+
+# LATEX files
+*.aux
+*.log
+*synctex.gz
+*.toc

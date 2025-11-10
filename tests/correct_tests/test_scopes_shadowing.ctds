@@ -1,0 +1,30 @@
+Program {
+    void print_int(integer i) extern;
+    void helper() {
+        integer v;
+        v = 3;
+        ; /* sentencia vacía intencional */
+        {
+            /* nuevo scope: shadowing de 'v' */
+            integer v = 7;
+            //print_int(v); /* imprime 7 */
+        }
+        //print_int(v); /* imprime 3 (scope exterior) */
+    }
+
+    void main() {
+        integer v;
+        v = 1;
+        helper();
+        {
+            integer v;
+            v = 42;
+            //print_int(v);
+            {
+                ; /* bloque vacío */
+            }
+        }
+        print_int(v);
+        return; /* return sin expresión en void */
+    }
+}
