@@ -51,12 +51,12 @@ int main(int argc, char *argv[]) {
 		printf("  %s <file.ctds> [options]\n\n", argv[0]);
 
 		printf("Options:\n");
-		printf("  %-22s %s\n", "-h, --help", "Shows this help message");
+		printf("  %-22s %s\n", "-h, -help", "Shows this help message");
 		printf("  %-22s %s\n", "-o <file>", "Specifies the name of the output file (default: out)");
-		printf("  %-22s %s\n", "-target <stage>", "Run until the indicated stage:");
+		printf("  %-22s %s\n", "-t, -target <stage>", "Run until the indicated stage:");
 		printf("                                scan | parse | codinter | assembly\n");
 		printf("  %-22s %s\n", "-opt", "Enable compiler optimizations");
-		printf("  %-22s %s\n", "-debug", "Shows debugging information (AST structure, lexer tokens, intermediate code, etc.)\n");
+		printf("  %-22s %s\n", "-d, -debug", "Shows debugging information (AST structure, lexer tokens, intermediate code, etc.)\n");
 
 		printf("Use example:\n");
 		printf("  %s -target codinter \n", argv[0]);
@@ -75,7 +75,7 @@ int main(int argc, char *argv[]) {
 	for (int i = 1; i < argc; i++) {
 		if (strcmp(argv[i], "-opt") == 0) {
 			optimizations = 1;
-		} else if (strcmp(argv[i], "-debug") == 0) {
+		} else if (strcmp(argv[i], "-debug") == 0 || strcmp(argv[i], "-d") == 0) {
 			debug = 1;
 		} else if (strcmp(argv[i], "-o") == 0) {
 			if (i + 1 < argc) { // If -o is specified, a filename after that is required
@@ -89,7 +89,7 @@ int main(int argc, char *argv[]) {
 				fprintf(stderr, "Error: -o requires a filename. See ctds -h for usage help.\n");
 				return 1;
 			}
-		} else if (strcmp(argv[i], "-target") == 0) {
+		} else if (strcmp(argv[i], "-target") == 0 || strcmp(argv[i], "-t") == 0) {
 			if (i + 1 < argc) { // If -target is specified, a target stage after that is required
 				str_to_lower(argv[i + 1]);
 				if (strcmp(argv[i + 1], "scan") == 0) {
