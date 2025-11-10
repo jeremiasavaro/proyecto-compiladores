@@ -14,7 +14,6 @@
 
 extern int yylineno;
 extern int yyparse();
-//void yyerror(const char *s);
 extern FILE *yyin;
 extern int yylex();
 
@@ -133,7 +132,7 @@ int main(int argc, char *argv[]) {
 	}
 	yyin = file;
 
-	if (stage == 0) {
+	if (stage == SCAN) {
 		if (debug) {
 			printf("\n----- SCANNING -----\n");
 		}
@@ -142,7 +141,7 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	if (stage > 0 || debug) {
+	if (stage > SCAN || debug) {
 		if (debug) {
 			printf("----- PARSING -----\n");
 		}
@@ -150,7 +149,7 @@ int main(int argc, char *argv[]) {
 		semantic_analyzer(head_ast);
 	}
 	// Generate intermediate code for each top-level method declaration
-	if (stage > 1) {
+	if (stage > PARSE) {
 		reset_code();
 		for (AST_ROOT* cur = head_ast; cur != NULL; cur = cur->next) {
 			gen_code(cur->sentence, NULL);
@@ -161,7 +160,7 @@ int main(int argc, char *argv[]) {
 		if (optimizations) {
 			optimize_memory(cant_ap_h);
 		}
-		if (debug) {
+		if (debug || stage == CODINTER) {
 			char inter_path[128];
 			char aux_file[256];
 			snprintf(inter_path, sizeof(inter_path), "intermediate_code/%s", outname);
@@ -178,7 +177,7 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	if (stage > 2 || debug) { 
+	if (stage > CODINTER || debug) {
 		char inter_path[256];
 		char aux_file[256];
 		snprintf(inter_path, sizeof(inter_path), "object_code/%s", outname);
@@ -191,7 +190,7 @@ int main(int argc, char *argv[]) {
 		fclose(out);
 	}
 	
-	if (stage > 3) {
+	if (stage > ASSEMBLY) {
 		char command[256];
 		snprintf(command, sizeof(command), "./link.sh object_code/%s", outname);
 		system(command);
