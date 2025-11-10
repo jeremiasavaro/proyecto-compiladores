@@ -34,7 +34,7 @@ void str_to_lower(char *s);
 int main(int argc, char *argv[]) {
 	// Flags
 	STAGE stage = EXECUTABLE; // Run all stages by default
-	char* outname = "res"; // Default name
+	char* outname = "out"; // Default name
 	char* sourcename = NULL;
 
 	if (argc == 1) {
@@ -44,30 +44,30 @@ int main(int argc, char *argv[]) {
 	if (argc == 2 && (strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0)) {
 		printf("\n");
 		printf("╭──────────────────────────────────────────────╮\n");
-		printf("│      Compilador CTDS — Opciones de uso       │\n");
+		printf("│         CTDS Compiler — Usage options        │\n");
 		printf("╰──────────────────────────────────────────────╯\n\n");
 
-		printf("Uso:\n");
-		printf("  %s <archivo.ctds> [opciones]\n\n", argv[0]);
+		printf("Usage:\n");
+		printf("  %s <file.ctds> [options]\n\n", argv[0]);
 
-		printf("Opciones:\n");
-		printf("  %-22s %s\n", "-h, --help", "Muestra esta ayuda y termina");
-		printf("  %-22s %s\n", "-o <archivo>", "Especifica el nombre del archivo de salida (por defecto: res)");
-		printf("  %-22s %s\n", "-target <etapa>", "Ejecuta hasta la etapa indicada:");
+		printf("Options:\n");
+		printf("  %-22s %s\n", "-h, --help", "Shows this help message");
+		printf("  %-22s %s\n", "-o <file>", "Specifies the name of the output file (default: out)");
+		printf("  %-22s %s\n", "-target <stage>", "Run until the indicated stage:");
 		printf("                                scan | parse | codinter | assembly\n");
-		printf("  %-22s %s\n", "-opt", "Activa optimizaciones del compilador");
-		printf("  %-22s %s\n", "-debug", "Muestra el AST y la tabla de símbolos (para depuración)\n");
+		printf("  %-22s %s\n", "-opt", "Enable compiler optimizations");
+		printf("  %-22s %s\n", "-debug", "Shows debugging information (AST structure, lexer tokens, intermediate code, etc.)\n");
 
-		printf("Ejemplo de uso:\n");
+		printf("Use example:\n");
 		printf("  %s -target codinter \n", argv[0]);
-		printf("  Genera HASTA el codigo intermedio \n\n");
+		printf("  Generate up to the intermediate code \n\n");
 
-		printf("Etapas disponibles:\n");
-		printf("  scan        Analiza léxicamente el código fuente\n");
-		printf("  parse       Construye el AST (árbol de sintaxis)\n");
-		printf("  codinter    Genera código intermedio\n");
-		printf("  assembly    Genera código ensamblador u objeto\n");
-		printf("  executable  Ejecuta el binario final (por defecto, sin flag)\n\n");
+		printf("Available stages:\n");
+		printf("  scan        Lexically parse the source code\n");
+		printf("  parse       Build the AST (abstract syntax tree)\n");
+		printf("  codinter    Generate intermediate code\n");
+		printf("  assembly    Generate assembly or object code\n");
+		printf("  executable  Generate the executable\n\n");
 
 		return 0;
 	}
@@ -131,7 +131,7 @@ int main(int argc, char *argv[]) {
 
 	if (stage == 0) {
 		if (debug) {
-			printf("----- SCANNING  -----\n");
+			printf("\n----- SCANNING -----\n");
 		}
 		while (yylex() != 0) {
     	
@@ -140,7 +140,7 @@ int main(int argc, char *argv[]) {
 
 	if (stage > 0 || debug) {
 		if (debug) {
-			printf("----- PARSING  -----\n");
+			printf("----- PARSING -----\n");
 		}
 		yyparse();
 		semantic_analyzer(head_ast);
@@ -163,6 +163,7 @@ int main(int argc, char *argv[]) {
 			snprintf(inter_path, sizeof(inter_path), "intermediate_code/%s", outname);
 			snprintf(aux_file, sizeof(aux_file), "%s.codinter", inter_path);
 			print_code_to_file(aux_file);
+			printf("\nIntermediate code dumped in %s \n", aux_file);
 		}
 	}
 
