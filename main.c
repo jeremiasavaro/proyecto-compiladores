@@ -141,11 +141,13 @@ int main(int argc, char *argv[]) {
 	}
 
 	if (stage > SCAN || debug) {
-		if (debug) {
+		if (debug && stage > SCAN) {
 			printf("----- PARSING -----\n");
 		}
-		yyparse();
-		semantic_analyzer(head_ast);
+		if (stage > SCAN) {
+			yyparse();
+			semantic_analyzer(head_ast);
+		}
 	}
 	// Generate intermediate code for each top-level method declaration
 	if (stage > PARSE) {
