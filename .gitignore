@@ -71,7 +71,10 @@ tests/output_object_code/
 tests/output_final
 
 # Intermediate code files
-intermediate_code/intermediate_code.out
+intermediate_code/*.codinter
+
+# Assembly files
+object_code/*.s
 
 *.DS_Store
 main
