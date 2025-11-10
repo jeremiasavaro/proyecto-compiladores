@@ -78,3 +78,9 @@ object_code/*.s
 
 *.DS_Store
 main
+
+# LATEX files
+*.aux
+*.log
+*synctex.gz
+*.toc
