@@ -221,7 +221,38 @@ del trabajo en equipo.
 	\item Cuando se invoca a una función con llamadas a otras funciones como parámetros, usualmente se pierden o pisan los valores de algunos parámetros.
 \end{itemize}
 
+\section{Quinta etapa}
 
+\subsection*{División de la quinta etapa}
+\begin{itemize}
+	\item \textbf{Mateo Cornejo:} Implementación de las optimizaciones propagación de constantes y eliminación de código muerto, refinamiento y culminación de la implementación de las flags y script de test.
+	\item \textbf{Jeremias Avaro:} Implementación de optimización de memoria y refinamiento de demás optimizaciones.
+	\item \textbf{Máximo Marquez Regis:} Implementación de optimización de división por potencias de 2, optimización de memoria, refinamiento y adaptación de la CLI del compilador.
+\end{itemize}
+
+\subsection*{Decisiones de diseño y aclaraciones}
+\begin{itemize}
+	\item Se comenzó la implementación de una optimización para parámetros repetidos de una función pero se optó por dejar de implementarla debido a inconsistencias en su funcionamiento.
+	\item Se implementó la optimización de eficiencia de memoria sobre el código intermedio ya que era más simple que realizarla sobre el código objeto.
+
+\end{itemize}
+
+\subsection*{Diseño y decisiones clave}
+\begin{itemize}
+	\item Las optimizaciones de propagación de constantes y eliminación de código muerto fueron realizadas sobre el AST.
+	\item Las optimizaciones de división por potencia de 2 y eficiencia de memoria fueron realizadas sobre le código intermedio.
+	\item La segunda parte de la optimización de eficiencia de memoria se había comenzado a implementar sobre el generador de código objeto, pero se decidió realizarla como una ``segunda pasada'' sobre el código intermedio debido a mayor simplicidad en el manejo de la estructura \texttt{INFO} que utiliza el compilador (más simple que realizarlo sobre texto).
+	\item En la optimización de divisiones por potencia de 2, se hace uso de un ``bias'' para poder truncar a 0 los resultados de las divisiones cuando alguno de los operandos es negativo (si el resultado de la división es -0.5, sin realizar este paso el resultado quedaría en -1).
+\end{itemize}
+
+\subsection*{Problemas conocidos}
+\begin{itemize}
+	\item Así como se realizó la optimización de división por potencias de 2, se podría haber realizado de igual manera una optimizacion para multiplicaciones por potencias de 2.
+	\item No fue testeado en su totalidad el compilador con las optimizaciones, puede existir algun caso raro en que las optimizaciones no funcionen como deberían.
+	\item Se podría optimizar aún más sobre la generación y reutilización de temporales, por ejemplo eliminando el temporal auxiliar utilizado en la asignación de una constante a una variable.
+	\item Si se compila código con el flag de optimizaciones, se realizan todas las optimizaciones, si no, no se realiza ninguna. Se podría mejorar añadiendo argumentos a el flag para poder decidir cuáles optimizaciones realizar y cuáles no.
+	\item Si se compila código con optimizaciones y además se imprime información de debug, puede pasar que en algunos casos en la impresión del AST (cuando se optimizó código muerto) se impriman bloques (\texttt{BLOCK}) fantasmas (que fueron optimizados).
+\end{itemize}
 
 
 \end{document}
