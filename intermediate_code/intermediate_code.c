@@ -336,7 +336,25 @@ static void gen_code_common(AST_NODE* node, INFO* result) {
 
         case OP_ASSIGN:
             gen_code(node->info->common.left, left);
-            gen_code(node->info->common.right, right);
+            if (node->info->common.right->info->type == AST_LEAF && node->info->common.right->info->leaf.type != TYPE_ID && optimizations) {
+                INFO constant_info;
+                constant_info.type = TABLE_ID;
+                if (node->info->common.right->info->leaf.type == TYPE_INT) {
+                    char buf[32];
+                    sprintf(buf, "%d", node->info->common.right->info->leaf.value->int_value);
+                    constant_info.id.name = my_strdup(buf);
+                    constant_info.id.type = TYPE_INT;                
+                } else if (node->info->common.right->info->leaf.type == TYPE_BOOL) {
+                    char buf[32];
+                    sprintf(buf, "%d", node->info->common.right->info->leaf.value->bool_value);
+                    constant_info.id.name = my_strdup(buf);
+                    constant_info.id.type = TYPE_BOOL;
+                }
+                emit(I_STORE, &constant_info, NULL, left);
+                break;
+            } else {
+                gen_code(node->info->common.right, right);
+            }
             emit(I_STORE, right, NULL, left);
             break;
 
