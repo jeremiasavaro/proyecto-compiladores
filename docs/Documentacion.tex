@@ -240,9 +240,9 @@ del trabajo en equipo.
 \subsection*{Diseño y decisiones clave}
 \begin{itemize}
 	\item Las optimizaciones de propagación de constantes y eliminación de código muerto fueron realizadas sobre el AST.
-	\item Las optimizaciones de división por potencia de 2 y eficiencia de memoria fueron realizadas sobre le código intermedio.
+	\item Las optimizaciones de división por potencia de 2 y eficiencia de memoria fueron realizadas sobre el código intermedio.
 	\item La segunda parte de la optimización de eficiencia de memoria se había comenzado a implementar sobre el generador de código objeto, pero se decidió realizarla como una ``segunda pasada'' sobre el código intermedio debido a mayor simplicidad en el manejo de la estructura \texttt{INFO} que utiliza el compilador (más simple que realizarlo sobre texto).
-	\item En la optimización de divisiones por potencia de 2, se hace uso de un ``bias'' para poder truncar a 0 los resultados de las divisiones cuando alguno de los operandos es negativo (si el resultado de la división es -0.5, sin realizar este paso el resultado quedaría en -1).
+	\item En la optimización de divisiones por potencia de 2, se hace uso de un ``bias'' para poder truncar a 0 los resultados de las divisiones cuando el dividendo es negativo (si el resultado de la división es -0.5, sin realizar este paso el resultado quedaría en -1). Esta optimización se realiza solamente cuando el divisor es positivo.
 \end{itemize}
 
 \subsection*{Problemas conocidos}
@@ -252,6 +252,7 @@ del trabajo en equipo.
 	\item Se podría optimizar aún más sobre la generación y reutilización de temporales, por ejemplo eliminando el temporal auxiliar utilizado en la asignación de una constante a una variable.
 	\item Si se compila código con el flag de optimizaciones, se realizan todas las optimizaciones, si no, no se realiza ninguna. Se podría mejorar añadiendo argumentos a el flag para poder decidir cuáles optimizaciones realizar y cuáles no.
 	\item Si se compila código con optimizaciones y además se imprime información de debug, puede pasar que en algunos casos en la impresión del AST (cuando se optimizó código muerto) se impriman bloques (\texttt{BLOCK}) fantasmas (que fueron optimizados).
+	\item Si se nombran variables empezando por 'T', podría generar código incorrecto debido a que no controlamos en la generación de código si es un temporal o una variable. 
 \end{itemize}
 
 
