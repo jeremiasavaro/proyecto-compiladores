@@ -42,7 +42,7 @@ static void get_operand_str(INFO* var, char* buf, size_t buf_size) {
     char* name = var->id.name;
 
     // Check if it's a label, constant, or variable
-    if (name[0] == 'L') {
+    if (name[0] == '_') {
         snprintf(buf, buf_size, "%s", name);
     } else if (isdigit(name[0]) || (name[0] == '-' && isdigit(name[1]))) {
         snprintf(buf, buf_size, "$%s", name);
@@ -98,9 +98,9 @@ void generate_object_code(FILE* out_file, CANT_AP_TEMP* temp_list) {
                 }
                 for (int k = i; k <= end_func_idx; ++k) {
                     // Get stack offsets for all variables used in the function
-                    if (code[k].var1 && code[k].var1->id.name && !isdigit(code[k].var1->id.name[0]) && code[k].var1->id.name[0] != 'L') get_var_offset(code[k].var1->id.name);
-                    if (code[k].var2 && code[k].var2->id.name && !isdigit(code[k].var2->id.name[0]) && code[k].var2->id.name[0] != 'L') get_var_offset(code[k].var2->id.name);
-                    if (code[k].reg  && code[k].reg->id.name  && !isdigit(code[k].reg->id.name[0])  && code[k].reg->id.name[0] != 'L') get_var_offset(code[k].reg->id.name);
+                    if (code[k].var1 && code[k].var1->id.name && !isdigit(code[k].var1->id.name[0]) && code[k].var1->id.name[0] != '_') get_var_offset(code[k].var1->id.name);
+                    if (code[k].var2 && code[k].var2->id.name && !isdigit(code[k].var2->id.name[0]) && code[k].var2->id.name[0] != '_') get_var_offset(code[k].var2->id.name);
+                    if (code[k].reg  && code[k].reg->id.name  && !isdigit(code[k].reg->id.name[0])  && code[k].reg->id.name[0] != '_') get_var_offset(code[k].reg->id.name);
                 }
                 int total_stack_size = -current_stack_offset;
                 // Align stack to 16 bytes

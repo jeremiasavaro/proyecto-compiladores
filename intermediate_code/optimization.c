@@ -77,7 +77,7 @@ void swap_temps(CANT_AP_TEMP* free_temp, CANT_AP_TEMP* actual_temp) {
  * temp that doesn't have remaining uses
  */
 void check_optimize(CANT_AP_TEMP* tmp_list, char* name) {
-	if (name[0] == 'T') {
+	if (name[0] == '$') {
 		CANT_AP_TEMP* free_temp = get_free(tmp_list, name);
 		CANT_AP_TEMP* actual_temp = get_temp(tmp_list, name);
 		// Only optimize if there's a temp that is free and if the temp to be replaced is unlocked

@@ -15,7 +15,7 @@ extern int debug;
  */
 char* new_temp() {
     char buf[32];
-    sprintf(buf, "T%d", temp_counter++);
+    sprintf(buf, "$T%d", temp_counter++);
     return my_strdup(buf);
 }
 
@@ -23,7 +23,7 @@ char* new_temp() {
  */
 static char* new_label() {
     char buf[32];
-    sprintf(buf, "L%d", label_counter++);
+    sprintf(buf, "_L%d", label_counter++);
     return my_strdup(buf);
 }
 
@@ -84,7 +84,7 @@ void emit(INSTR_TYPE t, INFO* var1, INFO* var2, INFO* reg) {
     code[code_size].instruct->instruct.type_instruct = t;
 
     if (var1) {
-        if (var1->id.name[0] == 'T'){
+        if (var1->id.name[0] == '$'){
             increase_temp_ap(var1->id.name);
         }
         code[code_size].var1 = (INFO*)malloc(sizeof(INFO));
@@ -94,7 +94,7 @@ void emit(INSTR_TYPE t, INFO* var1, INFO* var2, INFO* reg) {
     }
 
     if (var2) {
-        if (var2->id.name[0] == 'T'){
+        if (var2->id.name[0] == '$'){
             increase_temp_ap(var2->id.name);
         }
         code[code_size].var2 = (INFO*)malloc(sizeof(INFO));
@@ -104,7 +104,7 @@ void emit(INSTR_TYPE t, INFO* var1, INFO* var2, INFO* reg) {
     }
 
     if (reg) {
-        if (reg->id.name[0] == 'T'){
+        if (reg->id.name[0] == '$'){
             increase_temp_ap(reg->id.name);
         }
         code[code_size].reg = (INFO*)malloc(sizeof(INFO));
