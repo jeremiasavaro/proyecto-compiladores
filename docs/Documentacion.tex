@@ -249,10 +249,8 @@ del trabajo en equipo.
 \begin{itemize}
 	\item Así como se realizó la optimización de división por potencias de 2, se podría haber realizado de igual manera una optimizacion para multiplicaciones por potencias de 2.
 	\item No fue testeado en su totalidad el compilador con las optimizaciones, puede existir algún caso raro en que las optimizaciones no funcionen como deberían.
-	\item Se podría optimizar aún más sobre la generación y reutilización de temporales, por ejemplo eliminando el temporal auxiliar utilizado en la asignación de una constante a una variable.
 	\item Si se compila código con el flag de optimizaciones, se realizan todas las optimizaciones, si no, no se realiza ninguna. Se podría mejorar añadiendo argumentos a el flag para poder decidir cuáles optimizaciones realizar y cuáles no.
 	\item Si se compila código con optimizaciones y además se imprime información de debug, puede pasar que en algunos casos en la impresión del AST (cuando se optimizó código muerto) se impriman bloques (\texttt{BLOCK}) fantasmas (que fueron optimizados).
-	\item Si se nombran variables empezando por 'T', podría generar código incorrecto debido a que no controlamos en la generación de código si es un temporal o una variable. 
 \end{itemize}
 
 
