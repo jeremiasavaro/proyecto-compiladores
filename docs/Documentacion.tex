@@ -64,9 +64,9 @@ del trabajo en equipo.
 
 \subsection*{División de la primera etapa}
 \begin{itemize}
-    \item \textbf{Jeremias Avaro:} inicialización del proyecto y primeros avances del lexer y la gramática.
-    \item \textbf{Mateo Cornejo:} refinamiento de lexer y gramática. Creación de tests.
-    \item \textbf{Máximo Marquez Regis:} completó la gramática casi en su totalidad. Integración del parser y lexer.
+    \item \textbf{Jeremias Avaro:} Inicialización del proyecto y primeros avances del lexer y la gramática.
+    \item \textbf{Mateo Cornejo:} Refinamiento de lexer y gramática. Creación de tests.
+    \item \textbf{Máximo Marquez Regis:} Completó la gramática casi en su totalidad. Integración del parser y lexer.
 \end{itemize}
 
 \subsection*{Decisiones de diseño y aclaraciones}
@@ -90,7 +90,7 @@ del trabajo en equipo.
 \subsection*{Problemas conocidos}
 \begin{itemize}
     \item Algunos casos límite no han sido exhaustivamente probados.
-    \item El manejo de comentarios multiline5a podría fallar en comentarios no cerrados.
+    \item El manejo de comentarios multilínea podría fallar en comentarios no cerrados.
 \end{itemize}
 
 \newpage
@@ -99,9 +99,9 @@ del trabajo en equipo.
 
 \subsection*{División de la segunda etapa}
 \begin{itemize}
-    \item \textbf{Mateo Cornejo:} implementación del AST incluyendo la definición de estructuras y funciones asociadas. Desarrollo de funciones para la visualización del AST. Refactorización del manejo de errores hacia el módulo \texttt{error\_handling}. Participación en la implementación y correcciones del analizador semántico.
-    \item \textbf{Jeremias Avaro:} inicialización de la tabla de símbolos, planteando la estructura base y el mecanismo de scopes. Desarrollo conjunto del analizador semántico. 
-    \item \textbf{Máximo Marquez Regis:} implementación general de la tabla de símbolos, refinamiento del manejo de scopes y funciones. Correcciones posteriores en el analizador semántico, documentación de código, creación de tests extras.
+    \item \textbf{Mateo Cornejo:} Implementación del AST incluyendo la definición de estructuras y funciones asociadas. Desarrollo de funciones para la visualización del AST. Refactorización del manejo de errores hacia el módulo \texttt{error\_handling}. Participación en la implementación y correcciones del analizador semántico.
+    \item \textbf{Jeremias Avaro:} Inicialización de la tabla de símbolos, planteando la estructura base y el mecanismo de scopes. Desarrollo conjunto del analizador semántico. 
+    \item \textbf{Máximo Marquez Regis:} Implementación general de la tabla de símbolos, refinamiento del manejo de scopes y funciones. Correcciones posteriores en el analizador semántico, documentación de código, creación de tests extras.
 \end{itemize}
 
 \subsection*{Decisiones de diseño y aclaraciones}
@@ -165,7 +165,7 @@ del trabajo en equipo.
 \begin{itemize}
 	\item \textbf{Mateo Cornejo:} Implementación de la base del generador de código intermedio y correción de errores.
 	\item \textbf{Jeremias Avaro:} Implementación general del generador de código intermedio.
-	\item \textbf{Máximo Marquez Regis:} Refactorización de las estructuas del compilador.
+	\item \textbf{Máximo Marquez Regis:} Refactorización de las estructuras del compilador.
 \end{itemize}
 
 \subsection*{Decisiones de diseño y aclaraciones}
@@ -176,7 +176,7 @@ del trabajo en equipo.
     \item Para la generación de código intermedio se recorre el AST de igual manera que el Semantic Analyzer. Cada nodo del árbol sintáctico abstracto es procesado por funciones especializadas según su tipo (expresiones, asignaciones, declaraciones, bloques, etc.).
     \item Se hace uso de un temporal en todas las instrucciones del código de tres direcciones. En cada operación, se genera un nombre de temporal único (por ejemplo, T1, T2, ...) mediante la función new\_temp(). El resultado relevante de la operación se almacena en ese temporal, permitiendo encadenar instrucciones y facilitar la traducción a código máquina o ensamblador posteriormente.
     \item El buffer de instrucciones (code[ ]) almacena cada instrucción generada, incluyendo los operandos y el temporal asociado.
-    \item Se tomo como decisión que las operaciones (instrucciones) tambien sean almacenadas en la estructura \texttt{Info}, para facilitar la generación de código intermedio.
+    \item Se tomó como decisión que las operaciones (instrucciones) también sean almacenadas en la estructura \texttt{Info}, para facilitar la generación de código intermedio.
 \end{itemize}
 
 \subsection*{Diseño y decisiones clave}
@@ -185,7 +185,7 @@ del trabajo en equipo.
     \item El diseño del AST se mantuvo modular: cada tipo de nodo (expresiones, asignaciones, declaraciones, etc.) tiene una función de procesamiento específica, lo que facilita la extensión futura del lenguaje.
     \item Se implementó un generador de temporales (\texttt{new\_temp()}) y un contador global para asegurar que cada temporal sea único, garantizando trazabilidad y evitando colisiones durante la generación de código.
     \item El buffer de código (\texttt{code[]}) se diseñó como una lista secuencial de instrucciones que pueden recorrerse o traducirse sin necesidad de reconstruir el árbol sintáctico.
-    \item Se decidió volver a incorporar la operación de declaracion para los nodos de tipo common, ya que no se chequeaba si el tipo de la inicialización era el correcto.
+    \item Se decidió volver a incorporar la operación de declaración para los nodos de tipo \texttt{common}, ya que no se chequeaba si el tipo de la inicialización era el correcto.
 \end{itemize}
 
 \subsection*{Problemas conocidos}
@@ -221,7 +221,39 @@ del trabajo en equipo.
 	\item Cuando se invoca a una función con llamadas a otras funciones como parámetros, usualmente se pierden o pisan los valores de algunos parámetros.
 \end{itemize}
 
+\section{Quinta etapa}
 
+\subsection*{División de la quinta etapa}
+\begin{itemize}
+	\item \textbf{Mateo Cornejo:} Implementación de las optimizaciones propagación de constantes y eliminación de código muerto, refinamiento y culminación de la implementación de las flags y script de test.
+	\item \textbf{Jeremias Avaro:} Implementación de optimización de memoria y refinamiento de demás optimizaciones.
+	\item \textbf{Máximo Marquez Regis:} Implementación de optimización de división por potencias de 2, optimización de memoria, refinamiento y adaptación de la CLI del compilador.
+\end{itemize}
+
+\subsection*{Decisiones de diseño y aclaraciones}
+\begin{itemize}
+	\item Se comenzó la implementación de una optimización para parámetros repetidos de una función pero se optó por dejar de implementarla debido a inconsistencias en su funcionamiento.
+	\item Se implementó la optimización de eficiencia de memoria sobre el código intermedio ya que era más simple que realizarla sobre el código objeto.
+
+\end{itemize}
+
+\subsection*{Diseño y decisiones clave}
+\begin{itemize}
+	\item Las optimizaciones de propagación de constantes y eliminación de código muerto fueron realizadas sobre el AST.
+	\item Las optimizaciones de división por potencia de 2 y eficiencia de memoria fueron realizadas sobre el código intermedio.
+	\item La segunda parte de la optimización de eficiencia de memoria se había comenzado a implementar sobre el generador de código objeto, pero se decidió realizarla como una ``segunda pasada'' sobre el código intermedio debido a mayor simplicidad en el manejo de la estructura \texttt{INFO} que utiliza el compilador (más simple que realizarlo sobre texto).
+	\item En la optimización de divisiones por potencia de 2, se hace uso de un ``bias'' para poder truncar a 0 los resultados de las divisiones cuando el dividendo es negativo (si el resultado de la división es -0.5, sin realizar este paso el resultado quedaría en -1). Esta optimización se realiza solamente cuando el divisor es positivo.
+\end{itemize}
+
+\subsection*{Problemas conocidos}
+\begin{itemize}
+	\item Así como se realizó la optimización de división por potencias de 2, se podría haber realizado de igual manera una optimizacion para multiplicaciones por potencias de 2.
+	\item No fue testeado en su totalidad el compilador con las optimizaciones, puede existir algún caso raro en que las optimizaciones no funcionen como deberían.
+	\item Se podría optimizar aún más sobre la generación y reutilización de temporales, por ejemplo eliminando el temporal auxiliar utilizado en la asignación de una constante a una variable.
+	\item Si se compila código con el flag de optimizaciones, se realizan todas las optimizaciones, si no, no se realiza ninguna. Se podría mejorar añadiendo argumentos a el flag para poder decidir cuáles optimizaciones realizar y cuáles no.
+	\item Si se compila código con optimizaciones y además se imprime información de debug, puede pasar que en algunos casos en la impresión del AST (cuando se optimizó código muerto) se impriman bloques (\texttt{BLOCK}) fantasmas (que fueron optimizados).
+	\item Si se nombran variables empezando por 'T', podría generar código incorrecto debido a que no controlamos en la generación de código si es un temporal o una variable. 
+\end{itemize}
 
 
 \end{document}
