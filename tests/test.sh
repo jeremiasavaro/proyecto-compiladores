@@ -67,6 +67,7 @@ if [ "$TEST_DIR" != "tests/error_tests" ]; then
             echo "-----------------------------------"
         fi
     done
+    rm -f intermediate_code/*.codinter
 
     OBJ_DIR="tests/output_object_code"
     mkdir -p "$OBJ_DIR"
@@ -92,6 +93,7 @@ if [ "$TEST_DIR" != "tests/error_tests" ]; then
             echo "-----------------------------------"
         fi
     done
+    rm -f object_code/*.s
 
     EXE_DIR="tests/output_executables"
     mkdir -p "$EXE_DIR"
