@@ -160,6 +160,7 @@ typedef struct INFO {
 		struct {
 			char* name;
 			TYPE type;
+			int temp;
 		} id;
 
 		struct {

@@ -30,6 +30,7 @@ static char* new_label() {
 /* Function that adds a new instance of the temporal temp in the list of temporal instances
  */
 void append_new_instance(CANT_AP_TEMP* cur, char* temp) {
+    if (!cur) return;
     TEMP_LIST* aux = cur->list;
     if (!aux) {
         TEMP_LIST* new_entry = calloc(1, sizeof(TEMP_LIST));
@@ -63,6 +64,7 @@ void increase_temp_ap(char* temp) {
     new_entry->temp = my_strdup(temp);
     new_entry->next = NULL;
     new_entry->locked = 0;
+    new_entry->list = NULL;
     append_new_instance(new_entry, temp);
     CANT_AP_TEMP* aux = cant_ap_h;
     if (!aux) {
@@ -84,7 +86,7 @@ void emit(INSTR_TYPE t, INFO* var1, INFO* var2, INFO* reg) {
     code[code_size].instruct->instruct.type_instruct = t;
 
     if (var1) {
-        if (var1->id.name[0] == 'T'){
+        if (var1->id.name[0] == 'T' && var1->id.temp == 1){
             increase_temp_ap(var1->id.name);
         }
         code[code_size].var1 = (INFO*)malloc(sizeof(INFO));
@@ -94,7 +96,7 @@ void emit(INSTR_TYPE t, INFO* var1, INFO* var2, INFO* reg) {
     }
 
     if (var2) {
-        if (var2->id.name[0] == 'T'){
+        if (var2->id.name[0] == 'T' && var2->id.temp == 1){
             increase_temp_ap(var2->id.name);
         }
         code[code_size].var2 = (INFO*)malloc(sizeof(INFO));
@@ -104,7 +106,7 @@ void emit(INSTR_TYPE t, INFO* var1, INFO* var2, INFO* reg) {
     }
 
     if (reg) {
-        if (reg->id.name[0] == 'T'){
+        if (reg->id.name[0] == 'T' && reg->id.temp == 1){
             increase_temp_ap(reg->id.name);
         }
         code[code_size].reg = (INFO*)malloc(sizeof(INFO));
@@ -132,6 +134,7 @@ static void gen_code_leaf(AST_NODE* node, INFO* result) {
             aux.id.type = TYPE_INT;
             temp->id.name = new_temp();
             temp->id.type = TYPE_INT;
+            temp->id.temp = 1; // Mark as temporary
             emit(I_LOADVAL, &aux, NULL, temp);
             if (result) *result = *temp;
             break;
@@ -142,6 +145,7 @@ static void gen_code_leaf(AST_NODE* node, INFO* result) {
             aux.id.type = TYPE_BOOL;
             temp->id.name = new_temp();
             temp->id.type = TYPE_BOOL;
+            temp->id.temp = 1; // Mark as temporary
             emit(I_LOADVAL, &aux, NULL, temp);
             if (result) *result = *temp;
             break;
@@ -151,6 +155,7 @@ static void gen_code_leaf(AST_NODE* node, INFO* result) {
             if (sym) {
                 aux.id.name = sym->info->id.name;
                 aux.id.type = sym->info->id.type;
+                aux.id.temp = 0; // Not a temporary
                 if (node->father->info->common.op != OP_ASSIGN && node->father->info->common.op != OP_DECL) {
                     emit(I_LOAD, &aux, NULL, NULL);
                 }
@@ -180,6 +185,7 @@ static void gen_code_common(AST_NODE* node, INFO* result) {
             gen_code(node->info->common.right, right);
             temp->id.name = new_temp();
             temp->id.type = TYPE_INT;
+            temp->id.temp = 1; // Mark as temporary
             emit(I_ADD, left, right, temp);
             if (result) *result = *temp;
             break;
@@ -189,6 +195,7 @@ static void gen_code_common(AST_NODE* node, INFO* result) {
             gen_code(node->info->common.right, right);
             temp->id.name = new_temp();
             temp->id.type = TYPE_INT;
+            temp->id.temp = 1; // Mark as temporary
             emit(I_SUB, left, right, temp);
             if (result) *result = *temp;
             break;
@@ -198,6 +205,7 @@ static void gen_code_common(AST_NODE* node, INFO* result) {
             gen_code(node->info->common.right, right);
             temp->id.name = new_temp();
             temp->id.type = TYPE_INT;
+            temp->id.temp = 1; // Mark as temporary
             emit(I_MUL, left, right, temp);
             if (result) *result = *temp;
             break;
@@ -216,6 +224,7 @@ static void gen_code_common(AST_NODE* node, INFO* result) {
                     right->id.type = TYPE_INT;
                     temp->id.name = new_temp();
                     temp->id.type = TYPE_INT;
+                    temp->id.temp = 1; // Mark as temporary
                     emit(I_SHIFT_RIGHT, left, right, temp);
                     if (result) *result = *temp;
                     break;
@@ -224,6 +233,7 @@ static void gen_code_common(AST_NODE* node, INFO* result) {
             gen_code(node->info->common.right, right);
             temp->id.name = new_temp();
             temp->id.type = TYPE_INT;
+            temp->id.temp = 1; // Mark as temporary
             emit(I_DIV, left, right, temp);
             if (result) *result = *temp;
             break;
@@ -233,6 +243,7 @@ static void gen_code_common(AST_NODE* node, INFO* result) {
             gen_code(node->info->common.right, right);
             temp->id.name = new_temp();
             temp->id.type = TYPE_INT;
+            temp->id.temp = 1; // Mark as temporary
             emit(I_MOD, left, right, temp);
             if (result) *result = *temp;
             break;
@@ -241,6 +252,7 @@ static void gen_code_common(AST_NODE* node, INFO* result) {
             gen_code(node->info->common.left, left);
             temp->id.name = new_temp();
             temp->id.type = TYPE_INT;
+            temp->id.temp = 1; // Mark as temporary
             emit(I_MIN, left, NULL, temp);
             if (result) *result = *temp;
             break;
@@ -259,6 +271,7 @@ static void gen_code_common(AST_NODE* node, INFO* result) {
             gen_code(node->info->common.right, right);
             temp->id.name = new_temp();
             temp->id.type = TYPE_BOOL;
+            temp->id.temp = 1; // Mark as temporary
             emit(I_LES, left, right, temp);
             if (result) *result = *temp;
             break;
@@ -268,6 +281,7 @@ static void gen_code_common(AST_NODE* node, INFO* result) {
             gen_code(node->info->common.right, right);
             temp->id.name = new_temp();
             temp->id.type = TYPE_BOOL;
+            temp->id.temp = 1; // Mark as temporary
             emit(I_GRT, left, right, temp);
             if (result) *result = *temp;
             break;
@@ -277,6 +291,7 @@ static void gen_code_common(AST_NODE* node, INFO* result) {
             gen_code(node->info->common.right, right);
             temp->id.name = new_temp();
             temp->id.type = TYPE_BOOL;
+            temp->id.temp = 1; // Mark as temporary
             emit(I_EQ, left, right, temp);
             if (result) *result = *temp;
             break;
@@ -286,6 +301,7 @@ static void gen_code_common(AST_NODE* node, INFO* result) {
             gen_code(node->info->common.right, right);
             temp->id.name = new_temp();
             temp->id.type = TYPE_BOOL;
+            temp->id.temp = 1; // Mark as temporary
             emit(I_NEQ, left, right, temp);
             if (result) *result = *temp;
             break;
@@ -295,6 +311,7 @@ static void gen_code_common(AST_NODE* node, INFO* result) {
             gen_code(node->info->common.right, right);
             temp->id.name = new_temp();
             temp->id.type = TYPE_BOOL;
+            temp->id.temp = 1; // Mark as temporary
             emit(I_LEQ, left, right, temp);
             if (result) *result = *temp;
             break;
@@ -304,6 +321,7 @@ static void gen_code_common(AST_NODE* node, INFO* result) {
             gen_code(node->info->common.right, right);
             temp->id.name = new_temp();
             temp->id.type = TYPE_BOOL;
+            temp->id.temp = 1; // Mark as temporary
             emit(I_GEQ, left, right, temp);
             if (result) *result = *temp;
             break;
@@ -313,6 +331,7 @@ static void gen_code_common(AST_NODE* node, INFO* result) {
             gen_code(node->info->common.right, right);
             temp->id.name = new_temp();
             temp->id.type = TYPE_BOOL;
+            temp->id.temp = 1; // Mark as temporary
             emit(I_AND, left, right, temp);
             if (result) *result = *temp;
             break;
@@ -322,6 +341,7 @@ static void gen_code_common(AST_NODE* node, INFO* result) {
             gen_code(node->info->common.right, right);
             temp->id.name = new_temp();
             temp->id.type = TYPE_BOOL;
+            temp->id.temp = 1; // Mark as temporary
             emit(I_OR, left, right, temp);
             if (result) *result = *temp;
             break;
@@ -330,6 +350,7 @@ static void gen_code_common(AST_NODE* node, INFO* result) {
             gen_code(node->info->common.left, left);
             temp->id.name = new_temp();
             temp->id.type = TYPE_BOOL;
+            temp->id.temp = 1; // Mark as temporary
             emit(I_NEG, left, NULL, temp);
             if (result) *result = *temp;
             break;

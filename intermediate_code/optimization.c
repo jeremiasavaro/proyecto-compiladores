@@ -10,13 +10,13 @@ void check_optimize(CANT_AP_TEMP* tmp_list, char* name);
 void optimize_memory(CANT_AP_TEMP* tmp_list) {
 	Instr *int_code = get_intermediate_code();
 	for (int i = 0; i < get_code_size(); i++) {
-		if (int_code[i].var1) {
+		if (int_code[i].var1 && int_code[i].var1->id.temp == 1) {
 			check_optimize(tmp_list, int_code[i].var1->id.name);
 		}
-		if (int_code[i].var2) {
+		if (int_code[i].var2 && int_code[i].var2->id.temp == 1) {
 			check_optimize(tmp_list, int_code[i].var2->id.name);
 		}
-		if (int_code[i].reg) {
+		if (int_code[i].reg && int_code[i].reg->id.temp == 1) {
 			check_optimize(tmp_list, int_code[i].reg->id.name);
 		}
 	}
