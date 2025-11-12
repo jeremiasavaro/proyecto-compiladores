@@ -352,9 +352,8 @@ static void gen_code_common(AST_NODE* node, INFO* result) {
                 }
                 emit(I_STORE, &constant_info, NULL, left);
                 break;
-            } else {
-                gen_code(node->info->common.right, right);
             }
+            gen_code(node->info->common.right, right);
             emit(I_STORE, right, NULL, left);
             break;
 
